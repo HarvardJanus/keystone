@@ -6,7 +6,7 @@ import nodes.stats.{StandardScalerModel, StandardScaler}
 import org.apache.spark.rdd.RDD
 import nodes.util.{VectorSplitter, Identity}
 import utils.{MatrixUtils, Stats}
-import workflow.{Transformer, LabelEstimator}
+import workflow._
 
 
 /**
@@ -37,6 +37,14 @@ class BlockLinearMapper(
    */
   override def apply(in: RDD[DenseVector[Double]]): RDD[DenseVector[Double]] = {
     apply(vectorSplitter(in))
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
+    val out = apply(vectorSplitter(in))
+    val lineage = LinComLineage(in, out, xs(0))
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.getCoor(0)(0)._1.size+"x"+lineage.getCoor(0)(0)._2.size)
+    out
   }
 
   /**

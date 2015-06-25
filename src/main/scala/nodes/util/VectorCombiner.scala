@@ -2,7 +2,8 @@ package nodes.util
 
 import breeze.linalg.{DenseMatrix, DenseVector}
 import workflow.Transformer
-
+import org.apache.spark.rdd.RDD
+import workflow._
 import scala.reflect.ClassTag
 
 /**
@@ -11,4 +12,12 @@ import scala.reflect.ClassTag
 case class VectorCombiner[T : ClassTag]()(implicit zero: breeze.storage.Zero[T])
     extends Transformer[Seq[DenseVector[T]], DenseVector[T]] {
   def apply(in: Seq[DenseVector[T]]): DenseVector[T] = DenseVector.vertcat(in:_*)
+
+  override def saveLineageAndApply(in: RDD[Seq[DenseVector[T]]], tag: String): RDD[DenseVector[T]] = {
+    val out = in.map(apply)
+    val lineage = OneToOneLineage(in, out)
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.getCoor(513))
+    out
+  }
 }
