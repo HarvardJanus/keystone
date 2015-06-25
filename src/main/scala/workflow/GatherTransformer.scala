@@ -1,6 +1,7 @@
 package workflow
 
 import org.apache.spark.rdd.RDD
+import workflow._
 
 import scala.reflect.ClassTag
 
@@ -14,6 +15,10 @@ private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
   }
 
   def transformRDDWithLineage(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]], tag: String): RDD[Seq[T]] = {
-  	transformRDD(dataDependencies, fitDependencies)
+  	val out = transformRDD(dataDependencies, fitDependencies)
+  	val lineage = OneToOneLineage(dataDependencies.map(_.asInstanceOf[RDD[T]]), out)
+  	lineage.save(tag)
+  	println("collecting lineage for Transformer "+this.label)
+  	out
   }
 }
