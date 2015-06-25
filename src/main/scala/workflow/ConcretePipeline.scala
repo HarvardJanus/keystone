@@ -3,6 +3,7 @@ package workflow
 import org.apache.spark.rdd.RDD
 import pipelines.Logging
 
+import java.io._
 import scala.collection.mutable
 
 /**
@@ -19,7 +20,7 @@ private[workflow] class ConcretePipeline[A, B](
 
   private val fitCache: Array[Option[TransformerNode[_]]] = nodes.map(_ => None).toArray
   private val dataCache: mutable.Map[(Int, RDD[_]), RDD[_]] = new mutable.HashMap()
-
+  private var lineage : List[String] = List()
   /** validates (returns an exception if false) that
     - nodes.size = dataDeps.size == fitDeps.size
 
@@ -119,7 +120,40 @@ private[workflow] class ConcretePipeline[A, B](
     }
   }
 
+  final private[workflow] def rddDataEvalWithLineage(node: Int, in: RDD[A]): RDD[_] = {
+    if (node == Pipeline.SOURCE) {
+      in
+    } else {
+      dataCache.getOrElse((node, in), {
+        nodes(node) match {
+          case DataNode(rdd) => rdd
+          case transformer: TransformerNode[_] =>
+            val tag = transformer.label+"_"+node+"_"+in.id
+            lineage = tag::lineage
+            val nodeFitDeps = fitDeps(node).map(fitEstimator)
+            val nodeDataDeps = dataDeps(node).map(x => rddDataEvalWithLineage(x, in))
+            val outputData = transformer.transformRDDWithLineage(nodeDataDeps, nodeFitDeps, tag)
+            dataCache((node, in)) = outputData
+            outputData
+          case _: EstimatorNode =>
+            throw new RuntimeException("Pipeline DAG error: Cannot have a data dependency on an Estimator")
+        }
+      })
+    }
+  }
+
+  def saveLineage(lineage: List[String], id: Int) = {
+    val oos = new ObjectOutputStream(new FileOutputStream("Lineage/Index_"+id))
+    oos.writeObject(lineage)
+    oos.close
+  }
   override def apply(in: A): B = singleDataEval(sink, in).asInstanceOf[B]
 
-  override def apply(in: RDD[A]): RDD[B] = rddDataEval(sink, in).asInstanceOf[RDD[B]]
+  //override def apply(in: RDD[A]): RDD[B] = rddDataEval(sink, in).asInstanceOf[RDD[B]]
+  override def apply(in: RDD[A]): RDD[B] = {
+    lineage = List[String]()
+    val out = rddDataEvalWithLineage(sink, in).asInstanceOf[RDD[B]]
+    saveLineage(lineage, in.id)
+    out
+  }
 }

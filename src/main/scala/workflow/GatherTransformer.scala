@@ -12,4 +12,8 @@ private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
       x.zip(y).map(z => z._1 ++ z._2)
     })
   }
+
+  def transformRDDWithLineage(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]], tag: String): RDD[Seq[T]] = {
+  	transformRDD(dataDependencies, fitDependencies)
+  }
 }

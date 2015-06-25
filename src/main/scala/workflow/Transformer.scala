@@ -33,6 +33,8 @@ abstract class Transformer[A, B : ClassTag] extends TransformerNode[B] with Pipe
    */
   def apply(in: A): B
 
+  def saveLineageAndApply(in: RDD[A], tag: String): RDD[B] = in.map(apply) 
+
   private[workflow] final def transform(
     dataDependencies: Seq[_],
     fitDependencies: Seq[TransformerNode[_]]): B = {
@@ -43,6 +45,13 @@ abstract class Transformer[A, B : ClassTag] extends TransformerNode[B] with Pipe
     dataDependencies: Seq[RDD[_]],
     fitDependencies: Seq[TransformerNode[_]]): RDD[B] = {
     apply(dataDependencies.head.asInstanceOf[RDD[A]])
+  }
+
+  private[workflow] final def transformRDDWithLineage(
+    dataDependencies: Seq[RDD[_]], 
+    fitDependencies: Seq[TransformerNode[_]],
+    tag: String): RDD[B] = {
+    saveLineageAndApply(dataDependencies.head.asInstanceOf[RDD[A]], tag)
   }
 }
 
