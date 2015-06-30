@@ -53,7 +53,16 @@ case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
    */
 	def getCoor(key: Int): List[(List[Int], List[(Int, Int)])] = {
 		require((key < outRows), {"querying out of boundary of output vector"})
+		require((outCols == 1), {"output is a matrix, try use getCoor2D"})
 		List(((0 until inRows).toList, (0 until inRows).toList.zip(List.fill(modelRows){key})))
+	}
+
+	def getCoor2D(key: (Int, Int)): List[(List[(Int, Int)], List[(Int, Int)])] = {
+		val r = key._1
+		val c = key._2
+		require((r < outRows), {"querying out of boundary of output vector"})
+		require((c < outCols), {"querying out of boundary of output vector"})
+		List((List.fill(inCols){r}.zip((0 until inCols).toList), (0 until modelRows).toList.zip(List.fill(modelRows){c})))
 	}
 }
 
@@ -128,10 +137,24 @@ object AllToOneLineage{
 }
 
 object LinComLineage{
-	def apply[T](in: RDD[DenseVector[T]], out:RDD[DenseVector[T]], model: DenseMatrix[T]) = {
+	/*def apply[T](in: RDD[DenseVector[T]], out:RDD[DenseVector[T]], model: DenseMatrix[T]) = {
 		val sampleInVector = in.take(1)(0)
 		val sampleOutVector = out.take(1)(0)
 		new LinComLineage(sampleInVector.size, 1, sampleOutVector.size, 1, model.rows, model.cols, List(in.id), List(out.id))
+	}*/
+	def apply[T](in: RDD[_], out:RDD[_], model: DenseMatrix[T]) = {
+		val sampleIn= in.take(1)(0)
+		val sampleOut = out.take(1)(0)
+		val lineage = (sampleIn, sampleOut) match {
+			case (sIn: DenseVector[_], sOut: DenseVector[_]) => {
+				new LinComLineage(sIn.size, 1, sOut.size, 1, model.rows, model.cols, List(in.id), List(out.id))
+			}
+			case (sIn: DenseMatrix[_], sOut: DenseMatrix[_]) => {
+				new LinComLineage(sIn.rows, sIn.cols, sOut.rows, sOut.cols, model.rows, model.cols, List(in.id), List(out.id))
+			}
+			case _ => null
+		}
+		lineage
 	}
 }
 
