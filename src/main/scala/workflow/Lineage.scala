@@ -3,7 +3,7 @@ package workflow
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
 
-import utils.{MultiLabeledImage, Image, LabeledImage}
+import utils.{MultiLabeledImage, Image, LabeledImage, ImageMetadata}
 
 import java.io._
 import scala.reflect.ClassTag
@@ -19,11 +19,12 @@ trait Lineage extends Serializable{
 }
 
 case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
-	seqSize: Int, inRDDs: List[Int], ourRDDs: List[Int]) extends Lineage{
+	seqSize: Int, inRDDs: List[Int], ourRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
   /** 
    *  The temporary implementation assumes the input and output are Vectors
    *
    */
+
   def getCoor(key: Int) = {
   	require((key < outRows), {"querying out of boundary of output vector"})
   	seqSize match{
@@ -34,14 +35,25 @@ case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 }
 
 case class AllToOneLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int, 
-	inRDDs: List[Int], ourRDDs: List[Int]) extends Lineage{
+	inRDDs: List[Int], ourRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
 	/** 
    *  The temporary implementation assumes the input and output are Vectors
    *
    */
-	def getCoor(key: Int): List[Int] = {
+	def getCoor(key: Int) = {
 		require((key < outRows), {"querying out of boundary of output vector"})
-		(0 until inRows).toList
+		val rList = imageMeta match {
+			case Some(meta) => {
+				val xDim = meta.xDim
+				val yDim = meta.yDim
+				val numChannels = meta.numChannels
+				(0 until numChannels).toList.map(c => key+c*xDim*yDim)
+			}
+			case None => {
+				(0 until inRows).toList
+			}
+		}
+		rList
 	}
 }
 
@@ -95,10 +107,10 @@ object OneToOneLineage{
 				new OneToOneLineage(sampleInVector.size, 1, vOut.size, 1, sIn.size, List(in.id), List(out.id))
 			}
 			case (imageIn: MultiLabeledImage, imageOut: Image) => {
-				new OneToOneLineage(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id))
+				new OneToOneLineage(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id), Some(imageOut.metadata))
 			}
 			case (imageIn: Image, imageOut: Image) => {
-				new OneToOneLineage(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id))
+				new OneToOneLineage(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id), Some(imageOut.metadata))
 			}
 			case _ => null
 		}
@@ -124,15 +136,22 @@ object OneToOneLineage{
 }
 
 object AllToOneLineage{
-	def apply[T](in: RDD[DenseVector[T]], out:RDD[DenseVector[T]]) = {
-		val sampleInVector = in.take(1)(0)
-		val sampleOutVector = out.take(1)(0)
-		new AllToOneLineage(sampleInVector.size, 1, sampleOutVector.size, 1, List(in.id), List(out.id))
-	}
-
-	def apply[T: ClassTag](in: RDD[DenseVector[T]], out:RDD[Int]) = {
-		val sampleInVector = in.take(1)(0)
-		new AllToOneLineage(sampleInVector.size, 1, 1, 1, List(in.id), List(out.id))
+	def apply(in: RDD[_], out:RDD[_]) = {
+		val sampleIn = in.take(1)(0)
+		val sampleOut = out.take(1)(0)
+		val lineage = (sampleIn, sampleOut) match{
+			case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
+				new AllToOneLineage(vIn.size, 1, vOut.size, 1, List(in.id), List(out.id))
+			}
+			case (vIn: DenseVector[_], vOut: Int) => {
+				new AllToOneLineage(vIn.size, 1, 1, 1, List(in.id), List(out.id))
+			}
+			case (vIn: Image, vOut: Image) => {
+				new AllToOneLineage(vIn.flatSize, 1, vOut.flatSize, 1, List(in.id), List(out.id), Some(vIn.metadata))
+			}
+			case _ => null
+		}
+		lineage
 	}
 }
 
