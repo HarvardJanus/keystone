@@ -27,9 +27,20 @@ case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 
   def getCoor(key: Int) = {
   	require((key < outRows), {"querying out of boundary of output vector"})
-  	seqSize match{
+  	seqSize match {
   		case 1 => List(key)
   		case _ => List((key/inRows, key%inRows))
+  	}
+  }
+
+  def getCoor2D(key: (Int, Int)) = {
+  	val r = key._1
+		val c = key._2
+		require((r < outRows), {"querying out of boundary of output vector"})
+		require((c < outCols), {"querying out of boundary of output vector"})
+  	seqSize match {
+  		case 1 => List(key)
+  		case _ => 
   	}
   }
 }
@@ -105,6 +116,9 @@ object OneToOneLineage{
 			case (sIn: Seq[DenseVector[_]], vOut: DenseVector[_]) => {
 				val sampleInVector = sIn(0).asInstanceOf[DenseVector[_]]
 				new OneToOneLineage(sampleInVector.size, 1, vOut.size, 1, sIn.size, List(in.id), List(out.id))
+			}
+			case (mIn: DenseMatrix[_], mOut: DenseMatrix[_]) => {
+				new OneToOneLineage(mIn.rows, mIn.cols, mOut.rows, mOut.cols, 1, List(in.id), List(out.id))
 			}
 			case (imageIn: MultiLabeledImage, imageOut: Image) => {
 				new OneToOneLineage(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id), Some(imageOut.metadata))
