@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     utils_external_VLFeat
  * Method:    getSIFTs
- * Signature: (IIIIII[F)[S
+ * Signature: (IIIIII[F[D[D[D)[S
  */
 JNIEXPORT jshortArray JNICALL Java_utils_external_VLFeat_getSIFTs
-  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jfloatArray);
+  (JNIEnv *, jobject, jint, jint, jint, jint, jint, jint, jfloatArray, jdoubleArray, jdoubleArray, jdoubleArray);
 
 #ifdef __cplusplus
 }

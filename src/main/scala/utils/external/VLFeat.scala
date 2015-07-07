@@ -13,6 +13,9 @@ class VLFeat extends Serializable {
    * @param bin SIFT Descriptor bin size.
    * @param numScales Number of scales to extract at.
    * @param image Input image as float array.
+   * @param returned SIFT descriptors X
+   * @param returned SIFT descriptors Y
+   * @param returned SIFT descriptors S
    * @return SIFTs as Shorts.
    */
   @native
@@ -23,6 +26,9 @@ class VLFeat extends Serializable {
       bin: Int,
       numScales: Int,
       scaleStep: Int,
-      image: Array[Float]): Array[Short]
+      image: Array[Float]
+      x: Array[Double]
+      y: Array[Double]
+      s: Array[Double]): Array[Short]
 
 }
