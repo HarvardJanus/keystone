@@ -19,7 +19,7 @@ trait Lineage extends Serializable{
 }
 
 case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
-	seqSize: Int, inRDDs: List[Int], ourRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
+	seqSize: Int, inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
   /** 
    *  The temporary implementation assumes the input and output are Vectors
    *
@@ -47,7 +47,7 @@ case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 }
 
 case class AllToOneLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int, 
-	inRDDs: List[Int], ourRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
+	inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
 	/** 
    *  The temporary implementation assumes the input and output are Vectors
    *
@@ -70,7 +70,7 @@ case class AllToOneLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 }
 
 case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
-	modelRows: Int, modelCols: Int, inRDDs: List[Int], ourRDDs: List[Int]) extends Lineage{
+	modelRows: Int, modelCols: Int, inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
 	/** 
    *  The temporary implementation assumes the input and output are Vectors
    *
