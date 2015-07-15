@@ -26,9 +26,8 @@ class VLFeat extends Serializable {
       bin: Int,
       numScales: Int,
       scaleStep: Int,
-      image: Array[Float]
-      x: Array[Double]
-      y: Array[Double]
+      image: Array[Float],
+      x: Array[Double],
+      y: Array[Double],
       s: Array[Double]): Array[Short]
-
 }
