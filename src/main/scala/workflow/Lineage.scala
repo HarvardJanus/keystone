@@ -91,13 +91,45 @@ case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 }
 
 case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lineage{
-	def getCoor(key:Int): List[(String, Int)] = {
+	def getCoor(key: Int): List[(String, Int)] = {
 	/** 
    *  The temporary implementation assumes the input and output are Vectors
    *
    */
 		require((key < offList.size), {"querying out of boundary of output vector"})
 		List(offList(key))
+	}
+}
+
+case class ShapeLineage(in: RDD[_], out: RDD[_], shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
+	val data = shapeRDD.collect.toList
+	def getCoor(key: Int): List[Shape] = {
+		data(key)
+	}
+	def getCoor2D(key: (Int, Int)): List[Shape] = {
+		val itemID = key._1
+		val index = key._2
+
+		require((itemID < data.size), {"querying out of boundary of output RDD of shape list"})
+		val shapeList = data(itemID)
+
+		require((index < shapeList.size), {"querying out of boundary of shape list"})
+		val shape = shapeList(index)
+		List(shape)
+	}
+}
+
+object ShapeLineage{
+	def apply(in: RDD[_], out: RDD[_], shapes: RDD[List[Shape]]) = {
+		val sampleIn = in.take(1)(0)
+		val sampleOut = out.take(1)(0)
+		val lineage = (sampleIn, sampleOut) match {
+			case (vIn: Image, vOut: DenseMatrix[_]) => {
+				new ShapeLineage(in, out, shapes, List(in.id), List(out.id))
+			}
+			case _ => null
+		}
+		lineage
 	}
 }
 

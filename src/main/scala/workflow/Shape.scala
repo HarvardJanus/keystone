@@ -6,7 +6,7 @@ trait Shape extends Serializable{
 	def toCoor(): List[_]
 }
 
-case class Circle(c: (Double, Double), r: Double) extends Shape{
+class Circle(c: (Double, Double), r: Double) extends Shape{
 	def toCoor() = {
 		val x = c._1
 		val y = c._2
@@ -17,10 +17,11 @@ case class Circle(c: (Double, Double), r: Double) extends Shape{
 		} yield (i, j)
 		l.toList
 	}
+
+	override def toString() = "center: "+c+"\t r: "+r
 }
 
 case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) extends Shape{
-	require((a >= b), {"ellipse major has to be greater than or equal to minor"})
 	def toCoor() = {
 		val x = c._1
 		val y = c._2
@@ -40,6 +41,8 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 		else
 			return false
 	}
+
+	override def toString() = "center: "+c+"\t major: "+a+"\t minor: "+b+"\t theta: "+theta
 }
 
 case class Square(c: (Double, Double), a: Double, b:Double) extends Shape{
@@ -52,7 +55,22 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape{
 		} yield (i, j)
 		l.toList
 	}
+
+	override def toString() = "center: "+c+"\t width: "+2*a+"\t height: "+2*b
 }
+
+object Circle{
+	def apply(c: (Double, Double), r: Double): Shape = {
+		new Circle(c, r)
+	}
+}
+
+/*object Ellipse{
+	override def apply(c: (Double, Double), a: Double, b: Double, theta: Double): Shape = {
+		require((a >= b), {"ellipse major has to be greater than or equal to minor"})
+		new Ellipse(c, a, b, theta)
+	}
+}*/
 
 object Square{
 	def apply(lowerLeft: (Double, Double), upperRight: (Double, Double)): Shape = {

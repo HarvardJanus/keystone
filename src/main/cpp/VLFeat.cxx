@@ -175,15 +175,16 @@ DescSet* getMultiScaleDSIFTs_f(
           copy = false;
         } 
         for (int x=0; x<dims; x++) {
+          retValSet->x[globalLoc] = dkeys[i].x;
+          retValSet->y[globalLoc] = dkeys[i].y;
+          retValSet->s[globalLoc] = dkeys[i].s;
           if (copy) {
             retValSet->descriptors[globalLoc++] = descSet[scale][localoffset++];
           }else {
             retValSet->descriptors[globalLoc++] = 0;
             localoffset++;
           }
-          retValSet->x[globalLoc++] = dkeys[i].x;
-          retValSet->y[globalLoc++] = dkeys[i].y;
-          retValSet->s[globalLoc++] = dkeys[i].s;
+
         } // x 
       }// i 
       fflush(stdout);
