@@ -164,6 +164,7 @@ DescSet* getMultiScaleDSIFTs_f(
   } else {
     // concatinate desc. of each scale, one after the other, No groupping based on (x,y) coordinates
     // this is done when the number of desriptors for each scale is not the same. 
+    int metaGlobalLoc = 0;
     for (int scale=0; scale<imgNumScales; scale++) {
       VlDsiftKeypoint const *dkeys = vl_dsift_get_keypoints( dfilt[scale] );
       localoffset = 0;
@@ -175,17 +176,17 @@ DescSet* getMultiScaleDSIFTs_f(
           copy = false;
         } 
         for (int x=0; x<dims; x++) {
-          retValSet->x[globalLoc] = dkeys[i].x;
-          retValSet->y[globalLoc] = dkeys[i].y;
-          retValSet->s[globalLoc] = dkeys[i].s;
           if (copy) {
             retValSet->descriptors[globalLoc++] = descSet[scale][localoffset++];
           }else {
             retValSet->descriptors[globalLoc++] = 0;
             localoffset++;
           }
-
         } // x 
+        retValSet->x[metaGlobalLoc] = dkeys[i].x;
+        retValSet->y[metaGlobalLoc] = dkeys[i].y;
+        retValSet->s[metaGlobalLoc] = dkeys[i].s;
+        metaGlobalLoc++;
       }// i 
       fflush(stdout);
     }// scale

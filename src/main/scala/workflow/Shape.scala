@@ -13,7 +13,7 @@ class Circle(c: (Double, Double), r: Double) extends Shape{
 		val l = for { 
 			i <- (x-r).toInt to (x+r).toInt
 			j <- (y-r).toInt to (y+r).toInt
-			if i*i+j*j <= r*r
+			if (i-x)*(i-x)+(j-y)*(j-y) <= r*r
 		} yield (i, j)
 		l.toList
 	}

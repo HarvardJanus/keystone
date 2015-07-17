@@ -47,12 +47,11 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
           stepSize, binSize, scales, scaleStep, image.getSingleChannelAsFloatArray(), x, y, s)
         val numCols = rawDescDataShort.length/descriptorSize
         val rawDescData = rawDescDataShort.map(s => s.toFloat)
-        x = x.slice(0, numCols)
-        y = y.slice(0, numCols)
-        s = y.slice(0, numCols)
+
         val circleList = (0 until numCols).map{ i =>
           Circle((x(i), y(i)), s(i))
         }.toList
+
         val outMatrix = new DenseMatrix(descriptorSize, numCols, rawDescData)
         (outMatrix, circleList)
       }

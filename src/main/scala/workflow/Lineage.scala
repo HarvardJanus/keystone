@@ -101,7 +101,7 @@ case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lin
 	}
 }
 
-case class ShapeLineage(in: RDD[_], out: RDD[_], shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
+case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
 	val data = shapeRDD.collect.toList
 	def getCoor(key: Int): List[Shape] = {
 		data(key)
@@ -125,7 +125,7 @@ object ShapeLineage{
 		val sampleOut = out.take(1)(0)
 		val lineage = (sampleIn, sampleOut) match {
 			case (vIn: Image, vOut: DenseMatrix[_]) => {
-				new ShapeLineage(in, out, shapes, List(in.id), List(out.id))
+				new ShapeLineage(shapes, List(in.id), List(out.id))
 			}
 			case _ => null
 		}
