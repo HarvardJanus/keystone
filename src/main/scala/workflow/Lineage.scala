@@ -11,6 +11,7 @@ import scala.io.Source
 
 trait Lineage extends Serializable{
   def getCoor(key: Int): List[_]
+  def getCoor2D(key: (Int, Int)): List[_]
   def save(tag: String) = {
   	val oos = new ObjectOutputStream(new FileOutputStream("Lineage/"+tag))
   	oos.writeObject(this)
@@ -41,7 +42,7 @@ case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 		require((c < outCols), {"querying out of boundary of output vector"})
   	seqSize match {
   		case 1 => List(key)
-  		case _ => 
+  		case _ => List()
   	}
   }
 }
@@ -66,6 +67,18 @@ case class AllToOneLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 			}
 		}
 		rList
+	}
+
+	def getCoor2D(key: (Int, Int)) = {
+		val r = key._1
+		val c = key._2
+		require((r < outRows), {"querying out of boundary of output matrix"})
+		require((c < outCols), {"querying out of boundary of output matrix"})
+		val rSeq = for {
+			i <- 0 until inRows
+			j <- 0 until inCols
+		} yield (i, j)
+		rSeq.toList
 	}
 }
 
@@ -99,6 +112,8 @@ case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lin
 		require((key < offList.size), {"querying out of boundary of output vector"})
 		List(offList(key))
 	}
+
+	def getCoor2D(key: (Int, Int)) = List()
 }
 
 case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
@@ -195,6 +210,9 @@ object AllToOneLineage{
 			}
 			case (vIn: DenseVector[_], vOut: Int) => {
 				new AllToOneLineage(vIn.size, 1, 1, 1, List(in.id), List(out.id))
+			}
+			case (vIn: DenseMatrix[_], vOut: DenseMatrix[_]) => {
+				new AllToOneLineage(vIn.rows, vIn.cols, vOut.rows, vOut.cols, List(in.id), List(out.id))
 			}
 			case (vIn: Image, vOut: Image) => {
 				new AllToOneLineage(vIn.flatSize, 1, vOut.flatSize, 1, List(in.id), List(out.id), Some(vIn.metadata))

@@ -5,6 +5,7 @@ import nodes.images.FisherVectorInterface
 import nodes.learning.GaussianMixtureModel
 import org.apache.spark.rdd.RDD
 import utils.external.EncEval
+import workflow._
 
 /**
  * Implements a wrapper for the `enceval` Fisher Vector implementation.
@@ -30,5 +31,13 @@ class FisherVector(
       vars, wts, in.toArray)
 
     new DenseMatrix(numDims, numCentroids*2, fisherVector)
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
+    val out = in.map(apply)
+    val lineage = AllToOneLineage(in, out)
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.getCoor(0))
+    out
   }
 }
