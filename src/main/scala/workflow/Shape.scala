@@ -19,6 +19,8 @@ class Circle(c: (Double, Double), r: Double) extends Shape{
 	}
 
 	override def toString() = "center: "+c+"\t r: "+r
+	def getCenter = c
+	def getR = r
 }
 
 case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) extends Shape{
