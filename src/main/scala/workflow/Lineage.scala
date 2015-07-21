@@ -187,27 +187,13 @@ case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 	}
 
 
-	def getCoor(key: Int): List[(List[Int], List[(Int, Int)])] = {
-		require((key < outRows), {"querying out of boundary of output vector"})
-		require((outCols == 1), {"output is a matrix, try use getCoor2D"})
-		List(((0 until inRows).toList, (0 until inRows).toList.zip(List.fill(modelRows){key})))
-	}
+	def getCoor(key: Int): List[(List[Int], List[(Int, Int)])] = List()
 
-	def getCoor2D(key: (Int, Int)): List[(List[(Int, Int)], List[(Int, Int)])] = {
-		val r = key._1
-		val c = key._2
-		require((r < outRows), {"querying out of boundary of output vector"})
-		require((c < outCols), {"querying out of boundary of output vector"})
-		List((List.fill(inCols){r}.zip((0 until inCols).toList), (0 until modelRows).toList.zip(List.fill(modelRows){c})))
-	}
+	def getCoor2D(key: (Int, Int)): List[(List[(Int, Int)], List[(Int, Int)])] = List()
 }
 
 case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lineage{
 	def getCoor(key: Int): List[(String, Int)] = {
-	/** 
-   *  The temporary implementation assumes the input and output are Vectors
-   *
-   */
 		require((key < offList.size), {"querying out of boundary of output vector"})
 		List(offList(key))
 	}
