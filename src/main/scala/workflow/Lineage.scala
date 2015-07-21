@@ -24,6 +24,7 @@ trait Lineage extends Serializable{
 object Lineage{
 	implicit def intToSome(key: Int): Option[Int] = Some(key)
 	implicit def int2DToSome(key: (Int, Int)): Option[(Int, Int)] = Some(key)
+	implicit def indexInt2DToSome(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
 }
 
 case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
@@ -219,9 +220,37 @@ case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: 
 
 				require((j < shapeList.size), {"querying out of boundary of shape list"})
 				val shape = shapeList(j)
-				List(shape)
+				shape.toCoor
 			}
 		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case i: Int =>{
+				require((false), {"shape lineage forward query does not support 1-d index"})
+			}
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				findNearestShape(itemID, i.toDouble, j.toDouble)
+			}
+		}
+	}
+
+	def findNearestShape(itemID: Int, i: Double, j: Double): List[Int] = {
+		require((itemID < data.size), {"querying out of boundary of shape RDD"})
+		val shapeList = data(itemID)
+		//val sortedList = shapeList.sortWith(euclideanDistance(_, i,j) < euclideanDistance(_, i,j))
+		val tempList = shapeList.zipWithIndex.map{
+			case (s, index) => {
+				if (s.inShape(i, j)) index
+			}
+		}
+		tempList.filter(_.isInstanceOf[Int]).asInstanceOf[List[Int]]
+	}
+
+	def euclideanDistance(shape: Shape, i: Double, j: Double): Double = {
+		(shape.getCenter._1-i)*(shape.getCenter._1-i) + (shape.getCenter._2-j)*(shape.getCenter._2-j)
 	}
 
 
@@ -256,7 +285,8 @@ object OneToOneLineage{
 			case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
 				new OneToOneLineage(vIn.size, 1, vOut.size, 1, 1, List(in.id), List(out.id))
 			}
-			case (sIn: Seq[DenseVector[_]], vOut: DenseVector[_]) => {
+			case (sIn: Seq[_], vOut: DenseVector[_]) => {
+				//sIn should be Seq[DenseVetor[_]]
 				val sampleInVector = sIn(0).asInstanceOf[DenseVector[_]]
 				new OneToOneLineage(sampleInVector.size, 1, vOut.size, 1, sIn.size, List(in.id), List(out.id))
 			}

@@ -2,11 +2,13 @@ package workflow
 
 import scala.math._
 
-trait Shape extends Serializable{
+abstract class Shape(c: (Double, Double)) extends Serializable{
+	def getCenter(): (Double, Double)
 	def toCoor(): List[_]
+	def inShape(i: Double, j: Double): Boolean
 }
 
-class Circle(c: (Double, Double), r: Double) extends Shape{
+class Circle(c: (Double, Double), r: Double) extends Shape(c){
 	def toCoor() = {
 		val x = c._1
 		val y = c._2
@@ -18,36 +20,43 @@ class Circle(c: (Double, Double), r: Double) extends Shape{
 		l.toList
 	}
 
+	def inShape(i: Double, j: Double): Boolean = {
+		val x = c._1
+		val y = c._2
+		if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
+	}
+
 	override def toString() = "center: "+c+"\t r: "+r
-	def getCenter = c
-	def getR = r
+	def getCenter() = c
+	def getR() = r
 }
 
-case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) extends Shape{
+case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) extends Shape(c){
+	def getCenter() = c
 	def toCoor() = {
 		val x = c._1
 		val y = c._2
 		val l = for { 
 			i <- (x-a).toInt to (x+a).toInt
 			j <- (y-a).toInt to (y+a).toInt
-			if inEllipse(i, j)
+			if inShape(i, j)
 		} yield (i, j)
 		l.toList
 	}
 
-	def inEllipse(i: Double, j: Double): Boolean = {
-		val firstItem = ((i-c._1)*cos(theta) + (j-c._2)*sin(theta))/a
-		val secondItem = ((i-c._1)*sin(theta) + (j-c._2)*cos(theta))/b
-		if(firstItem*firstItem + secondItem*secondItem <= 1)
-			return true
-		else
-			return false
+	def inShape(i: Double, j: Double): Boolean = {
+		val x = c._1
+		val y = c._2
+		val firstItem = ((i-x)*cos(theta) + (j-y)*sin(theta))/a
+		val secondItem = ((i-x)*sin(theta) + (j-y)*cos(theta))/b
+		if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
 	}
 
 	override def toString() = "center: "+c+"\t major: "+a+"\t minor: "+b+"\t theta: "+theta
 }
 
-case class Square(c: (Double, Double), a: Double, b:Double) extends Shape{
+case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
+	def getCenter() = c
 	def toCoor() = {
 		val x = c._1
 		val y = c._2
@@ -56,6 +65,12 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape{
 			j <- (y-a).toInt to (y+a).toInt
 		} yield (i, j)
 		l.toList
+	}
+
+	def inShape(i: Double, j: Double): Boolean = {
+		val x = c._1
+		val y = c._2
+		if(i>=(x-a) && i<=(x+a) && j>=(y-b) && j<=(y+b)) true else false
 	}
 
 	override def toString() = "center: "+c+"\t width: "+2*a+"\t height: "+2*b
