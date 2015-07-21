@@ -10,10 +10,8 @@ import scala.reflect.ClassTag
 import scala.io.Source
 
 trait Lineage extends Serializable{
-	//def mapForward(key: Option[_]): List[_]
-	//def mapBackward(key: Option[_]): List[_]
-  def getCoor(key: Int): List[_]
-  def getCoor2D(key: (Int, Int)): List[_]
+	def qForward(key: Option[_]): List[_]
+	def qBackward(key: Option[_]): List[_]
   def save(tag: String) = {
   	val oos = new ObjectOutputStream(new FileOutputStream("Lineage/"+tag))
   	oos.writeObject(this)
@@ -30,8 +28,6 @@ object Lineage{
 case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
 	seqSize: Int, inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
 
-	def getCoor(key: Int) = List()
-	def getCoor2D(key: (Int, Int)) = List()
 	def qForward(key: Option[_]) = {
 		val k = key.getOrElse(null)
 		k match {
@@ -148,10 +144,6 @@ case class AllToOneLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 			case _ => List()
 		}
 	}
-
-	def getCoor(key: Int) = List()
-
-	def getCoor2D(key: (Int, Int)) = List()
 }
 
 case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
@@ -189,11 +181,6 @@ case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 			case _ => List()
 		}
 	}
-
-
-	def getCoor(key: Int) = List()
-
-	def getCoor2D(key: (Int, Int)) = List()
 }
 
 /*case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lineage{
@@ -230,6 +217,7 @@ case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: 
 		k match {
 			case i: Int =>{
 				require((false), {"shape lineage forward query does not support 1-d index"})
+				List()
 			}
 			case (itemID: Int, (i: Int, j: Int)) =>{
 				findNearestShape(itemID, i.toDouble, j.toDouble)
@@ -252,10 +240,6 @@ case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: 
 	def euclideanDistance(shape: Shape, i: Double, j: Double): Double = {
 		(shape.getCenter._1-i)*(shape.getCenter._1-i) + (shape.getCenter._2-j)*(shape.getCenter._2-j)
 	}
-
-
-	def getCoor(key: Int) = List()
-	def getCoor2D(key: (Int, Int)) = List()
 }
 
 object ShapeLineage{
@@ -273,11 +257,6 @@ object ShapeLineage{
 }
 
 object OneToOneLineage{
-	/*def apply[T](in: RDD[DenseVector[T]], out:RDD[DenseVector[T]]) = {
-		val sampleInVector = in.take(1)(0)
-		val sampleOutVector = out.take(1)(0)
-		new OneToOneLineage(sampleInVector.size, 1, sampleOutVector.size, 1, 1, List(in.id), List(out.id))
-	}*/
 	def apply(in: RDD[_], out:RDD[_]) = {
 		val sampleIn = in.take(1)(0)
 		val sampleOut = out.take(1)(0)
@@ -307,22 +286,9 @@ object OneToOneLineage{
 		lineage
 	}
 
-	/*def apply[T: ClassTag](in: RDD[Seq[DenseVector[T]]], out:RDD[DenseVector[T]]) = {
-		val sampleInSec = in.take(1)(0)
-		val sampleInVector = sampleInSec(0)
-		val sampleOutVector = out.take(1)(0)
-		new OneToOneLineage(sampleInVector.size, 1, sampleOutVector.size, 1, sampleInSec.size, List(in.id), List(out.id))
-	}*/
-
 	def apply[T](in: Seq[RDD[T]], out:RDD[Seq[T]]) = {
 		new OneToOneLineage(0, 0, 0, 0, in.size, in.map(r => r.id).toList, List(out.id))
 	}
-
-	/*def apply(in: RDD[MultiLabeledImage], out: RDD[Image]) = {
-		val sampleInMultiLabeledImage = in.take(1)(0)
-		val sampleOutImage = out.take(1)(0)
-		new OneToOneLineage(sampleInMultiLabeledImage.image.flatSize, 1, sampleOutImage.flatSize, 1, 1, List(in.id), List(out.id))
-	}*/
 }
 
 object AllToOneLineage{
@@ -349,11 +315,6 @@ object AllToOneLineage{
 }
 
 object LinComLineage{
-	/*def apply[T](in: RDD[DenseVector[T]], out:RDD[DenseVector[T]], model: DenseMatrix[T]) = {
-		val sampleInVector = in.take(1)(0)
-		val sampleOutVector = out.take(1)(0)
-		new LinComLineage(sampleInVector.size, 1, sampleOutVector.size, 1, model.rows, model.cols, List(in.id), List(out.id))
-	}*/
 	def apply[T](in: RDD[_], out:RDD[_], model: DenseMatrix[T]) = {
 		val sampleIn= in.take(1)(0)
 		val sampleOut = out.take(1)(0)

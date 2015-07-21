@@ -6,6 +6,7 @@ import nodes.learning.GaussianMixtureModel
 import org.apache.spark.rdd.RDD
 import utils.external.EncEval
 import workflow._
+import workflow.Lineage._
 
 /**
  * Implements a wrapper for the `enceval` Fisher Vector implementation.
@@ -37,7 +38,7 @@ class FisherVector(
     val out = in.map(apply)
     val lineage = AllToOneLineage(in, out)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.getCoor(0))
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out
   }
 }

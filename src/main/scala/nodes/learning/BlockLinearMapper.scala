@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import nodes.util.{VectorSplitter, Identity}
 import utils.{MatrixUtils, Stats}
 import workflow._
+import workflow.Lineage._
 
 
 /**
@@ -43,7 +44,7 @@ class BlockLinearMapper(
     val out = apply(vectorSplitter(in))
     val lineage = LinComLineage(in, out, xs(0))
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(Some(0))(0)._1.size+"x"+lineage.qBackward(Some(0))(0)._2.size)
+    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0)(0)._1.size+"x"+lineage.qBackward(0)(0)._2.size)
     out
   }
 

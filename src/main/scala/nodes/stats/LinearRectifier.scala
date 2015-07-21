@@ -5,6 +5,7 @@ import pipelines._
 import org.apache.spark.rdd.RDD
 import workflow._
 import workflow.Transformer
+import workflow.Lineage._
 
 /**
  * This transformer applies a Linear Rectifier,
@@ -21,7 +22,7 @@ case class LinearRectifier(maxVal: Double = 0.0, alpha: Double = 0.0)
     val out = in.map(apply)
     val lineage = OneToOneLineage(in, out)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.getCoor(0))
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out
   }
 }
