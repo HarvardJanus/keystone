@@ -10,6 +10,10 @@ import scala.reflect.ClassTag
 import scala.io.Source
 
 trait Lineage extends Serializable{
+	implicit def intToSome(key: Int): Option[Int] = Some(key)
+	implicit def int2DToSome(key: (Int, Int)): Option[(Int, Int)] = Some(key)
+	//def mapForward(key: Option[_]): List[_]
+	//def mapBackward(key: Option[_]): List[_]
   def getCoor(key: Int): List[_]
   def getCoor2D(key: (Int, Int)): List[_]
   def save(tag: String) = {
@@ -21,38 +25,95 @@ trait Lineage extends Serializable{
 
 case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
 	seqSize: Int, inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
-  /** 
-   *  The temporary implementation assumes the input and output are Vectors
-   *
-   */
 
-  def getCoor(key: Int) = {
-  	require((key < outRows), {"querying out of boundary of output vector"})
-  	(inCols, seqSize) match {
-  		case (1, 1) => List(key)
-  		case (1, _) => List((key/inRows, key%inRows))
-  		case (_, 1) => List((key%inRows, key/inRows))
-  	}
-  }
+	def getCoor(key: Int) = List()
+	def getCoor2D(key: (Int, Int)) = List()
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case i:Int =>{
+				require((inCols == 1)&&(outCols == 1)&&(seqSize == 1), {"input is 2-d structure, use 2-d index"})
+				require((i < outRows), {"querying out of boundary of output vector"})
+				List(i)
+			}
+			case (i: Int, j: Int) =>{
+				require((seqSize > 1)||(inCols > 1), {"input is 1-d structure, use 1-d index"})
+				(outCols, seqSize) match {
+					case (1, 1) => {
+						//This is the case for matrix-to-vector
+						require((j*inRows+i < outRows), {"querying out of boundary of output"})
+						List((j*inRows+i))
+					}
+					case (_, 1) => {
+						//This is the case for matrix-to-matrix
+						require((i < outRows) && (j < outCols), {"querying out of boundary of output"})
+						List((i, j))
+					}
+					case (1, _) => {
+						require((i < seqSize), {"Sequence index out of bound"})
+						require((inRows*i+j < outRows), {"querying out of boundary of output vector"})
+						List(inRows * i + j)	
+					}
+				}
+			}
+			case _ => List()
+		}
+	}
 
-  def getCoor2D(key: (Int, Int)) = {
-  	val r = key._1
-		val c = key._2
-		require((r < outRows), {"querying out of boundary of output vector"})
-		require((c < outCols), {"querying out of boundary of output vector"})
-  	seqSize match {
-  		case 1 => List(key)
-  		case _ => List()
-  	}
-  }
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case i:Int =>{
+				require((i < outRows), {"querying out of boundary of output vector"})
+				(inCols, seqSize) match {
+  				case (1, 1) => List(i)
+  				case (1, _) => List((i/inRows, i%inRows))
+  				case (_, 1) => List((i%inRows, i/inRows))
+  			}
+			}
+			case (i: Int, j: Int) =>{
+				require((seqSize == 1) && (outCols > 1), {"output is 1-d structure, use 1-d index"})
+				require((i < outRows), {"querying out of boundary of output vector"})
+				require((j < outCols), {"querying out of boundary of output vector"})
+  			List((i, j))
+			}
+			case _ => List()
+		}
+	}
 }
 
 case class AllToOneLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int, 
 	inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Lineage{
-	/** 
-   *  The temporary implementation assumes the input and output are Vectors
-   *
-   */
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case i: Int =>{
+				require((inCols == 1), {"input is 1-d structure, use 1-d index"})
+				imageMeta match {
+					//this is the case where input and output are images
+					case Some(meta) => {
+						//check condition here
+						List(i/outRows)
+					}
+					//this is the case where output is an single element or 1-d vector
+					case _ => {
+						require((i < outRows), {"querying out of boundary of output vector"})
+						(0 until outRows).toList
+					}
+				}
+			}
+			case (i: Int, j: Int) =>{
+				require((inRows > 1)&&(inCols >1), {"input is 2-d structure, use 2-d index"})
+				val rSeq = for {
+					x <- 0 until outRows
+					y <- 0 until outCols
+				} yield (x, y)
+				rSeq.toList
+			}
+		}
+	}
+
 	def getCoor(key: Int) = {
 		require((key < outRows), {"querying out of boundary of output vector"})
 		val rList = imageMeta match {
@@ -118,6 +179,7 @@ case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lin
 
 case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
 	val data = shapeRDD.collect.toList
+
 	def getCoor(key: Int): List[Shape] = {
 		data(key)
 	}

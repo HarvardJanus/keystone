@@ -17,11 +17,19 @@ class ColumnSampler(
     val numImgs = numImgsOpt.getOrElse(in.count.toInt)
     val samplesPerImage = numSamples/numImgs
 
-    in.flatMap(mat => {
+    val out = in.flatMap(mat => {
       (0 until samplesPerImage).map( x => {
         mat(::, scala.util.Random.nextInt(mat.cols)).toDenseVector
       })
     })
+    val m = in.take(1)(0)
+    val v = out.take(1)(0)
+    println("numImgs: "+numImgs)
+    println("samplesPerImage: "+samplesPerImage)
+    println("matrix dimension: "+m.rows+"x"+m.cols)
+    println("vector dimension: "+v.size)
+    println("total num of vectors: "+out.count)
+    out
   }
 
 }
