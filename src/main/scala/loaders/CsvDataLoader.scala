@@ -17,9 +17,9 @@ object CsvDataLoader {
    */
   def apply(sc: SparkContext, path: String): RDD[DenseVector[Double]] = {
     val out = sc.textFile(path).map(row => DenseVector(row.split(",").map(_.toDouble)))
-    val lineage = InputLineage(path, out)
+    /*val lineage = InputLineage(path, out)
     lineage.save("Input_"+out.id)
-    println("collecting lineage for Loader")
+    println("collecting lineage for Loader")*/
     out
   }
 

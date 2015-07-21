@@ -10,8 +10,6 @@ import scala.reflect.ClassTag
 import scala.io.Source
 
 trait Lineage extends Serializable{
-	implicit def intToSome(key: Int): Option[Int] = Some(key)
-	implicit def int2DToSome(key: (Int, Int)): Option[(Int, Int)] = Some(key)
 	//def mapForward(key: Option[_]): List[_]
 	//def mapBackward(key: Option[_]): List[_]
   def getCoor(key: Int): List[_]
@@ -21,6 +19,11 @@ trait Lineage extends Serializable{
   	oos.writeObject(this)
   	oos.close
   }
+}
+
+object Lineage{
+	implicit def intToSome(key: Int): Option[Int] = Some(key)
+	implicit def int2DToSome(key: (Int, Int)): Option[(Int, Int)] = Some(key)
 }
 
 case class OneToOneLineage(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
@@ -187,37 +190,43 @@ case class LinComLineage(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 	}
 
 
-	def getCoor(key: Int): List[(List[Int], List[(Int, Int)])] = List()
+	def getCoor(key: Int) = List()
 
-	def getCoor2D(key: (Int, Int)): List[(List[(Int, Int)], List[(Int, Int)])] = List()
+	def getCoor2D(key: (Int, Int)) = List()
 }
 
-case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lineage{
+/*case class InputLineage(fileRows: Int, offList: List[(String, Int)]) extends Lineage{
 	def getCoor(key: Int): List[(String, Int)] = {
 		require((key < offList.size), {"querying out of boundary of output vector"})
 		List(offList(key))
 	}
 
 	def getCoor2D(key: (Int, Int)) = List()
-}
+}*/
 
 case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
 	val data = shapeRDD.collect.toList
 
-	def getCoor(key: Int): List[Shape] = {
-		data(key)
-	}
-	def getCoor2D(key: (Int, Int)): List[Shape] = {
-		val itemID = key._1
-		val index = key._2
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case i: Int =>{
+				data(i)
+			}
+			case (i: Int, j: Int) =>{
+				require((i < data.size), {"querying out of boundary of output RDD of shape list"})
+				val shapeList = data(i)
 
-		require((itemID < data.size), {"querying out of boundary of output RDD of shape list"})
-		val shapeList = data(itemID)
-
-		require((index < shapeList.size), {"querying out of boundary of shape list"})
-		val shape = shapeList(index)
-		List(shape)
+				require((j < shapeList.size), {"querying out of boundary of shape list"})
+				val shape = shapeList(j)
+				List(shape)
+			}
+		}
 	}
+
+
+	def getCoor(key: Int) = List()
+	def getCoor2D(key: (Int, Int)) = List()
 }
 
 object ShapeLineage{
@@ -331,7 +340,7 @@ object LinComLineage{
 	}
 }
 
-object InputLineage{
+/*object InputLineage{
 	def apply[T](path: String, out: RDD[DenseVector[T]]) = {
 		val outSize = out.count
 		val lengths = Source.fromFile(path).getLines.toList.map{l => l.size}
@@ -345,4 +354,4 @@ object InputLineage{
 		}
 		new InputLineage(lengths.size, offsets)
 	}
-}
+}*/
