@@ -242,6 +242,43 @@ case class ShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: 
 	}
 }
 
+case class FlatMapShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
+	val data = shapeRDD.collect.toList
+
+	def qBackward(key: Option[_]) = {
+		val samplesPerList = data(0).size
+		val k = key.getOrElse(null)
+		k match {
+			case (columnID:Int, index: Int) =>{
+				require((columnID < data.size*samplesPerList), {"querying out of boundary of the index"})
+				//assume a uniform distribution of vectors from matrices or images
+				val matrixIndex = columnID/samplesPerList
+				val vectorIndex = columnID%samplesPerList
+				List((matrixIndex, (index, data(matrixIndex)(vectorIndex).getCenter._2.toInt)))
+			}
+			case _ => List()
+		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val samplesPerList = data(0).size
+		val k = key.getOrElse(null)
+		k match{
+			case (matrixID: Int) => {
+				require((matrixID < data.size), {"querying out of boundary of the input"})
+				data(matrixID)
+			}
+			case (matrixID: Int, (i: Int, j: Int)) =>{
+				require((matrixID < data.size), {"querying out of boundary of the input"})
+				val shapeList = data(matrixID)
+				val columnList = shapeList.map(l => l.getCenter._2)
+				if (columnList.contains(j.toDouble)) List((matrixID*samplesPerList+columnList.indexOf(j.toDouble), i)) else List()
+			}
+			case _ => List()
+		}
+	}
+}
+
 object ShapeLineage{
 	def apply(in: RDD[_], out: RDD[_], shapes: RDD[List[Shape]]) = {
 		val sampleIn = in.take(1)(0)
@@ -251,7 +288,12 @@ object ShapeLineage{
 				new ShapeLineage(shapes, List(in.id), List(out.id))
 			}
 			case (vIn: DenseMatrix[_], vOut: DenseVector[_]) =>{
-				new ShapeLineage(shapes, List(in.id), List(out.id))
+				if(in.count < out.count){
+					new FlatMapShapeLineage(shapes, List(in.id), List(out.id))
+				}
+				else{
+					new ShapeLineage(shapes, List(in.id), List(out.id))
+				}
 			}
 			case _ => null
 		}

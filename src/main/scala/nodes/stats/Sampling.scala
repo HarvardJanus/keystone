@@ -31,10 +31,9 @@ class ColumnSampler(
         Square((0, random), (size, random))
       }).toList
     })
-    println("222222222222")
+
     val out = outRDD.flatMap(x => x.map(t=>t._1))
     val lineage = ShapeLineage(in, out, squareListRDD)
-    println("333333333333")
     lineage.save("ColumnSampler-"+System.nanoTime())
     println("collecting lineage for ColumnSampler \t mapping: "+lineage.qBackward((0, 0)))
     out
