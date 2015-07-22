@@ -3,7 +3,8 @@ package nodes.stats
 import breeze.linalg.{DenseVector, DenseMatrix}
 import org.apache.spark.rdd.RDD
 import pipelines.FunctionNode
-
+import workflow._
+import workflow.Lineage._
 /**
  * Given a collection of Dense Matrices, this will generate a sample of `numSamples` columns from the entire set.
  * @param numSamples
@@ -17,18 +18,25 @@ class ColumnSampler(
     val numImgs = numImgsOpt.getOrElse(in.count.toInt)
     val samplesPerImage = numSamples/numImgs
 
-    val out = in.flatMap(mat => {
+    val outRDD = in.map(mat => {
       (0 until samplesPerImage).map( x => {
-        mat(::, scala.util.Random.nextInt(mat.cols)).toDenseVector
+        val random = scala.util.Random.nextInt(mat.cols)
+        (mat(::, random).toDenseVector, random)
       })
     })
-    val m = in.take(1)(0)
-    val v = out.take(1)(0)
-    println("numImgs: "+numImgs)
-    println("samplesPerImage: "+samplesPerImage)
-    println("matrix dimension: "+m.rows+"x"+m.cols)
-    println("vector dimension: "+v.size)
-    println("total num of vectors: "+out.count)
+    val squareListRDD = outRDD.map( x => {
+      x.map( t => {
+        val size = t._1.size
+        val random = t._2
+        Square((0, random), (size, random))
+      }).toList
+    })
+    println("222222222222")
+    val out = outRDD.flatMap(x => x.map(t=>t._1))
+    val lineage = ShapeLineage(in, out, squareListRDD)
+    println("333333333333")
+    lineage.save("ColumnSampler-"+System.nanoTime())
+    println("collecting lineage for ColumnSampler \t mapping: "+lineage.qBackward((0, 0)))
     out
   }
 

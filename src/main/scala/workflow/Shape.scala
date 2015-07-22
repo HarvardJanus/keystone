@@ -26,7 +26,7 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
 		if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
 	}
 
-	override def toString() = "center: "+c+"\t r: "+r
+	override def toString() = "center: "+c+" r: "+r
 	def getCenter() = c
 	def getR() = r
 }
@@ -52,7 +52,7 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 		if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
 	}
 
-	override def toString() = "center: "+c+"\t major: "+a+"\t minor: "+b+"\t theta: "+theta
+	override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
 
 case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
@@ -62,7 +62,7 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 		val y = c._2
 		val l = for { 
 			i <- (x-a).toInt to (x+a).toInt
-			j <- (y-a).toInt to (y+a).toInt
+			j <- (y-b).toInt to (y+b).toInt
 		} yield (i, j)
 		l.toList
 	}
@@ -73,7 +73,7 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 		if(i>=(x-a) && i<=(x+a) && j>=(y-b) && j<=(y+b)) true else false
 	}
 
-	override def toString() = "center: "+c+"\t width: "+2*a+"\t height: "+2*b
+	override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
 }
 
 object Circle{
@@ -90,10 +90,10 @@ object Circle{
 }*/
 
 object Square{
-	def apply(lowerLeft: (Double, Double), upperRight: (Double, Double)): Shape = {
-		val c = ((lowerLeft._1 + upperRight._1)/2, (lowerLeft._2 + upperRight._2)/2)
-		val a = abs(lowerLeft._1 - upperRight._1)/2
-		val b = abs(lowerLeft._2 - upperRight._2)/2
+	def apply(upperLeft: (Double, Double), lowerRight: (Double, Double)): Shape = {
+		val c = ((upperLeft._1 + lowerRight._1)/2, (upperLeft._2 + lowerRight._2)/2)
+		val a = abs(upperLeft._2 - lowerRight._2)/2
+		val b = abs(upperLeft._1 - lowerRight._1)/2
 		new Square(c, a, b)
 	}
 }

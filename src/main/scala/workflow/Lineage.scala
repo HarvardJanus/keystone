@@ -250,6 +250,9 @@ object ShapeLineage{
 			case (vIn: Image, vOut: DenseMatrix[_]) => {
 				new ShapeLineage(shapes, List(in.id), List(out.id))
 			}
+			case (vIn: DenseMatrix[_], vOut: DenseVector[_]) =>{
+				new ShapeLineage(shapes, List(in.id), List(out.id))
+			}
 			case _ => null
 		}
 		lineage
