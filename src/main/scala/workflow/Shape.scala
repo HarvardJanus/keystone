@@ -48,7 +48,7 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 		val x = c._1
 		val y = c._2
 		val firstItem = ((i-x)*cos(theta) + (j-y)*sin(theta))/a
-		val secondItem = ((i-x)*sin(theta) + (j-y)*cos(theta))/b
+		val secondItem = ((j-y)*cos(theta) - (i-x)*sin(theta))/b
 		if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
 	}
 
@@ -89,6 +89,65 @@ object Circle{
 	}
 }*/
 
+object Shape{
+	def apply(input: List[(Int, Int)]): Shape = {
+		detect(input)
+	}
+
+	def euclideanDistance(x: (Double, Double), y: (Double, Double)) = {
+		(x._1-y._1)*(x._1-y._1) + (x._2-y._2)*(x._2-y._2)
+	}
+
+	def detect(input: List[(Int, Int)]): Shape = {
+		val x = input.map(x => x._1.toDouble)
+		val y = input.map(x => x._2.toDouble)
+		val xCentroid = x.sum/x.length
+		val yCentroid = y.sum/y.length
+		val centroid = (xCentroid, yCentroid)
+
+		val xLeft = x.min
+		val xRight = x.max
+		val yUp = y.min
+		val yDown = y.max
+		val square = Square((xLeft, yUp), (xRight, yDown))
+
+		val furthest = {
+			var distance = 0.0
+			var point = (0.0, 0.0)
+			for(p <- x.zip(y)){
+				val dist = euclideanDistance(p, centroid)
+				if ( dist > distance){
+					distance = dist
+					point = p
+				}
+			}
+			point
+		}
+
+		val r = sqrt(euclideanDistance(furthest, centroid))
+		val circle = Circle(centroid, r)
+
+		val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-centroid._1/r) else asin (centroid._1/r)
+		//val theta = asin(-centroid._1/r)
+		println("centroid: "+centroid+", furthest: "+furthest+", r: "+r+", theta: "+theta)
+
+		val numerator = pow(r*((furthest._2-centroid._2)*cos(theta)-(furthest._1-centroid._1)*sin(theta)), 2)
+		val denominator = pow(r, 2)-pow(((furthest._1-centroid._1)*cos(theta)+(furthest._2-centroid._2)*sin(theta)), 2)
+		val b = sqrt(numerator/denominator)
+
+		val ellipse = Ellipse(centroid, r, b, theta)
+
+		println(square)
+		println(circle)
+		println(ellipse)
+
+		println(square.toCoor)
+		println(circle.toCoor)
+		println(ellipse.toCoor)
+
+		return square
+	}
+}
 object Square{
 	def apply(upperLeft: (Double, Double), lowerRight: (Double, Double)): Shape = {
 		val c = ((upperLeft._1 + lowerRight._1)/2, (upperLeft._2 + lowerRight._2)/2)
@@ -110,5 +169,9 @@ object ShapeTester{
 
     val square1 = Square((-1, -1), (1, 1))
 		println(square1.toCoor)
+
+		val list = List((0, 0), (0, 1), (1, 0), (1, 1))
+		val shape = Shape(list)
+		println(shape.toCoor)
   }
 }
