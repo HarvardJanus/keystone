@@ -281,8 +281,7 @@ case class FlatMapShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], ou
 }
 
 case class SubZeroLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
-	val data = mappingRDD.collect.toList
-	val (fIndex, bIndex) = buildIndex(data)
+	val (fIndex, bIndex) = buildIndex(mappingRDD.collect.toList)
 
 	def buildIndex(data: List[List[(List[(Int, Int)], List[(Int, Int)])]]): 
 		(List[(Map[(Int, Int), List[String]], Map[String, List[(Int, Int)]])], List[(Map[(Int, Int), String], Map[String, List[(Int, Int)]])]) = {
@@ -349,8 +348,7 @@ case class SubZeroLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int
 }
 
 case class SimpleLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
-	val data = mappingRDD.collect.toList
-	val (fIndex, bIndex) = buildIndex(data)
+	val (fIndex, bIndex) = buildIndex(mappingRDD.collect.toList)
 
 	def buildIndex(data: List[List[(List[(Int, Int)], List[(Int, Int)])]]): 
 		(List[(Map[(Int, Int), List[List[(Int, Int)]]])], List[(Map[(Int, Int), List[(Int, Int)]])]) = {
@@ -410,8 +408,7 @@ case class SimpleLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)
 }
 
 case class ContourLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
-	val data = mappingRDD.collect.toList
-	val (fIndex, bIndex) = buildIndex(data)
+	val (fIndex, bIndex) = buildIndex(mappingRDD.collect.toList)
 
 	def buildIndex(data: List[List[(List[(Int, Int)], List[(Int, Int)])]]): 
 		(List[(Map[Shape, Shape])], List[(Map[Shape, Shape])]) = {
@@ -463,15 +460,19 @@ case class ContourLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int
 		k match {
 			case (itemID: Int, (i: Int, j: Int)) =>{
 				val m = fIndex(itemID)
-				val shapeTuple = m.find(_._1.inShape(i.toDouble, j.toDouble)).getOrElse(null)
-				shapeTuple match {
-					case t:(Shape, Shape) => t._2.toCoor
-					case _ => List()
+				val shapeMap= m.filter(_._1.inShape(i.toDouble, j.toDouble))
+				if(shapeMap.isEmpty){
+					List()
+				}
+				else{
+					val shapes = shapeMap.values.toList
+					shapes.map(x => x.toCoor)
 				}
 			}
 		}
 	}
 }
+
 object RegionLineage{
 	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]]) = 
 		new ContourLineage(ioList, List(in.id), List(out.id))
