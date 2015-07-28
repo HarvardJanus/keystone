@@ -6,6 +6,7 @@ import org.apache.spark.rdd.RDD
 import utils.{MultiLabeledImage, Image, LabeledImage, ImageMetadata}
 
 import java.io._
+import scala.collection.mutable.Map
 import scala.reflect.ClassTag
 import scala.io.Source
 
@@ -277,6 +278,79 @@ case class FlatMapShapeLineage(shapeRDD: RDD[List[Shape]], inRDDs: List[Int], ou
 			case _ => List()
 		}
 	}
+}
+
+case class SubZeroLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
+	val data = mappingRDD.collect.toList
+	val (fIndex, bIndex) = buildIndex(data)
+
+	def buildIndex(data: List[List[(List[(Int, Int)], List[(Int, Int)])]]): 
+		(List[(Map[(Int, Int), List[String]], Map[String, List[(Int, Int)]])], List[(Map[(Int, Int), String], Map[String, List[(Int, Int)]])]) = {
+		val fIndex = data.zipWithIndex.map{
+			case (itemList, rddIndex) => {
+				var map1: Map[(Int, Int), List[String]] = Map()
+				var map2: Map[String, List[(Int, Int)]] = Map()
+				itemList.zipWithIndex.map{
+					case (mapping, mIndex) => {
+						val hValue = rddIndex+"-"+mIndex
+						map2 += hValue->mapping._2
+						mapping._1.map(t => {
+							if(map1.contains(t)){
+								map1(t) = map1(t) :+ hValue
+							}
+							else{
+								map1 += t->List(hValue)
+							}
+						})
+					}
+				}
+				(map1, map2)
+			}
+		}
+
+		val bIndex = data.zipWithIndex.map{
+			case (itemList, rddIndex) => {
+				var map1: Map[(Int, Int), String] = Map()
+				var map2: Map[String, List[(Int, Int)]] = Map()
+				itemList.zipWithIndex.map{
+					case (mapping, mIndex) => {
+						val hValue = rddIndex+"-"+mIndex
+						map2 += hValue->mapping._1
+						mapping._2.map(t => map1 += t->hValue)
+					}
+				}
+				(map1, map2)
+			}
+		}
+		return (fIndex, bIndex)
+	}
+
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				val (m1, m2) = bIndex(itemID)
+				val interKey = m1((i, j))
+				m2(interKey)
+			}
+		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				val (m1, m2) = fIndex(itemID)
+				val interKeyList = m1((i, j))
+				interKeyList.map(interKey => m2(interKey))
+			}
+		}
+	}
+}
+
+object RegionLineage{
+	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]]) = 
+		new SubZeroLineage(ioList, List(in.id), List(out.id))
 }
 
 object ShapeLineage{

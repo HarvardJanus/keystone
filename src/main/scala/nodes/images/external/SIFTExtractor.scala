@@ -50,19 +50,36 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
         val rawDescData = rawDescDataShort.map(s => s.toFloat)
 
         //temporarily set the radius to the scale, need to fix
-        val circleList = (0 until numCols).map{ i =>
+        /*val circleList = (0 until numCols).map{ i =>
           Circle((x(i), y(i)), binSize.toDouble)
         }.toList
 
         val outMatrix = new DenseMatrix(descriptorSize, numCols, rawDescData)
-        (outMatrix, circleList)
+        (outMatrix, circleList)*/
+
+        //below is a new interface for lineage
+        val inList = (0 until 20).map{ i =>
+          Circle((x(i), y(i)), binSize.toDouble).toCoor.asInstanceOf[List[(Int, Int)]]
+        }.toList
+
+        val outList = (0 until 20).map{ i =>
+          (0 until descriptorSize).toList.zip(List.fill(descriptorSize){i})
+        }.toList
+
+        val outMatrix = new DenseMatrix(descriptorSize, numCols, rawDescData)
+        (outMatrix, inList.zip(outList))
       }
     }
-    val circleListRDD = outRDD.map(x => x._2)
+    /*val circleListRDD = outRDD.map(x => x._2)
     val out = outRDD.map(x => x._1)
-    val lineage = ShapeLineage(in, out, circleListRDD)
+    val lineage = ShapeLineage(in, out, circleListRDD)*/
+    
+    val out = outRDD.map(x => x._1)
+    val ioList = outRDD.map(x => x._2)
+    val lineage = RegionLineage(in, out, ioList)
+
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0)))
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, (1, 1))).size)
     out
   }
 }

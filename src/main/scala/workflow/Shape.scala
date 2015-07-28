@@ -105,6 +105,7 @@ object Shape{
 		val yCentroid = y.sum/y.length
 		val centroid = (xCentroid, yCentroid)
 
+		//fit a square
 		val xLeft = x.min
 		val xRight = x.max
 		val yUp = y.min
@@ -124,28 +125,34 @@ object Shape{
 			point
 		}
 
+		//fit a circle
 		val r = sqrt(euclideanDistance(furthest, centroid))
 		val circle = Circle(centroid, r)
 
+		//fit an ellipse
 		val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-centroid._1/r) else asin (centroid._1/r)
-		//val theta = asin(-centroid._1/r)
-		println("centroid: "+centroid+", furthest: "+furthest+", r: "+r+", theta: "+theta)
-
 		val numerator = pow(r*((furthest._2-centroid._2)*cos(theta)-(furthest._1-centroid._1)*sin(theta)), 2)
 		val denominator = pow(r, 2)-pow(((furthest._1-centroid._1)*cos(theta)+(furthest._2-centroid._2)*sin(theta)), 2)
 		val b = sqrt(numerator/denominator)
-
 		val ellipse = Ellipse(centroid, r, b, theta)
 
-		println(square)
-		println(circle)
-		println(ellipse)
+		//calculate the precision of each shape
+		val pre_square = square.toCoor.intersect(input).size.toDouble/input.size
+		val pre_circle = circle.toCoor.intersect(input).size.toDouble/input.size
+		val pre_ellipse = ellipse.toCoor.intersect(input).size.toDouble/input.size
 
-		println(square.toCoor)
-		println(circle.toCoor)
-		println(ellipse.toCoor)
+		println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
 
-		return square
+		//decide shape based on the accuracy of the fitting shape
+		val shape = if ((pre_square >= pre_circle)&&(pre_square >= pre_ellipse)){
+			square
+		}else if (pre_circle >= pre_ellipse) {
+			circle
+		}else{
+			ellipse
+		}
+
+		return shape
 	}
 }
 object Square{
