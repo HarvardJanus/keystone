@@ -141,15 +141,15 @@ object Shape{
 		val pre_circle = circle.toCoor.intersect(input).size.toDouble/input.size
 		val pre_ellipse = ellipse.toCoor.intersect(input).size.toDouble/input.size
 
-		println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
+		//println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
 
 		//decide shape based on the accuracy of the fitting shape
-		val shape = if ((pre_square >= pre_circle)&&(pre_square >= pre_ellipse)){
-			square
-		}else if (pre_circle >= pre_ellipse) {
+		val shape = if ((pre_ellipse >= pre_circle)&&(pre_ellipse >= pre_circle)){
+			ellipse
+		}else if (pre_circle >= pre_square) {
 			circle
 		}else{
-			ellipse
+			square
 		}
 
 		return shape

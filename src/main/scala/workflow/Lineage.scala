@@ -419,7 +419,7 @@ case class ContourLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int
 				var bMap: Map[Shape, Shape] = Map()
 				itemList.map{
 					mapping => {
-						val xList = mapping._1.map(x => x._1)
+						/*val xList = mapping._1.map(x => x._1)
 						val yList = mapping._1.map(x => x._2)
 						val x = xList.sum.toDouble/xList.size
 						val y = yList.sum.toDouble/yList.size
@@ -427,7 +427,9 @@ case class ContourLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int
 
 						val upperLeft = (mapping._2.head._1.toDouble, mapping._2.head._2.toDouble)
 						val lowerRight = (mapping._2.last._1.toDouble, mapping._2.last._2.toDouble)
-						val square = Square(upperLeft, lowerRight)
+						val square = Square(upperLeft, lowerRight)*/
+						val circle = Shape(mapping._1)
+						val square = Shape(mapping._2)
 
 						fMap += circle->square
 						bMap += square->circle
@@ -476,9 +478,9 @@ case class ContourLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int
 
 object RegionLineage{
 	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]]) = 
-		//new ContourLineage(ioList, List(in.id), List(out.id))
+		new ContourLineage(ioList, List(in.id), List(out.id))
 		//new SubZeroLineage(ioList, List(in.id), List(out.id))
-		new SimpleLineage(ioList, List(in.id), List(out.id))
+		//new SimpleLineage(ioList, List(in.id), List(out.id))
 }
 
 object ShapeLineage{
