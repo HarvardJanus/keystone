@@ -61,8 +61,8 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 		val x = c._1
 		val y = c._2
 		val l = for { 
-			i <- (x-a).toInt to (x+a).toInt
-			j <- (y-b).toInt to (y+b).toInt
+			i <- (x-b).toInt to (x+b).toInt
+			j <- (y-a).toInt to (y+a).toInt
 		} yield (i, j)
 		l.toList
 	}
@@ -70,7 +70,7 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 	def inShape(i: Double, j: Double): Boolean = {
 		val x = c._1
 		val y = c._2
-		if(i>=(x-a) && i<=(x+a) && j>=(y-b) && j<=(y+b)) true else false
+		if(i>=(x-b) && i<=(x+b) && j>=(y-a) && j<=(y+a)) true else false
 	}
 
 	override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b

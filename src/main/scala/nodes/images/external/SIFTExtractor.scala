@@ -57,12 +57,12 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
         val outMatrix = new DenseMatrix(descriptorSize, numCols, rawDescData)
         (outMatrix, circleList)*/
 
-        //below is a new interface for lineage
-        val inList = (0 until 20).map{ i =>
+        //below is a new interface for lineage, change back to nCol
+        val inList = (0 until 50).map{ i =>
           Circle((x(i), y(i)), binSize.toDouble).toCoor.asInstanceOf[List[(Int, Int)]]
         }.toList
 
-        val outList = (0 until 20).map{ i =>
+        val outList = (0 until 50).map{ i =>
           (0 until descriptorSize).toList.zip(List.fill(descriptorSize){i})
         }.toList
 

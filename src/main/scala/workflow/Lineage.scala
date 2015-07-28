@@ -348,9 +348,135 @@ case class SubZeroLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int
 	}
 }
 
+case class SimpleLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
+	val data = mappingRDD.collect.toList
+	val (fIndex, bIndex) = buildIndex(data)
+
+	def buildIndex(data: List[List[(List[(Int, Int)], List[(Int, Int)])]]): 
+		(List[(Map[(Int, Int), List[List[(Int, Int)]]])], List[(Map[(Int, Int), List[(Int, Int)]])]) = {
+		val fIndex = data.map{
+			itemList => {
+				var map: Map[(Int, Int), List[List[(Int, Int)]]] = Map()
+				itemList.map{
+					mapping => {
+						mapping._1.map(t => {
+							if(map.contains(t)){
+								map(t) = map(t) :+ mapping._2
+							}
+							else{
+								map += t->List(mapping._2)
+							}
+						})
+					}
+				}
+				map
+			}
+		}
+
+		val bIndex = data.map{
+			itemList => {
+				var map: Map[(Int, Int), List[(Int, Int)]] = Map()
+				itemList.map{
+					mapping => {
+						mapping._2.map(t => map += t->mapping._1)
+					}
+				}
+				map
+			}
+		}
+
+		(fIndex, bIndex)
+	}
+
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				val m = bIndex(itemID)
+				m((i, j))
+			}
+		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				val m = fIndex(itemID)
+				m((i, j))
+			}
+		}
+	}
+}
+
+case class ContourLineage(mappingRDD: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], inRDDs: List[Int], outRDDs: List[Int]) extends Lineage{
+	val data = mappingRDD.collect.toList
+	val (fIndex, bIndex) = buildIndex(data)
+
+	def buildIndex(data: List[List[(List[(Int, Int)], List[(Int, Int)])]]): 
+		(List[(Map[Shape, Shape])], List[(Map[Shape, Shape])]) = {
+		val maps = data.map{
+			itemList => {
+				var fMap: Map[Shape, Shape] = Map()
+				var bMap: Map[Shape, Shape] = Map()
+				itemList.map{
+					mapping => {
+						val xList = mapping._1.map(x => x._1)
+						val yList = mapping._1.map(x => x._2)
+						val x = xList.sum.toDouble/xList.size
+						val y = yList.sum.toDouble/yList.size
+						val circle = Circle((x, y), 4)
+
+						val upperLeft = (mapping._2.head._1.toDouble, mapping._2.head._2.toDouble)
+						val lowerRight = (mapping._2.last._1.toDouble, mapping._2.last._2.toDouble)
+						val square = Square(upperLeft, lowerRight)
+
+						fMap += circle->square
+						bMap += square->circle
+					}
+				}
+				(fMap, bMap)
+			}
+		}
+
+		val fIndex = maps.map(x => x._1)
+		val bIndex = maps.map(x => x._2)
+		(fIndex, bIndex)
+	}
+
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				val m = bIndex(itemID)
+				val shapeTuple = m.find(_._1.inShape(i.toDouble, j.toDouble)).getOrElse(null)
+				shapeTuple match {
+					case t:(Shape, Shape) => t._2.toCoor
+					case _ => List()
+				}
+			}
+		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (itemID: Int, (i: Int, j: Int)) =>{
+				val m = fIndex(itemID)
+				val shapeTuple = m.find(_._1.inShape(i.toDouble, j.toDouble)).getOrElse(null)
+				shapeTuple match {
+					case t:(Shape, Shape) => t._2.toCoor
+					case _ => List()
+				}
+			}
+		}
+	}
+}
 object RegionLineage{
 	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]]) = 
-		new SubZeroLineage(ioList, List(in.id), List(out.id))
+		new ContourLineage(ioList, List(in.id), List(out.id))
+		//new SubZeroLineage(ioList, List(in.id), List(out.id))
+		//new SimpleLineage(ioList, List(in.id), List(out.id))
 }
 
 object ShapeLineage{
