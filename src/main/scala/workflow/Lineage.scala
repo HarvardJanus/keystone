@@ -2,7 +2,7 @@ package workflow
 
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
-
+import org.apache.spark.SparkContext
 import utils.{MultiLabeledImage, Image, LabeledImage, ImageMetadata}
 
 import java.io._
@@ -14,13 +14,31 @@ trait Lineage extends Serializable{
 	def qForward(key: Option[_]): List[_]
 	def qBackward(key: Option[_]): List[_]
   def save(tag: String) = {
-  	val oos = new ObjectOutputStream(new FileOutputStream("Lineage/"+tag))
-  	oos.writeObject(this)
-  	oos.close
+  	//val oos = new ObjectOutputStream(new FileOutputStream("Lineage/"+tag))
+  	//oos.writeObject(this)
+  	//oos.close
+  	val sc = Lineage.getSC
+  	val path = Lineage.getPath
+  	val rdd = sc.parallelize(Seq(this), 1)
+  	rdd.saveAsObjectFile(path+"/"+tag)
   }
 }
 
 object Lineage{
+	var sc: SparkContext = null
+	var path: String = ""
+	def setSC(inSC: SparkContext) = {
+		sc = inSC
+	}
+
+	def setPath(inPath: String) = {
+		path = inPath
+	}
+
+	def getSC = sc
+
+	def getPath = path
+
 	implicit def intToSome(key: Int): Option[Int] = Some(key)
 	implicit def int2DToSome(key: (Int, Int)): Option[(Int, Int)] = Some(key)
 	implicit def indexInt2DToSome(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)

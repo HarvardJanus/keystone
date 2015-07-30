@@ -11,6 +11,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import pipelines._
 import scopt.OptionParser
 import workflow.Pipeline
+import workflow._
 
 
 object MnistRandomFFT extends Serializable with Logging {
@@ -104,6 +105,8 @@ object MnistRandomFFT extends Serializable with Logging {
     val conf = new SparkConf().setAppName(appName)
     conf.setIfMissing("spark.master", "local[2]")
     val sc = new SparkContext(conf)
+    Lineage.setSC(sc)
+    Lineage.setPath("Lineage")
     run(sc, appConfig)
 
     sc.stop()
