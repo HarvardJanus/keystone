@@ -43,7 +43,7 @@ class BatchPCATransformer(val pcaMat: DenseMatrix[Float]) extends Transformer[De
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
     val out = in.map(apply)
-    val lineage = LinComLineage(in, out, pcaMat)
+    val lineage = LinComLineage(in, out, pcaMat, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0)))
     out

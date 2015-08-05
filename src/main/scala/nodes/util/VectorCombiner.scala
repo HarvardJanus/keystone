@@ -16,7 +16,7 @@ case class VectorCombiner[T : ClassTag]()(implicit zero: breeze.storage.Zero[T])
 
   override def saveLineageAndApply(in: RDD[Seq[DenseVector[T]]], tag: String): RDD[DenseVector[T]] = {
     val out = in.map(apply)
-    val lineage = OneToOneLineage(in, out)
+    val lineage = OneToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(513))
     out

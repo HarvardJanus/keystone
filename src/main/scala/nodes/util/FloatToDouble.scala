@@ -14,7 +14,7 @@ object FloatToDouble extends Transformer[DenseMatrix[Float], DenseMatrix[Double]
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
-    val lineage = OneToOneLineage(in, out)
+    val lineage = OneToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0)))
     out

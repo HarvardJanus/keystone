@@ -14,7 +14,7 @@ object MaxClassifier extends Transformer[DenseVector[Double], Int] {
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[Int] = {
     val out = in.map(apply)
-    val lineage = AllToOneLineage(in, out)
+    val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0).size)
     out

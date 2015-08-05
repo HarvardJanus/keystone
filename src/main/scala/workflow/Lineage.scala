@@ -14,9 +14,6 @@ trait Lineage extends Serializable{
 	def qForward(key: Option[_]): List[_]
 	def qBackward(key: Option[_]): List[_]
   def save(tag: String) = {
-  	//val oos = new ObjectOutputStream(new FileOutputStream("Lineage/"+tag))
-  	//oos.writeObject(this)
-  	//oos.close
   	val sc = Lineage.getSC
   	val path = Lineage.getPath
   	val rdd = sc.parallelize(Seq(this), 1)
@@ -25,17 +22,17 @@ trait Lineage extends Serializable{
 }
 
 object Lineage{
-	var sc: SparkContext = null
+	var sparkContext: SparkContext = null
 	var path: String = ""
 	def setSC(inSC: SparkContext) = {
-		sc = inSC
+		sparkContext = inSC
 	}
 
 	def setPath(inPath: String) = {
 		path = inPath
 	}
 
-	def getSC = sc
+	def getSC = sparkContext
 
 	def getPath = path
 
@@ -524,7 +521,7 @@ object ShapeLineage{
 }
 
 object OneToOneLineage{
-	def apply(in: RDD[_], out:RDD[_]) = {
+	def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _]) = {
 		val sampleIn = in.take(1)(0)
 		val sampleOut = out.take(1)(0)
 		val lineage = (sampleIn, sampleOut) match{
@@ -559,7 +556,7 @@ object OneToOneLineage{
 }
 
 object AllToOneLineage{
-	def apply(in: RDD[_], out:RDD[_]) = {
+	def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _]) = {
 		val sampleIn = in.take(1)(0)
 		val sampleOut = out.take(1)(0)
 		val lineage = (sampleIn, sampleOut) match{
@@ -582,7 +579,7 @@ object AllToOneLineage{
 }
 
 object LinComLineage{
-	def apply[T](in: RDD[_], out:RDD[_], model: DenseMatrix[T]) = {
+	def apply[T](in: RDD[_], out:RDD[_], model: DenseMatrix[T], transformer: Transformer[_, _]) = {
 		val sampleIn= in.take(1)(0)
 		val sampleOut = out.take(1)(0)
 		val lineage = (sampleIn, sampleOut) match {

@@ -14,7 +14,7 @@ object MatrixVectorizer extends Transformer[DenseMatrix[Double], DenseVector[Dou
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
-    val lineage = OneToOneLineage(in, out)
+    val lineage = OneToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out
