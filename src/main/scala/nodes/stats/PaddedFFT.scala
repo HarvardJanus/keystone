@@ -5,7 +5,7 @@ import breeze.math.Complex
 import org.apache.spark.rdd.RDD
 import workflow._
 import workflow.Transformer
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 
 /**
  * This transformer pads input vectors to the nearest power of two,
@@ -22,7 +22,7 @@ case class PaddedFFT() extends Transformer[DenseVector[Double], DenseVector[Doub
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
-    val lineage = AllToOneLineage(in, out, this)
+    val lineage = AllToOneKLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0).size)
     out

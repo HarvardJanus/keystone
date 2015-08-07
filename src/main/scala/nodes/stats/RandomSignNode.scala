@@ -5,7 +5,7 @@ import breeze.stats.distributions._
 import org.apache.spark.rdd.RDD
 import workflow._
 import workflow.Transformer
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 
 /**
  *  A node that takes in DenseVector[Double] and randomly flips
@@ -18,7 +18,7 @@ case class RandomSignNode(signs: DenseVector[Double])
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
-    val lineage = OneToOneKLineage(in, out, signs, this)
+    val lineage = OneToOneKLineage(in, out, this, Some(signs))
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out

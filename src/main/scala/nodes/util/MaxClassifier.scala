@@ -4,7 +4,7 @@ import breeze.linalg.{DenseVector, argmax}
 import org.apache.spark.rdd.RDD
 import workflow._
 import workflow.Transformer
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 
 /**
  * Transformer that returns the index of the largest value in the vector
@@ -14,7 +14,7 @@ object MaxClassifier extends Transformer[DenseVector[Double], Int] {
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[Int] = {
     val out = in.map(apply)
-    val lineage = AllToOneLineage(in, out, this)
+    val lineage = AllToOneKLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0).size)
     out
