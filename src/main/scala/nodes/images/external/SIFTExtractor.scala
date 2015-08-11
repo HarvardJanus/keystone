@@ -6,7 +6,7 @@ import org.apache.spark.rdd.RDD
 import utils.Image
 import utils.external.VLFeat
 import workflow._
-import workflow.KeystoneLineage._
+import workflow.Lineage._
 
 /**
  * Extracts SIFT Descriptors at dense intervals at multiple scales using the vlfeat C library.
@@ -76,7 +76,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     
     val out = outRDD.map(x => x._1)
     val ioList = outRDD.map(x => x._2)
-    val lineage = RegionKLineage(in, out, ioList, this)
+    val lineage = RegionLineage(in, out, ioList, this)
 
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((1, 1)))

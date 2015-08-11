@@ -9,7 +9,7 @@ import org.netlib.util.intW
 import pipelines._
 import workflow.{Transformer, Estimator}
 import workflow._
-import workflow.KeystoneLineage._
+import workflow.Lineage._
 
 
 /**
@@ -43,7 +43,7 @@ class BatchPCATransformer(val pcaMat: DenseMatrix[Float]) extends Transformer[De
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
     val out = in.map(apply)
-    val lineage = LinComKLineage(in, out, this, Some(pcaMat))
+    val lineage = LinComLineage(in, out, this, Some(pcaMat))
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0)))
     out

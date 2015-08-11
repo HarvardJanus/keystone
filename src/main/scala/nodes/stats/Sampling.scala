@@ -4,7 +4,7 @@ import breeze.linalg.{DenseVector, DenseMatrix}
 import org.apache.spark.rdd.RDD
 import pipelines.FunctionNode
 import workflow._
-import workflow.KeystoneLineage._
+import workflow.Lineage._
 /**
  * Given a collection of Dense Matrices, this will generate a sample of `numSamples` columns from the entire set.
  * @param numSamples

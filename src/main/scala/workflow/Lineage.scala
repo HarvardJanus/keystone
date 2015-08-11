@@ -19,7 +19,7 @@ import scala.io.Source
  *  @param transformer the transformer itself
  */
 
-class KeystoneLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
+class Lineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
 	modelRDD: Option[_]) extends serializable{
 
 	//qForward() and qBackward() methods need implementation, should call to mappingRDD
@@ -36,13 +36,13 @@ class KeystoneLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transfo
   }
 }
 
-object KeystoneLineage{
+object Lineage{
 	implicit def intToOption(key: Int): Option[Int] = Some(key)
 	implicit def int2DToOption(key: (Int, Int)): Option[(Int, Int)] = Some(key)
 	implicit def indexInt2DToOption(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
 }
 
-object OneToOneKLineage{
+object OneToOneLineage{
 	def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
 		val mapping = in.zip(out).map({
 			case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
@@ -67,11 +67,11 @@ object OneToOneKLineage{
 			}
 			case _ => None
 		})
-		new KeystoneLineage(in, out, mapping, transformer, model)
+		new Lineage(in, out, mapping, transformer, model)
 	}
 }
 
-object AllToOneKLineage{
+object AllToOneLineage{
 	def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
 		val mapping = in.zip(out).map({
 			case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
@@ -88,11 +88,11 @@ object AllToOneKLineage{
 			}
 			case _ => None
 		})
-		new KeystoneLineage(in, out, mapping, transformer, model)
+		new Lineage(in, out, mapping, transformer, model)
 	}
 }
 
-object LinComKLineage{
+object LinComLineage{
 	def apply[T](in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[DenseMatrix[T]]) = {
 		val m = model.getOrElse(None).asInstanceOf[DenseMatrix[T]]
 		val mapping = in.zip(out).map({
@@ -104,18 +104,18 @@ object LinComKLineage{
 			}
 			case _ => None
 		})
-		new KeystoneLineage(in, out, mapping, transformer, model)
+		new Lineage(in, out, mapping, transformer, model)
 	}
 }
 
-object RegionKLineage{
+object RegionLineage{
 	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], 
 		transformer: Transformer[_, _], model: Option[_] = None) = {
 		val mapping = ioList.map(l => {
 			ContourMapping(l, List(in.id), List(out.id))
 		})
 
-		new KeystoneLineage(in, out, mapping, transformer, model)
+		new Lineage(in, out, mapping, transformer, model)
 		//new SubZeroMapping(ioList, List(in.id), List(out.id))
 		//new SimpleMapping(ioList, List(in.id), List(out.id))
 	}
