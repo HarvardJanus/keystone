@@ -16,7 +16,7 @@ trait Mapping extends serializable{
 }
 
 case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
-	seqSize: Int, inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Mapping{
+	seqSize: Int, imageMeta: Option[ImageMetadata] = None) extends Mapping{
 
 	def qForward(key: Option[_]) = {
 		val k = key.getOrElse(null)
@@ -73,7 +73,7 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 }
 
 case class AllToOneMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int, 
-	inRDDs: List[Int], outRDDs: List[Int], imageMeta: Option[ImageMetadata] = None) extends Mapping{
+	imageMeta: Option[ImageMetadata] = None) extends Mapping{
 
 	def qForward(key: Option[_]) = {
 		val k = key.getOrElse(null)
@@ -137,7 +137,7 @@ case class AllToOneMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 }
 
 case class LinComMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
-	modelRows: Int, modelCols: Int, inRDDs: List[Int], outRDDs: List[Int]) extends Mapping{
+	modelRows: Int, modelCols: Int) extends Mapping{
 
 	def qBackward(key: Option[_]) = {
 		val k = key.getOrElse(null)
@@ -173,7 +173,7 @@ case class LinComMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 	}
 }
 
-case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape], inRDDs: List[Int], outRDDs: List[Int]) extends Mapping{
+case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
 	def qBackward(key: Option[_]) = {
 		val k = key.getOrElse(null)
 		k match {
@@ -205,9 +205,9 @@ case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape], inRD
 }
 
 object ContourMapping{
-	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])], inRDDs: List[Int], outRDDs: List[Int]) = {
+	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
 		val (fMap, bMap) = buildIndex(mapping)
-		new ContourMapping(fMap, bMap, inRDDs, outRDDs)
+		new ContourMapping(fMap, bMap)
 	}
 
 	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {

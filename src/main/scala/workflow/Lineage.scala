@@ -46,24 +46,24 @@ object OneToOneLineage{
 	def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
 		val mapping = in.zip(out).map({
 			case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
-				new OneToOneMapping(vIn.size, 1, vOut.size, 1, 1, List(in.id), List(out.id))
+				new OneToOneMapping(vIn.size, 1, vOut.size, 1, 1)
 			}
 			case (sIn: Seq[_], vOut: DenseVector[_]) => {
 				//sIn should be Seq[DenseVetor[_]]
 				val sampleInVector = sIn(0).asInstanceOf[DenseVector[_]]
-				new OneToOneMapping(sampleInVector.size, 1, vOut.size, 1, sIn.size, List(in.id), List(out.id))
+				new OneToOneMapping(sampleInVector.size, 1, vOut.size, 1, sIn.size)
 			}
 			case (mIn: DenseMatrix[_], mOut: DenseMatrix[_]) => {
-				new OneToOneMapping(mIn.rows, mIn.cols, mOut.rows, mOut.cols, 1, List(in.id), List(out.id))
+				new OneToOneMapping(mIn.rows, mIn.cols, mOut.rows, mOut.cols, 1)
 			}
 			case (mIn: DenseMatrix[_], mOut: DenseVector[_]) => {
-				new OneToOneMapping(mIn.rows, mIn.cols, mOut.size, 1, 1, List(in.id), List(out.id))
+				new OneToOneMapping(mIn.rows, mIn.cols, mOut.size, 1, 1)
 			}
 			case (imageIn: MultiLabeledImage, imageOut: Image) => {
-				new OneToOneMapping(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id), Some(imageOut.metadata))
+				new OneToOneMapping(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageOut.metadata))
 			}
 			case (imageIn: Image, imageOut: Image) => {
-				new OneToOneMapping(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, List(in.id), List(out.id), Some(imageOut.metadata))
+				new OneToOneMapping(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageOut.metadata))
 			}
 			case _ => None
 		})
@@ -75,16 +75,16 @@ object AllToOneLineage{
 	def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
 		val mapping = in.zip(out).map({
 			case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
-				new AllToOneMapping(vIn.size, 1, vOut.size, 1, List(in.id), List(out.id))
+				new AllToOneMapping(vIn.size, 1, vOut.size, 1)
 			}
 			case (vIn: DenseVector[_], vOut: Int) => {
-				new AllToOneMapping(vIn.size, 1, 1, 1, List(in.id), List(out.id))
+				new AllToOneMapping(vIn.size, 1, 1, 1)
 			}
 			case (vIn: DenseMatrix[_], vOut: DenseMatrix[_]) => {
-				new AllToOneMapping(vIn.rows, vIn.cols, vOut.rows, vOut.cols, List(in.id), List(out.id))
+				new AllToOneMapping(vIn.rows, vIn.cols, vOut.rows, vOut.cols)
 			}
 			case (vIn: Image, vOut: Image) => {
-				new AllToOneMapping(vIn.flatSize, 1, vOut.flatSize, 1, List(in.id), List(out.id), Some(vIn.metadata))
+				new AllToOneMapping(vIn.flatSize, 1, vOut.flatSize, 1, Some(vIn.metadata))
 			}
 			case _ => None
 		})
@@ -97,10 +97,10 @@ object LinComLineage{
 		val m = model.getOrElse(None).asInstanceOf[DenseMatrix[T]]
 		val mapping = in.zip(out).map({
 			case (sIn: DenseVector[_], sOut: DenseVector[_]) => {
-				new LinComMapping(sIn.size, 1, sOut.size, 1, m.rows, m.cols, List(in.id), List(out.id))
+				new LinComMapping(sIn.size, 1, sOut.size, 1, m.rows, m.cols)
 			}
 			case (sIn: DenseMatrix[_], sOut: DenseMatrix[_]) => {
-				new LinComMapping(sIn.rows, sIn.cols, sOut.rows, sOut.cols, m.rows, m.cols, List(in.id), List(out.id))
+				new LinComMapping(sIn.rows, sIn.cols, sOut.rows, sOut.cols, m.rows, m.cols)
 			}
 			case _ => None
 		})
@@ -112,7 +112,7 @@ object RegionLineage{
 	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], 
 		transformer: Transformer[_, _], model: Option[_] = None) = {
 		val mapping = ioList.map(l => {
-			ContourMapping(l, List(in.id), List(out.id))
+			ContourMapping(l)
 		})
 
 		new Lineage(in, out, mapping, transformer, model)
