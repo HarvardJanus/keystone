@@ -105,8 +105,6 @@ object MnistRandomFFT extends Serializable with Logging {
     val conf = new SparkConf().setAppName(appName)
     conf.setIfMissing("spark.master", "local[2]")
     val sc = new SparkContext(conf)
-    Lineage.setSC(sc)
-    Lineage.setPath("Lineage")
     run(sc, appConfig)
 
     sc.stop()

@@ -152,9 +152,6 @@ object VOCSIFTFisher extends Serializable {
     val conf = new SparkConf().setAppName(appName)
     conf.setIfMissing("spark.master", "local[2]")
     val sc = new SparkContext(conf)
-    //the following two lines are temporary solution, will remove after migration to KeystoneLineage
-    Lineage.setSC(sc)
-    Lineage.setPath("Lineage")
     run(sc, appConfig)
 
     sc.stop()

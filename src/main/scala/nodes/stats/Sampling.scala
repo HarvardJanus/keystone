@@ -4,7 +4,7 @@ import breeze.linalg.{DenseVector, DenseMatrix}
 import org.apache.spark.rdd.RDD
 import pipelines.FunctionNode
 import workflow._
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 /**
  * Given a collection of Dense Matrices, this will generate a sample of `numSamples` columns from the entire set.
  * @param numSamples
@@ -24,18 +24,21 @@ class ColumnSampler(
         (mat(::, random).toDenseVector, random)
       })
     })
-    val squareListRDD = outRDD.map( x => {
-      x.map( t => {
-        val size = t._1.size
-        val random = t._2
-        Square((0, random), (size, random))
-      }).toList
-    })
 
     val out = outRDD.flatMap(x => x.map(t=>t._1))
-    val lineage = ShapeLineage(in, out, squareListRDD)
+    /*val randomAndSize = outRDD.flatMap(x => x.map(x=>(x._2, x._1.size)))
+    val mappingRDD = randomAndSize.zipWithIndex.map{
+      case ((random, size), index) => {
+        val inList = (0 until size).toList.zip(List.fill(size){random})
+        val outList = (List.fill(size){index.toInt}).zip(0 until size)
+        List((inList, outList))
+      }
+    }
+
+
+    val lineage = RegionKLineage(in, out, mappingRDD, this)
     lineage.save("ColumnSampler-"+System.nanoTime())
-    println("collecting lineage for ColumnSampler \t mapping: "+lineage.qBackward((0, 0)))
+    println("collecting lineage for ColumnSampler")*/
     out
   }
 
