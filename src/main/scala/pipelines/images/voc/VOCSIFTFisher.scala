@@ -14,6 +14,7 @@ import nodes.util.{FloatToDouble, MatrixVectorizer, Cacher, ClassLabelIndicators
 import org.apache.spark.{SparkConf, SparkContext}
 import scopt.OptionParser
 import utils.{Image, MatrixUtils}
+import workflow._
 
 object VOCSIFTFisher extends Serializable {
   val appName = "VOCSIFTFisher"
@@ -151,6 +152,9 @@ object VOCSIFTFisher extends Serializable {
     val conf = new SparkConf().setAppName(appName)
     conf.setIfMissing("spark.master", "local[2]")
     val sc = new SparkContext(conf)
+    //the following two lines are temporary solution, will remove after migration to KeystoneLineage
+    Lineage.setSC(sc)
+    Lineage.setPath("Lineage")
     run(sc, appConfig)
 
     sc.stop()

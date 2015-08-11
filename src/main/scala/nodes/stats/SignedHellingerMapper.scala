@@ -5,7 +5,7 @@ import breeze.numerics._
 import org.apache.spark.rdd.RDD
 import workflow.Transformer
 import workflow._
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 
 /**
  *  Apply power normalization: z <- sign(z)|z|^{\rho}
@@ -19,7 +19,7 @@ object SignedHellingerMapper extends Transformer[DenseVector[Double], DenseVecto
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
-    val lineage = OneToOneLineage(in, out, this)
+    val lineage = OneToOneKLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out

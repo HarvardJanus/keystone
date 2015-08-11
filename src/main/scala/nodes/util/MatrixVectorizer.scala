@@ -4,7 +4,7 @@ import breeze.linalg.{DenseMatrix, DenseVector}
 import org.apache.spark.rdd.RDD
 import workflow.Transformer
 import workflow._
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 
 /**
  * Flattens a matrix into a vector.
@@ -14,7 +14,7 @@ object MatrixVectorizer extends Transformer[DenseMatrix[Double], DenseVector[Dou
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
-    val lineage = OneToOneLineage(in, out, this)
+    val lineage = OneToOneKLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out

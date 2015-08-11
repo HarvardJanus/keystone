@@ -172,3 +172,65 @@ case class LinComMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 		}
 	}
 }
+
+case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape], inRDDs: List[Int], outRDDs: List[Int]) extends Mapping{
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (i: Int, j: Int) =>{
+				val shapeTuple = bMap.find(_._1.inShape(i.toDouble, j.toDouble)).getOrElse(null)
+				shapeTuple match {
+					case t:(Shape, Shape) => t._2.toCoor
+					case _ => List()
+				}
+			}
+		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (i: Int, j: Int) =>{
+				val shapeMap= fMap.filter(_._1.inShape(i.toDouble, j.toDouble))
+				if(shapeMap.isEmpty){
+					List()
+				}
+				else{
+					val shapes = shapeMap.values.toList
+					shapes.map(x => x.toCoor)
+				}
+			}
+		}
+	}
+}
+
+object ContourMapping{
+	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])], inRDDs: List[Int], outRDDs: List[Int]) = {
+		val (fMap, bMap) = buildIndex(mapping)
+		new ContourMapping(fMap, bMap, inRDDs, outRDDs)
+	}
+
+	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
+		var fMap: Map[Shape, Shape] = Map()
+		var bMap: Map[Shape, Shape] = Map()
+		val maps = mapping.map{
+			m => {
+				/*val xList = mapping._1.map(x => x._1)
+				val yList = mapping._1.map(x => x._2)
+				val x = xList.sum.toDouble/xList.size
+				val y = yList.sum.toDouble/yList.size
+				val circle = Circle((x, y), 4)
+
+				val upperLeft = (mapping._2.head._1.toDouble, mapping._2.head._2.toDouble)
+				val lowerRight = (mapping._2.last._1.toDouble, mapping._2.last._2.toDouble)
+				val square = Square(upperLeft, lowerRight)*/
+				val circle = Shape(m._1)
+				val square = Shape(m._2)
+
+				fMap += circle->square
+				bMap += square->circle
+			}
+		}
+		(fMap, bMap)
+	}
+}

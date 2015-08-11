@@ -4,7 +4,7 @@ import org.apache.spark.rdd.RDD
 import utils.{MultiLabeledImage, Image, LabeledImage}
 import workflow._
 import workflow.Transformer
-import workflow.Lineage._
+import workflow.KeystoneLineage._
 
 /**
  * Extracts a label from a labeled image.
@@ -35,7 +35,7 @@ object MultiLabeledImageExtractor extends Transformer[MultiLabeledImage, Image] 
 
   override def saveLineageAndApply(in: RDD[MultiLabeledImage], tag: String): RDD[Image] = {
     val out = in.map(apply)
-    val lineage = OneToOneLineage(in, out, this)
+    val lineage = OneToOneKLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
     out
