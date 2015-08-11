@@ -137,17 +137,16 @@ object Shape{
 		val ellipse = Ellipse(centroid, r, b, theta)
 
 		//calculate the precision of each shape
-		val pre_square = square.toCoor.intersect(input).size.toDouble/square.toCoor.size
-		val pre_circle = circle.toCoor.intersect(input).size.toDouble/circle.toCoor.size
-		val pre_ellipse = ellipse.toCoor.intersect(input).size.toDouble/ellipse.toCoor.size
+		val pre_square = if (square.toCoor.size == 0) 0 else square.toCoor.intersect(input).size.toDouble/square.toCoor.size
+		val pre_circle = if (circle.toCoor.size == 0) 0 else circle.toCoor.intersect(input).size.toDouble/circle.toCoor.size
+		val pre_ellipse = if (ellipse.toCoor.size == 0) 0 else ellipse.toCoor.intersect(input).size.toDouble/ellipse.toCoor.size
 
 		//println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
 
 		//decide shape based on the accuracy of the fitting shape
-		//val shape = if ((pre_ellipse >= pre_circle)&&(pre_ellipse >= pre_circle)){
-		//	ellipse
-		//}else 
-		val shape = if (pre_circle >= pre_square) {
+		val shape = if ((pre_ellipse >= pre_circle)&&(pre_ellipse >= pre_square)){
+			ellipse
+		}else if (pre_circle >= pre_square) {
 			circle
 		}else{
 			square
