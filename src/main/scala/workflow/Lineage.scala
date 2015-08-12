@@ -19,12 +19,16 @@ import scala.io.Source
  *  @param transformer the transformer itself
  */
 
-class Lineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
-	modelRDD: Option[_]) extends serializable{
+abstract class Lineage(modelRDD: Option[_]) extends serializable{
 
 	//qForward() and qBackward() methods need implementation, should call to mappingRDD
 	def qForward(key: Option[_]) = List((1, 1))
 	def qBackward(key: Option[_]) = List((1, 1))
+  def save(tag: String)
+}
+
+class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
+	modelRDD: Option[_]) extends Lineage(modelRDD){
 
   def save(tag: String) = {
   	//need to save RDD in each directory
@@ -33,6 +37,20 @@ class Lineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Tr
   	val rdd = context.parallelize(Seq(transformer), 1)
   	rdd.saveAsObjectFile(path+"/"+tag+"/transformer")
   	mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
+  }
+}
+
+class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMapping, transformer: GatherTransformer[_], 
+	modelRDD: Option[_]) extends Lineage(modelRDD){
+
+  def save(tag: String) = {
+  	//need to save RDD in each directory
+  	val path = "Lineage"
+  	val context = outRDD.context
+  	val rdd = context.parallelize(Seq(transformer), 1)
+  	rdd.saveAsObjectFile(path+"/"+tag+"/transformer")
+  	val mrdd = context.parallelize(Seq(mapping), 1)
+  	mrdd.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
 }
 
@@ -67,7 +85,7 @@ object OneToOneLineage{
 			}
 			case _ => None
 		})
-		new Lineage(in, out, mapping, transformer, model)
+		new NarrowLineage(in, out, mapping, transformer, model)
 	}
 }
 
@@ -88,7 +106,7 @@ object AllToOneLineage{
 			}
 			case _ => None
 		})
-		new Lineage(in, out, mapping, transformer, model)
+		new NarrowLineage(in, out, mapping, transformer, model)
 	}
 }
 
@@ -104,19 +122,28 @@ object LinComLineage{
 			}
 			case _ => None
 		})
-		new Lineage(in, out, mapping, transformer, model)
+		new NarrowLineage(in, out, mapping, transformer, model)
 	}
 }
 
 object RegionLineage{
 	def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], 
-		transformer: Transformer[_, _], model: Option[_] = None) = {
+		transformer: Transformer[_, _], model: Option[_]=None) = {
 		val mapping = ioList.map(l => {
 			ContourMapping(l)
 		})
 
-		new Lineage(in, out, mapping, transformer, model)
+		new NarrowLineage(in, out, mapping, transformer, model)
 		//new SubZeroMapping(ioList, List(in.id), List(out.id))
 		//new SimpleMapping(ioList, List(in.id), List(out.id))
+	}
+}
+
+object GatherLineage{
+	def apply[T](in: Seq[RDD[T]], out: RDD[Seq[T]], transformer: GatherTransformer[_], model: Option[_]=None) = {
+		val sampleIn = in(0)
+		val sampleOut = out.take(1)(0)
+		val mapping = TransposeMapping(in.size, sampleIn.count, out.count, sampleOut.size)
+		new GatherLineage(in, out, mapping, transformer, model)
 	}
 }

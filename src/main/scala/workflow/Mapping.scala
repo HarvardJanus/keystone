@@ -204,6 +204,25 @@ case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) exte
 	}
 }
 
+case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extends Mapping{
+	//need to check i, j are within bound
+	def qBackward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (i: Int, j: Int) => List((j,i))
+			case _ => List()
+		}
+	}
+
+	def qForward(key: Option[_]) = {
+		val k = key.getOrElse(null)
+		k match {
+			case (i: Int, j: Int) => List((j,i))
+			case _ => List()
+		}
+	}
+}
+
 object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
 		val (fMap, bMap) = buildIndex(mapping)
