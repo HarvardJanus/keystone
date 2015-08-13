@@ -26,10 +26,12 @@ class ColumnSampler(
         })
       }
     }
-    println(outRDD.take(1)(0))
+    //cache to avoid re-evaluation
+    outRDD.cache()
 
-    val out = outRDD.flatMap(x => x.map(t=>t._1))
-    val bMappingRDD = outRDD.flatMap(x => x.map(t=>(t._2, t._3.toLong)))
+    val out = outRDD.flatMap(x => x.map(t => t._1))
+    val bMappingRDD = outRDD.flatMap(x => x.map(t => (t._2, t._3.toLong)))
+
 
     val fTempRDD = outRDD.map(x => x.map(t => (t._2, t._3.toLong)))
     val fMappingRDD = fTempRDD.map( x => {
@@ -43,7 +45,6 @@ class ColumnSampler(
     println("collecting lineage for ColumnSampler")
     out
   }
-
 }
 
 /**
