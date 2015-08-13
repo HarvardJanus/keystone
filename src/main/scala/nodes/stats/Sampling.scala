@@ -18,27 +18,29 @@ class ColumnSampler(
     val numImgs = numImgsOpt.getOrElse(in.count.toInt)
     val samplesPerImage = numSamples/numImgs
 
-    val outRDD = in.map(mat => {
-      (0 until samplesPerImage).map( x => {
-        val random = scala.util.Random.nextInt(mat.cols)
-        (mat(::, random).toDenseVector, random)
-      })
-    })
-
-    val out = outRDD.flatMap(x => x.map(t=>t._1))
-    /*val randomAndSize = outRDD.flatMap(x => x.map(x=>(x._2, x._1.size)))
-    val mappingRDD = randomAndSize.zipWithIndex.map{
-      case ((random, size), index) => {
-        val inList = (0 until size).toList.zip(List.fill(size){random})
-        val outList = (List.fill(size){index.toInt}).zip(0 until size)
-        List((inList, outList))
+    val outRDD = in.zipWithIndex.map{
+      case (mat, index) => {
+        (0 until samplesPerImage).map( x => {
+          val random = scala.util.Random.nextInt(mat.cols)
+          (mat(::, random).toDenseVector, index, random)
+        })
       }
     }
+    println(outRDD.take(1)(0))
 
+    val out = outRDD.flatMap(x => x.map(t=>t._1))
+    val bMappingRDD = outRDD.flatMap(x => x.map(t=>(t._2, t._3.toLong)))
 
-    val lineage = RegionKLineage(in, out, mappingRDD, this)
+    val fTempRDD = outRDD.map(x => x.map(t => (t._2, t._3.toLong)))
+    val fMappingRDD = fTempRDD.map( x => {
+      x.toList.zipWithIndex.map{
+        case ((index, random), innerIndex) => (random, index*samplesPerImage+innerIndex)
+      }
+    })
+
+    val lineage = SampleLineage(in, out, fMappingRDD, bMappingRDD)
     lineage.save("ColumnSampler-"+System.nanoTime())
-    println("collecting lineage for ColumnSampler")*/
+    println("collecting lineage for ColumnSampler")
     out
   }
 

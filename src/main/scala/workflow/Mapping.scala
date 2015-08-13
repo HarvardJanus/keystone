@@ -223,6 +223,26 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
 	}
 }
 
+case class MiscMapping(map: Map[Long, _]) extends Mapping{
+  def qForward(key: Option[_]) = {
+    val k = key.getOrElse(null)
+    k match {
+      case (i: Long) =>{
+        List(map(i))
+      }
+    }
+  }
+
+  def qBackward(key: Option[_]) = {
+    val k = key.getOrElse(null)
+    k match {
+      case (i: Long) =>{
+        List(map(i))
+      }
+    }
+  }
+}
+
 object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
 		val (fMap, bMap) = buildIndex(mapping)
@@ -252,4 +272,21 @@ object ContourMapping{
 		}
 		(fMap, bMap)
 	}
+}
+
+object MiscMapping{
+  def apply(mapping: List[(Long, Long)]) = {
+    var map: Map[Long, Long] = Map()
+    mapping.map(x => map += x._1->x._2)
+    new MiscMapping(map)
+  }
+
+  def apply(mapping: (Long, Long)) = {
+    val map = mapping match {
+      case (mIndex:Long, random:Long) => {
+        Map(1.toLong->(mIndex, random))
+      }
+    }
+    new MiscMapping(map)
+  }
 }
