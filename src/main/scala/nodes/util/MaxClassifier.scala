@@ -16,7 +16,7 @@ object MaxClassifier extends Transformer[DenseVector[Double], Int] {
     val out = in.map(apply)
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0).size)
+    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0, 0).size)
     out
   }
 }

@@ -45,15 +45,21 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
 
   def qBackward(key: Option[_]) = {
     key.getOrElse(null) match{
-      case (i:Int, j:Int) => mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some(j))
-      case (i:Int, j:Int, k:Int) => mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some((j, k)))
+      case (i:Int, j:Int) => {
+        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some(j))
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
+      case (i:Int, j:Int, k:Int) => {
+        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some((j, k)))
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
     }
   }
 
   def save(tag: String) = {
     val context = mappingRDD.context
-    val rdd = context.parallelize(Seq(transformer), 1)
-    rdd.saveAsObjectFile(path+"/"+tag+"/transformer")
+    val tRDD = context.parallelize(Seq(transformer), 1)
+    tRDD.saveAsObjectFile(path+"/"+tag+"/transformer")
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
 }
