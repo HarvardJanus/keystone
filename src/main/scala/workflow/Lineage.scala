@@ -22,13 +22,33 @@ import scala.io.Source
 abstract class Lineage(modelRDD: Option[_]) extends serializable{
   val path = "Lineage"
   //qForward() and qBackward() methods need implementation, should call to mappingRDD
-  def qForward(key: Option[_]) = List((1, 1))
-  def qBackward(key: Option[_]) = List((1, 1))
+  def qForward(key: Option[_]):List[_]
+  def qBackward(key: Option[_]):List[_]
   def save(tag: String)
 }
 
 class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
   modelRDD: Option[_]) extends Lineage(modelRDD){
+
+  def qForward(key: Option[_]) = {
+    key.getOrElse(null) match{
+      case (i:Int, j:Int) => {
+        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qForward(Some(j))
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
+      case (i:Int, j:Int, k:Int) => {
+        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qForward(Some((j, k)))
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
+    }
+  }
+
+  def qBackward(key: Option[_]) = {
+    key.getOrElse(null) match{
+      case (i:Int, j:Int) => mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some(j))
+      case (i:Int, j:Int, k:Int) => mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some((j, k)))
+    }
+  }
 
   def save(tag: String) = {
     val context = mappingRDD.context
@@ -41,6 +61,9 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
 class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMapping, transformer: GatherTransformer[_], 
   modelRDD: Option[_]) extends Lineage(modelRDD){
 
+  def qForward(key: Option[_]) = List((1,1))
+  def qBackward(key: Option[_]) = List((1,1))
+
   def save(tag: String) = {
     val context = outRDD.context
     val rdd = context.parallelize(Seq(transformer), 1)
@@ -51,6 +74,10 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
 }
 
 class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: RDD[_], modelRDD: Option[_]) extends Lineage(modelRDD){
+  
+  def qForward(key: Option[_]) = List((1,1))
+  def qBackward(key: Option[_]) = List((1,1))
+
   //This is a temporary solution since ColumnSampler is not a transformer yet
   def save(tag: String) = {
     fMapping.saveAsObjectFile(path+"/"+tag+"/fMappingRDD")

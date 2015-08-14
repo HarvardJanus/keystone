@@ -20,7 +20,7 @@ case class RandomSignNode(signs: DenseVector[Double])
     val out = in.map(apply)
     val lineage = OneToOneLineage(in, out, this, Some(signs))
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0))
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qForward(0,0))
     out
   }
 }
