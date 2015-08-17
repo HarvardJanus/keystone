@@ -209,7 +209,10 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
 	def qBackward(key: Option[_]) = {
 		val k = key.getOrElse(null)
 		k match {
-			case (i: Int, j: Int) => List((j,i))
+			case (i: Int, j: Int) => {
+        require((i < inY)&&(j < inX), {"querying out of bound of input"})
+        List((j,i))
+      }
 			case _ => List()
 		}
 	}
@@ -217,7 +220,10 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
 	def qForward(key: Option[_]) = {
 		val k = key.getOrElse(null)
 		k match {
-			case (i: Int, j: Int) => List((j,i))
+			case (i: Int, j: Int) => {
+        require((i < outY)&&(j < outX), {"querying out of bound of output"})
+        List((j,i))
+      }
 			case _ => List()
 		}
 	}
