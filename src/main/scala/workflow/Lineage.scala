@@ -67,8 +67,25 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
 class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMapping, transformer: GatherTransformer[_], 
   modelRDD: Option[_]) extends Lineage(modelRDD){
 
-  def qForward(key: Option[_]) = List((1,1))
-  def qBackward(key: Option[_]) = List((1,1))
+  def qForward(key: Option[_]) = {
+    key.getOrElse(null) match{
+      case (i:Int, j:Int, k:Int) => {
+        val innerRet = mapping.qForward(Some((i, j)))
+        val list = innerRet.zip(List.fill(innerRet.size){k})
+        list.map(x => (x._1._1, x._1._2, x._2))
+      }
+    }
+  }
+
+  def qBackward(key: Option[_]) = {
+    key.getOrElse(null) match{
+      case (i:Int, j:Int, k:Int) => {
+        val innerRet = mapping.qForward(Some((i, j)))
+        val list = innerRet.zip(List.fill(innerRet.size){k})
+        list.map(x => (x._1._1, x._1._2, x._2))
+      }
+    }
+  }
 
   def save(tag: String) = {
     val context = outRDD.context
@@ -81,8 +98,27 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
 
 class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: RDD[_], modelRDD: Option[_]) extends Lineage(modelRDD){
   
-  def qForward(key: Option[_]) = List((1,1))
-  def qBackward(key: Option[_]) = List((1,1))
+  def qForward(key: Option[_]) = {
+    key.getOrElse(null) match{
+      case (i:Int, j:Int, k:Int) => {
+        val innerRet = fMapping.take(i+1)(i).asInstanceOf[Mapping].qForward(Some(k.toLong))
+        innerRet.zip(List.fill(innerRet.size){j})
+      }
+    }
+  }
+
+  def qBackward(key: Option[_]) = {
+    key.getOrElse(null) match {
+      case (i:Int, j:Int) => {
+        val innerRet = bMapping.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some(1.toLong))
+        val list = innerRet.zip(List.fill(innerRet.size){j})
+        list.map(x => {
+          val y = x.asInstanceOf[((Long, Long), Int)]
+          (y._1._1, y._2, y._1._2)
+        })
+      }
+    }
+  }
 
   //This is a temporary solution since ColumnSampler is not a transformer yet
   def save(tag: String) = {
@@ -94,7 +130,10 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: R
 object Lineage{
   implicit def intToOption(key: Int): Option[Int] = Some(key)
   implicit def int2DToOption(key: (Int, Int)): Option[(Int, Int)] = Some(key)
+  implicit def int3DToOption(key: (Int, Int, Int)): Option[(Int, Int, Int)] = Some(key)
   implicit def indexInt2DToOption(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
+
+  //need a lineage apply interface to reconstruct the lineage object from files on disk
 }
 
 object OneToOneLineage{

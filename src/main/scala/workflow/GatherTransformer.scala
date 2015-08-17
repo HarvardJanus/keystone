@@ -5,7 +5,8 @@ import workflow._
 
 import scala.reflect.ClassTag
 
-private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
+//private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
+class GatherTransformer[T] extends TransformerNode[Seq[T]] {
   def transform(dataDependencies: Seq[_], fitDependencies: Seq[TransformerNode[_]]): Seq[T] = dataDependencies.map(_.asInstanceOf[T])
 
   def transformRDD(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]]): RDD[Seq[T]] = {
