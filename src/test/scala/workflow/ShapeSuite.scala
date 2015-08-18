@@ -35,6 +35,7 @@ class ShapeSuite extends FunSuite with LocalSparkContext with Logging {
 	val slist = List((-1,-1), (-1,0), (-1,1), (0,-1), (0,0), (0,1), (1,-1), (1,0), (1,1))
 	val square = Shape(slist)
 	val objectSquare = new Square((0,0), 1, 1)
+	println(square)
 	assert(square.toCoor == objectSquare.toCoor)
   }
 }
