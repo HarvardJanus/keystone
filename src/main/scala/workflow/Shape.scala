@@ -95,7 +95,7 @@ object Shape{
 	}
 
 	def euclideanDistance(x: (Double, Double), y: (Double, Double)) = {
-		(x._1-y._1)*(x._1-y._1) + (x._2-y._2)*(x._2-y._2)
+		sqrt((x._1-y._1)*(x._1-y._1) + (x._2-y._2)*(x._2-y._2))
 	}
 
 	def detect(input: List[(Int, Int)]): Shape = {
@@ -126,20 +126,26 @@ object Shape{
 		}
 
 		//fit a circle
-		val r = sqrt(euclideanDistance(furthest, centroid))
+		val r = euclideanDistance(furthest, centroid)
 		val circle = Circle(centroid, r)
 
 		//fit an ellipse
-		val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-centroid._1/r) else asin (centroid._1/r)
-		val numerator = pow(r*((furthest._2-centroid._2)*cos(theta)-(furthest._1-centroid._1)*sin(theta)), 2)
-		val denominator = pow(r, 2)-pow(((furthest._1-centroid._1)*cos(theta)+(furthest._2-centroid._2)*sin(theta)), 2)
+		val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-(furthest._2-centroid._2)/r) else asin ((furthest._2-centroid._2)/r)
+
+		val secondList = x.zip(y).filter{
+			x => abs(abs(asin((x._2-centroid._2)/euclideanDistance(x, centroid)) - theta) - 1.57) < 0.01
+		}
+		val second = secondList.sortWith(euclideanDistance(_,centroid)>euclideanDistance(_,centroid)).head
+		val numerator = pow(r*((second._2-centroid._2)*cos(theta)-(second._1-centroid._1)*sin(theta)), 2)
+		val denominator = pow(r, 2)-pow(((second._1-centroid._1)*cos(theta)+(second._2-centroid._2)*sin(theta)), 2)
+
 		val b = sqrt(numerator/denominator)
 		val ellipse = Ellipse(centroid, r, b, theta)
 
 		//calculate the precision of each shape
-		val pre_square = if (square.toCoor.size == 0) 0 else square.toCoor.intersect(input).size.toDouble/square.toCoor.size
-		val pre_circle = if (circle.toCoor.size == 0) 0 else circle.toCoor.intersect(input).size.toDouble/circle.toCoor.size
-		val pre_ellipse = if (ellipse.toCoor.size == 0) 0 else ellipse.toCoor.intersect(input).size.toDouble/ellipse.toCoor.size
+		val pre_square = if (square.toCoor.size == 0) 0 else square.toCoor.intersect(input).size.toDouble/input.size
+		val pre_circle = if (circle.toCoor.size == 0) 0 else circle.toCoor.intersect(input).size.toDouble/input.size
+		val pre_ellipse = if (ellipse.toCoor.size == 0) 0 else ellipse.toCoor.intersect(input).size.toDouble/input.size
 
 		//println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
 
