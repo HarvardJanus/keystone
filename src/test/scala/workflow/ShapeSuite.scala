@@ -27,4 +27,7 @@ class ShapeSuite extends FunSuite with LocalSparkContext with Logging {
 	val objectCircle = new Circle((0.0,0.0), 2.0)
 	assert(circle.toCoor == objectCircle.toCoor)
   }
+
+  //a test to detect ellipse
+  //a test to detect square
 }
