@@ -6,6 +6,7 @@ import org.scalatest.FunSuite
 import pipelines.{LocalSparkContext, Logging}
 import utils.{ImageUtils, TestUtils}
 
+
 class ShapeSuite extends FunSuite with LocalSparkContext with Logging {
   test("basic shape test") {
     val circle = Circle((0, 0), 2.0)
