@@ -1,9 +1,11 @@
 package workflow
 
+import archery._
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.scalatest.FunSuite
 import pipelines.{LocalSparkContext, Logging}
+import scala.math._
 import utils.{ImageUtils, TestUtils}
 
 
@@ -36,7 +38,20 @@ class ShapeSuite extends FunSuite with LocalSparkContext with Logging {
 	val slist = List((-1,-1), (-1,0), (-1,1), (0,-1), (0,0), (0,1), (1,-1), (1,0), (1,1))
 	val square = Shape(slist)
 	val objectSquare = new Square((0,0), 1, 1)
-	println(square)
 	assert(square.toCoor == objectSquare.toCoor)
+  }
+
+  test("bounding box test") {
+  	val circle = new Circle((0,0), 2)
+  	assert(circle.toBox == Box(-2.0F, -2.0F, 2.0F, 2.0F))
+
+  	val ellipse = new Ellipse((0,0), 2, 2, 0)
+  	assert(ellipse.toBox == Box(-2.0F, -2.0F, 2.0F, 2.0F))
+
+  	val ellipse2 = new Ellipse((0,0), 2, 1, Pi/4)
+  	assert(ellipse2.toBox == Box(-1.5811388F,-1.5811388F,1.5811388F,1.5811388F))
+
+  	val square = new Square((0,0), 2, 1)
+  	assert(square.toBox == Box(-1.0F, -2.0F, 1.0F, 2.0F))
   }
 }

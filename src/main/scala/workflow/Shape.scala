@@ -57,7 +57,34 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 	}
 
 	//below is a temp solution 
-	def toBox() = Box((c._1-a/cos(abs(theta))).toFloat, (c._2-b/cos(abs(theta))).toFloat, (c._1+a/cos(abs(theta))).toFloat, (c._2+b/cos(abs(theta))).toFloat)
+	def toBox() = {
+		/**
+		 *  In an ellipse with rotation
+		 *  x = c._1 + a*cos(t)*cos(theta) - b*sin(t)*sin(theta)
+		 *	y = c._2 + b*sin(t)*cos(theta) + a*cos(t)*sin(phi)
+		 *
+		 *	dx/dt = -a*sin(t)*cos(theta) - b*cos(t)*sin(theta) = 0
+		 *	dy/dt = b*cos(t)*cos(theta) - a*sin(t)*sin(theta) = 0
+		 */
+		val xTan = -b*tan(theta)/a
+		val t1 = atan(xTan)
+		val t2 = t1+Pi
+		val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
+		val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
+		val xl = List(x1, x2)
+		val xMin = xl.min
+		val xMax = xl.max
+
+		val yTan = b*cos(theta)/sin(theta)/a
+		val t3 = atan(yTan)
+		val t4 = t3+Pi
+		val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
+		val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
+		val yl = List(y1, y2)
+		val yMin = yl.min
+		val yMax = yl.max
+		Box(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
+	}
 
 	override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
