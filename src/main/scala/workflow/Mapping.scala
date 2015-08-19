@@ -1,5 +1,6 @@
 package workflow
 
+import archery._
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
@@ -204,6 +205,38 @@ case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) exte
 	}
 }
 
+case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape]) extends Mapping{
+  def qBackward(key: Option[_]) = {
+    val k = key.getOrElse(null)
+    k match {
+      case (i: Int, j: Int) =>{
+        val shapeArray = bRTree.searchWithIn(Point(i.toFloat, j.toFloat))
+        if (shapeArray.isEmpty){
+          List()
+        }
+        else{
+          shapeArray.map(x => x.value.toCoor).toList
+        }
+      }
+    }
+  }
+
+  def qForward(key: Option[_]) = {
+    val k = key.getOrElse(null)
+    k match {
+      case (i: Int, j: Int) =>{
+        val shapeArray = fRTree.searchWithIn(Point(i.toFloat, j.toFloat))
+        if(shapeArray.isEmpty){
+          List()
+        }
+        else{
+          shapeArray.map(x => x.value.toCoor).toList
+        }
+      }
+    }
+  }
+}
+
 case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extends Mapping{
 	//need to check i, j are within bound
 	def qBackward(key: Option[_]) = {
@@ -251,8 +284,10 @@ case class MiscMapping(map: Map[Long, _]) extends Mapping{
 
 object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
-		val (fMap, bMap) = buildIndex(mapping)
-		new ContourMapping(fMap, bMap)
+		/*val (fMap, bMap) = buildIndex(mapping)
+		new ContourMapping(fMap, bMap)*/
+    val (fRTree, bRTree) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree)
 	}
 
 	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
@@ -278,6 +313,28 @@ object ContourMapping{
 		}
 		(fMap, bMap)
 	}
+
+  def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (RTree[Shape], RTree[Shape]) = {
+    var fRTree: RTree[Shape] = RTree()
+    var bRTree: RTree[Shape] = RTree()
+    val maps = mapping.map{
+      m => {
+        val xList = m._1.map(x => x._1)
+        val yList = m._1.map(x => x._2)
+        val x = xList.sum.toDouble/xList.size
+        val y = yList.sum.toDouble/yList.size
+        val circle = Circle((x, y), 4)
+
+        val upperLeft = (m._2.head._1.toDouble, m._2.head._2.toDouble)
+        val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
+        val square = Square(upperLeft, lowerRight)
+
+        fRTree = fRTree.insert(Entry(circle.toBox, square))
+        bRTree = bRTree.insert(Entry(square.toBox, circle))
+      }
+    }
+    (fRTree, bRTree)
+  }
 }
 
 object MiscMapping{

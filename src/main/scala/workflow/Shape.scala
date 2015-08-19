@@ -1,11 +1,13 @@
 package workflow
 
+import archery._
 import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
 	def getCenter(): (Double, Double)
 	def toCoor(): List[_]
 	def inShape(i: Double, j: Double): Boolean
+	def toBox(): Box
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
@@ -25,6 +27,8 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
 		val y = c._2
 		if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
 	}
+
+	def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
 
 	override def toString() = "center: "+c+" r: "+r
 	def getCenter() = c
@@ -52,6 +56,9 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 		if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
 	}
 
+	//below is a temp solution 
+	def toBox() = Box((c._1-a/cos(abs(theta))).toFloat, (c._2-b/cos(abs(theta))).toFloat, (c._1+a/cos(abs(theta))).toFloat, (c._2+b/cos(abs(theta))).toFloat)
+
 	override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
 
@@ -72,6 +79,8 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 		val y = c._2
 		if(i>=(x-b) && i<=(x+b) && j>=(y-a) && j<=(y+a)) true else false
 	}
+
+	def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
 
 	override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
 }
