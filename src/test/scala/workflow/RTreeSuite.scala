@@ -4,7 +4,7 @@ import archery._
 import org.scalatest.FunSuite
 import pipelines.{LocalSparkContext, Logging}
 
-class RTreeSuite extends FunSuite with LocalSparkContext with Logging {
+class RTreeSuite extends FunSuite with Logging {
 	/**
 	 *	RTree requires the Box to be defined as (lowerLeftX, lowerLeftY, upperRightX, upperRightY)
 	 */

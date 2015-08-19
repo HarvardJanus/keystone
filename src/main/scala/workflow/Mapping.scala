@@ -32,7 +32,7 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 				(outCols, seqSize) match {
 					case (1, 1) => {
 						//This is the case for matrix-to-vector
-						require((j*inRows+i < outRows), {"querying out of boundary of input vector"})
+						require((j*inRows+i < outRows), {"querying out of boundary of input matrix"})
 						List((j*inRows+i))
 					}
 					case (_, 1) => {
@@ -55,6 +55,7 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 		val k = key.getOrElse(null)
 		k match {
 			case i:Int =>{
+        require((outCols == 1), {"output is 2-d structure, use 2-d index"})
 				require((i < outRows), {"querying out of boundary of output vector"})
 				(inCols, seqSize) match {
   				case (1, 1) => List(i)
@@ -84,7 +85,7 @@ case class AllToOneMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 				imageMeta match {
 					//this is the case where input and output are images
 					case Some(meta) => {
-						require((i < inRows), {"querying out of boundary of input vector"})
+						require((i < inRows), {"querying out of boundary of input image"})
 						List(i%outRows)
 					}
 					//this is the case where input and output are 1-d vectors
@@ -115,17 +116,21 @@ case class AllToOneMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 				imageMeta match{
 					//this is the case where input and output are images
 					case Some(meta) => {
+            require((i < outRows), {"querying out of boundary of output image"})
 						val xDim = meta.xDim
 						val yDim = meta.yDim
 						val numChannels = meta.numChannels
 						(0 until numChannels).toList.map(c => i+c*xDim*yDim)
 					}
-					case _ => (0 until inRows).toList
+					case _ => {
+            require((i < inRows), {"querying out of boundray of output vector"})
+            (0 until inRows).toList
+          }
 				}
 			}
 			case (i: Int, j: Int) => {
 				require((inCols > 1), {"input is 1-d structure, use 1-d index"})
-				require((i < inRows)&&(j < inCols), {"querying out of boundary of input matrix"})
+				require((i < inRows)&&(j < inCols), {"querying out of boundary of output matrix"})
 				val rSeq = for {
 					i <- 0 until inRows
 					j <- 0 until inCols

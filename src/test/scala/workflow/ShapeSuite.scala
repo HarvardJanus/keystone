@@ -9,7 +9,7 @@ import scala.math._
 import utils.{ImageUtils, TestUtils}
 
 
-class ShapeSuite extends FunSuite with LocalSparkContext with Logging {
+class ShapeSuite extends FunSuite with Logging {
   test("basic shape test") {
     val circle = Circle((0, 0), 2.0)
     assert(circle.toCoor == List((-2,0), (-1,-1), (-1,0), (-1,1), (0,-2), (0,-1), (0,0), (0,1), (0,2), (1,-1), (1,0), (1,1), (2,0)))
