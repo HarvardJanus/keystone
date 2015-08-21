@@ -179,7 +179,7 @@ case class LinComMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 	}
 }
 
-case class ContourMapping(fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
+case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:Shape]) extends Mapping{
 	def qBackward(key: Option[_]) = {
 		val k = key.getOrElse(null)
 		k match {
@@ -243,7 +243,8 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape]) exten
 }
 
 case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extends Mapping{
-	//need to check i, j are within bound
+  require((inX == outY)&&(inY == outX), {"dimensions of input and output matrix are not matching"})
+
 	def qBackward(key: Option[_]) = {
 		val k = key.getOrElse(null)
 		k match {
@@ -251,7 +252,10 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
         require((i < inY)&&(j < inX), {"querying out of bound of input"})
         List((j,i))
       }
-			case _ => List()
+			case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
 		}
 	}
 
@@ -262,7 +266,10 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
         require((i < outY)&&(j < outX), {"querying out of bound of output"})
         List((j,i))
       }
-			case _ => List()
+			case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
 		}
 	}
 }
