@@ -33,11 +33,25 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   def qForward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int) => {
-        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qForward(Some(j))
+        val mapped = mappingRDD.zipWithIndex.map{
+          case (mapping, index) =>{
+            if (index == i){
+              mapping.asInstanceOf[Mapping].qForward(Some(j))
+            }
+          }
+        }
+        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
       case (i:Int, j:Int, k:Int) => {
-        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qForward(Some((j, k)))
+        val mapped = mappingRDD.zipWithIndex.map{
+          case (mapping, index) =>{
+            if (index == i){
+              mapping.asInstanceOf[Mapping].qForward(Some(j,k))
+            }
+          }
+        }
+        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
     }
@@ -46,11 +60,25 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   def qBackward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int) => {
-        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some(j))
+        val mapped = mappingRDD.zipWithIndex.map{
+          case (mapping, index) =>{
+            if (index == i){
+              mapping.asInstanceOf[Mapping].qBackward(Some(j))
+            }
+          }
+        }
+        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
       case (i:Int, j:Int, k:Int) => {
-        val innerRet = mappingRDD.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some((j, k)))
+        val mapped = mappingRDD.zipWithIndex.map{
+          case (mapping, index) =>{
+            if (index == i){
+              mapping.asInstanceOf[Mapping].qBackward(Some(j,k))
+            }
+          }
+        }
+        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
     }
@@ -59,7 +87,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   def save(tag: String) = {
     val context = mappingRDD.context
     val tRDD = context.parallelize(Seq(transformer), 1)
-    tRDD.saveAsObjectFile(path+"/"+tag+"/transformer")
+    tRDD.saveAsObjectFile(path+"/"+tag+"/transformerRDD")
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
 }
@@ -90,7 +118,7 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
   def save(tag: String) = {
     val context = outRDD.context
     val rdd = context.parallelize(Seq(transformer), 1)
-    rdd.saveAsObjectFile(path+"/"+tag+"/transformer")
+    rdd.saveAsObjectFile(path+"/"+tag+"/transformerRDD")
     val mrdd = context.parallelize(Seq(mapping), 1)
     mrdd.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
@@ -101,7 +129,14 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: R
   def qForward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int, k:Int) => {
-        val innerRet = fMapping.take(i+1)(i).asInstanceOf[Mapping].qForward(Some(k.toLong))
+        val mapped = fMapping.zipWithIndex.map{
+          case (mapping, index) =>{
+            if (index == i){
+              mapping.asInstanceOf[Mapping].qForward(Some(k.toLong))
+            }
+          }
+        }
+        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         innerRet.zip(List.fill(innerRet.size){j})
       }
     }
@@ -110,7 +145,14 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: R
   def qBackward(key: Option[_]) = {
     key.getOrElse(null) match {
       case (i:Int, j:Int) => {
-        val innerRet = bMapping.take(i+1)(i).asInstanceOf[Mapping].qBackward(Some(1.toLong))
+        val mapped = bMapping.zipWithIndex.map{
+          case (mapping, index) =>{
+            if (index == i){
+              mapping.asInstanceOf[Mapping].qBackward(Some(1.toLong))
+            }
+          }
+        }
+        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         val list = innerRet.zip(List.fill(innerRet.size){j})
         list.map(x => {
           val y = x.asInstanceOf[((Long, Long), Int)]
@@ -134,6 +176,12 @@ object Lineage{
   implicit def indexInt2DToOption(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
 
   //need a lineage apply interface to reconstruct the lineage object from files on disk
+  def loadLineage(mappingRDD: RDD[Mapping], transformerRDD: RDD[_]): NarrowLineage = {
+    val sc = mappingRDD.context
+    val rdd = sc.parallelize(Seq(1))
+    val transformer = transformerRDD.first.asInstanceOf[Transformer[_,_]]
+    new NarrowLineage(rdd, rdd, mappingRDD, transformer, Some(None))
+  }
 }
 
 object OneToOneLineage{
