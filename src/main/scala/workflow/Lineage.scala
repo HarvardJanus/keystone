@@ -88,6 +88,15 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     val context = mappingRDD.context
     val tRDD = context.parallelize(Seq(transformer), 1)
     tRDD.saveAsObjectFile(path+"/"+tag+"/transformerRDD")
+
+    //save RDD to disk with possible optimization on identical items
+    /*if(mappingRDD.distinct.count == 1){
+      val mapping = mappingRDD.first
+      context.parallelize(Seq(mapping), 1).saveAsObjectFile(path+"/"+tag+"/mappingRDD")
+    }
+    else{
+      mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
+    }*/
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
 }
