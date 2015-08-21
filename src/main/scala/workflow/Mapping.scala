@@ -190,6 +190,10 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
 					case _ => List()
 				}
 			}
+      case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
 		}
 	}
 
@@ -206,6 +210,10 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
 					shapes.map(x => x.toCoor)
 				}
 			}
+      case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
 		}
 	}
 }
@@ -223,6 +231,10 @@ case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Sha
           shapeArray.filter(x=>x.value._1.inShape(i.toDouble, j.toDouble)).map(x => x.value._2.toCoor).toList
         }
       }
+      case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
     }
   }
 
@@ -237,6 +249,10 @@ case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Sha
         else{
           shapeArray.filter(x=>x.value._1.inShape(i.toDouble, j.toDouble)).map(x => x.value._2.toCoor).toList
         }
+      }
+      case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
       }
     }
   }

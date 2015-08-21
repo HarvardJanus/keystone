@@ -56,7 +56,6 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 		if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
 	}
 
-	//below is a temp solution 
 	def toBox() = {
 		/**
 		 *  In an ellipse with rotation
