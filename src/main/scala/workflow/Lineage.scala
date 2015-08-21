@@ -108,7 +108,7 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
   def qBackward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int, k:Int) => {
-        val innerRet = mapping.qForward(Some((i, j)))
+        val innerRet = mapping.qBackward(Some((i, j)))
         val list = innerRet.zip(List.fill(innerRet.size){k})
         list.map(x => (x._1._1, x._1._2, x._2))
       }
@@ -266,7 +266,7 @@ object RegionLineage{
 object GatherLineage{
   def apply[T](in: Seq[RDD[T]], out: RDD[Seq[T]], transformer: GatherTransformer[_], model: Option[_]=None) = {
     val sampleIn = in(0)
-    val sampleOut = out.take(1)(0)
+    val sampleOut = out.first
     val mapping = TransposeMapping(in.size, sampleIn.count, out.count, sampleOut.size)
     new GatherLineage(in, out, mapping, transformer, model)
   }
