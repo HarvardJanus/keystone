@@ -210,7 +210,7 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
 	}
 }
 
-case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape]) extends Mapping{
+case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Shape, Shape)]) extends Mapping{
   def qBackward(key: Option[_]) = {
     val k = key.getOrElse(null)
     k match {
@@ -220,7 +220,7 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape]) exten
           List()
         }
         else{
-          shapeArray.map(x => x.value.toCoor).toList
+          shapeArray.filter(x=>x.value._1.inShape(i.toDouble, j.toDouble)).map(x => x.value._2.toCoor).toList
         }
       }
     }
@@ -235,7 +235,7 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape]) exten
           List()
         }
         else{
-          shapeArray.map(x => x.value.toCoor).toList
+          shapeArray.filter(x=>x.value._1.inShape(i.toDouble, j.toDouble)).map(x => x.value._2.toCoor).toList
         }
       }
     }
@@ -326,9 +326,9 @@ object ContourMapping{
 		(fMap, bMap)
 	}
 
-  def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (RTree[Shape], RTree[Shape]) = {
-    var fRTree: RTree[Shape] = RTree()
-    var bRTree: RTree[Shape] = RTree()
+  def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (RTree[(Shape, Shape)], RTree[(Shape, Shape)]) = {
+    var fRTree: RTree[(Shape, Shape)] = RTree()
+    var bRTree: RTree[(Shape, Shape)] = RTree()
     val maps = mapping.map{
       m => {
         val xList = m._1.map(x => x._1)
@@ -341,8 +341,8 @@ object ContourMapping{
         val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
         val square = Square(upperLeft, lowerRight)
 
-        fRTree = fRTree.insert(Entry(circle.toBox, square))
-        bRTree = bRTree.insert(Entry(square.toBox, circle))
+        fRTree = fRTree.insert(Entry(circle.toBox, (circle, square)))
+        bRTree = bRTree.insert(Entry(square.toBox, (square, circle)))
       }
     }
     (fRTree, bRTree)
