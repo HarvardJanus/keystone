@@ -8,6 +8,7 @@ abstract class Shape(c: (Double, Double)) extends Serializable{
 	def toCoor(): List[_]
 	def inShape(i: Double, j: Double): Boolean
 	def toBox(): Box
+	def toSquare(): Square
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
@@ -29,6 +30,7 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
 	}
 
 	def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
+	def toSquare = Square(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble)).asInstanceOf[Square]
 
 	override def toString() = "center: "+c+" r: "+r
 	def getCenter() = c
@@ -85,11 +87,34 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 		Box(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
 	}
 
+	def toSquare() ={
+		val xTan = -b*tan(theta)/a
+		val t1 = atan(xTan)
+		val t2 = t1+Pi
+		val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
+		val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
+		val xl = List(x1, x2)
+		val xMin = xl.min
+		val xMax = xl.max
+
+		val yTan = b*cos(theta)/sin(theta)/a
+		val t3 = atan(yTan)
+		val t4 = t3+Pi
+		val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
+		val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
+		val yl = List(y1, y2)
+		val yMin = yl.min
+		val yMax = yl.max
+		Square((xMin, yMin), (xMax, yMax)).asInstanceOf[Square]
+	}
+
 	override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
 
 case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 	def getCenter() = c
+	def getUpperLeft = (c._1-b, c._2-a)
+	def getLowerRight = (c._1+b, c._2+a)
 	def toCoor() = {
 		val x = c._1
 		val y = c._2
@@ -107,6 +132,7 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 	}
 
 	def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
+	def toSquare() = Square(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a))).asInstanceOf[Square]
 
 	override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
 }
