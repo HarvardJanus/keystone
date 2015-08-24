@@ -363,6 +363,13 @@ object ContourMapping{
     }
     (fRTree, bRTree)
   }
+
+  def buildKMeansIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, List[Shape]], Map[Shape, List[Shape]]) = {
+    val fIndex: Map[Shape, List[Shape]] = Map()
+    val bIndex: Map[Shape, List[Shape]] = Map()
+
+    (fIndex, bIndex)
+  }
 }
 
 object MiscMapping{
