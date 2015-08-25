@@ -450,12 +450,14 @@ object ContourMapping{
       Map(seq: _*)
     }
 
+    //helper function computes the centroid of a given list of shapes
     def getCentroid(l: List[(Shape, Shape)]): (Double, Double) = {
       val xSum = l.map(x => x._1.getCenter._1.toDouble).sum
       val ySum = l.map(x => x._1.getCenter._2.toDouble).sum
       (xSum/l.size, ySum/l.size)
     }
 
+    //helper function computes the bounding square of a given list of shapes
     def getBoundSquare(key: (Double, Double), l: List[(Shape, Shape)]): Shape = {
       val firstL = l.map(x=>x._1)
       firstL.foldLeft(Square(key, 0.0, 0.0)){
