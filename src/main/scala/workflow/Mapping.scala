@@ -13,7 +13,7 @@ import scala.math._
 import scala.reflect.ClassTag
 import scala.io.Source
 
-  trait Mapping extends serializable{
+trait Mapping extends serializable{
 	def qForward(key: Option[_]): List[_]
 	def qBackward(key: Option[_]): List[_]
 }
