@@ -285,6 +285,57 @@ case class ContourMappingKMeans(fIndex: Map[Shape, List[(Shape, Shape)]], bIndex
   def qBackward(key: Option[_]) = query(key, bIndex)
 }
 
+case class SimpleMapping(fIndex: Map[(Int, Int), List[List[(Int, Int)]]], bIndex: Map[(Int, Int), List[List[(Int, Int)]]]) extends Mapping{
+  def qForward(key: Option[_]) = query(key, fIndex)
+  def qBackward(key: Option[_]) = query(key, bIndex)
+
+  def query(key: Option[_], index: Map[(Int, Int), List[List[(Int, Int)]]]) = {
+    val k = key.getOrElse(null)
+    k match {
+      case (i: Int, j: Int) =>{
+        val valueList = index((i, j))
+        if (valueList.isEmpty){
+          List()
+        }
+        else{
+          valueList
+        }
+      }
+      case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
+    }
+  }
+}
+
+case class OneManyMapping(fIndex: (Map[(Int, Int), List[String]], Map[String,List[(Int, Int)]]), 
+    bIndex: (Map[(Int, Int), List[String]], Map[String,List[(Int, Int)]])) extends Mapping{
+  def qForward(key: Option[_]) = query(key, fIndex)
+  def qBackward(key: Option[_]) = query(key, bIndex)
+
+  def query(key: Option[_], index: (Map[(Int, Int), List[String]], Map[String,List[(Int, Int)]])) = {
+    val firstIndex = index._1
+    val secondIndex = index._2
+    val k = key.getOrElse(null)
+    k match {
+      case (i: Int, j: Int) =>{
+        val valueList = firstIndex((i, j))
+        if (valueList.isEmpty){
+          List()
+        }
+        else{
+          valueList.map(key => secondIndex(key))
+        }
+      }
+      case _ => {
+        require((0==1), "input is 2-d structure, use 2-d index")
+        List()
+      }
+    }
+  }
+}
+
 case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extends Mapping{
   require((inX == outY)&&(inY == outX), {"dimensions of input and output matrix are not matching"})
 
@@ -477,6 +528,93 @@ object ContourMapping{
     bIndex = KMeans(bShapeMap, 1)
 
     (fIndex, bIndex)
+  }
+}
+
+object SimpleMapping{
+  def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
+    val (fIndex, bIndex) = buildSimpleIndex(mapping)
+    new SimpleMapping(fIndex, bIndex)
+  }
+
+  def buildSimpleIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
+    //initialize index
+    var fIndex: Map[(Int, Int), List[List[(Int, Int)]]] = Map()
+    var bIndex: Map[(Int, Int), List[List[(Int, Int)]]] = Map()
+    //build index
+    mapping.map{
+      case (l1, l2) => {
+        l1.map{
+          key => {
+            if(fIndex.contains(key)){
+              fIndex(key) = fIndex(key) :+ l2
+            }
+            else{
+              fIndex += key->List(l2)
+            }
+          }
+        }
+        l2.map{
+          key => {
+            if(bIndex.contains(key)){
+              bIndex(key) = bIndex(key) :+ l1
+            }
+            else{
+              bIndex += key->List(l1)
+            }
+          }
+        }
+      }
+    }
+    (fIndex, bIndex)
+  }
+}
+
+object OneManyMapping{
+  def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
+    val (fIndex, bIndex) = buildOneManyIndex(mapping)
+    new OneManyMapping(fIndex, bIndex)
+  }
+
+  def buildOneManyIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
+    //initialize index
+    var firstFIndex: Map[(Int, Int), List[String]] = Map() 
+    var secondFIndex: Map[String,List[(Int, Int)]] = Map()
+    var firstBIndex: Map[(Int, Int), List[String]] = Map() 
+    var secondBIndex: Map[String,List[(Int, Int)]] = Map()
+  
+    //build index
+    mapping.zipWithIndex.map{
+      case ((l1, l2), index) => {
+        //build fIndex
+        val hValue = index.toString
+        secondFIndex += hValue->l2
+        l1.map{
+          key => {
+            if(firstFIndex.contains(key)){
+              firstFIndex(key) = firstFIndex(key) :+ hValue
+            }
+            else{
+              firstFIndex += key->List(hValue)
+            }            
+          }
+        }
+        //build bIndex
+        secondBIndex += hValue->l1
+        l2.map{
+          key => {
+            if(firstBIndex.contains(key)){
+              firstBIndex(key) = firstBIndex(key) :+ hValue
+            }
+            else{
+              firstBIndex += key->List(hValue)
+            } 
+          }
+        }
+      }
+    }
+    //return index    
+    ((firstFIndex, secondFIndex), (firstBIndex, secondBIndex))
   }
 }
 
