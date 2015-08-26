@@ -18,6 +18,7 @@ case class RandomSignNode(signs: DenseVector[Double])
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
+    out.cache()
     val lineage = OneToOneLineage(in, out, this, Some(signs))
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qForward(0,0))
