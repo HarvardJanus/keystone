@@ -185,7 +185,7 @@ object Lineage{
   implicit def indexInt2DToOption(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
 
   //need a lineage apply interface to reconstruct the lineage object from files on disk
-  def loadLineage(mappingRDD: RDD[Mapping], transformerRDD: RDD[_]): NarrowLineage = {
+  def load(mappingRDD: RDD[Mapping], transformerRDD: RDD[_]): NarrowLineage = {
     val sc = mappingRDD.context
     val rdd = sc.parallelize(Seq(1))
     val transformer = transformerRDD.first.asInstanceOf[Transformer[_,_]]
