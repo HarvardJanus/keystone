@@ -151,9 +151,10 @@ private[workflow] class ConcretePipeline[A, B](
 
   //override def apply(in: RDD[A]): RDD[B] = rddDataEval(sink, in).asInstanceOf[RDD[B]]
   override def apply(in: RDD[A]): RDD[B] = {
-    lineage = List[String]()
+    /*lineage = List[String]()
     val out = rddDataEvalWithLineage(sink, in).asInstanceOf[RDD[B]]
     saveLineage(lineage, in.id)
-    out
+    out*/
+    rddDataEvalWithLineage(sink, in).asInstanceOf[RDD[B]]
   }
 }

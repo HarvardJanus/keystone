@@ -305,8 +305,8 @@ object LinComLineage{
 object RegionLineage{
   def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(List[(Int, Int)], List[(Int, Int)])]], 
     transformer: Transformer[_, _], model: Option[_]=None) = {
-    //val mapping = ioList.map(l => ContourMapping(l))
-    val mapping = ioList.map(l => OneManyMapping(l))
+    val mapping = ioList.map(l => ContourMapping(l))
+    //val mapping = ioList.map(l => OneManyMapping(l))
     //val mapping = ioList.map(l => SimpleMapping(l))
 
     new NarrowLineage(in, out, mapping, transformer, model)
