@@ -25,6 +25,7 @@ abstract class Lineage(modelRDD: Option[_]) extends serializable{
   def qForward(key: Option[_]):List[_]
   def qBackward(key: Option[_]):List[_]
   def save(tag: String)
+  def size: Long
 }
 
 class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
@@ -99,6 +100,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     }*/
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
+  def size = mappingRDD.count
 }
 
 class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMapping, transformer: GatherTransformer[_], 
@@ -131,6 +133,7 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
     val mrdd = context.parallelize(Seq(mapping), 1)
     mrdd.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
   }
+  def size = inSeq.size
 }
 
 class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: RDD[_], modelRDD: Option[_]) extends Lineage(modelRDD){
@@ -176,6 +179,8 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: R
     fMapping.saveAsObjectFile(path+"/"+tag+"/fMappingRDD")
     bMapping.saveAsObjectFile(path+"/"+tag+"/bMappingRDD")
   }
+
+  def size = fMapping.count
 }
 
 object Lineage{
@@ -190,6 +195,44 @@ object Lineage{
     val rdd = sc.parallelize(Seq(1))
     val transformer = transformerRDD.first.asInstanceOf[Transformer[_,_]]
     new NarrowLineage(rdd, rdd, mappingRDD, transformer, Some(None))
+  }
+
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    (System.nanoTime-s)/1e6
+  }
+
+  def loadAndQuerySeq(mappingRDD: RDD[Mapping]) = {
+    val sc = mappingRDD.context
+
+    //trivial rdd
+    val rdd = sc.parallelize(Seq(1))
+    //trivial transformer
+    val transformer = Transformer[Int, Int](_ * 1)
+    val lineage = new NarrowLineage(rdd, rdd, mappingRDD, transformer, Some(None))
+
+    val dimensionRDD = mappingRDD.map(mapping => {
+      val mapped = mapping.asInstanceOf[OneToOneMapping]
+      (mapped.inRows, mapped.inCols)
+    })
+    val dimensionList = dimensionRDD.collect.toList
+
+    val indexList= (0 until mappingRDD.count.toInt).toList.zip(dimensionList).map{
+      case (itemID, (inRows, inCols)) => (itemID, inRows, inCols)
+    }
+
+    val (itemID, inRows, inCols) = indexList(indexList.size/2)
+
+    val timeList = if(inCols == 1){
+      (0 until inRows).toList.map(r => time(lineage.qForward(itemID, r)))
+    }
+    /*else{
+      for(r <- (0 until inRows); j<- (0 until inCols))
+        time(lineage.qForward(itemID, r, j))
+    }*/
+
+    timeList.asInstanceOf[List[Double]]
   }
 }
 
