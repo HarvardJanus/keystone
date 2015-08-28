@@ -12,15 +12,17 @@ import nodes.learning._
 import nodes.stats.{ColumnSampler, NormalizeRows, SignedHellingerMapper}
 import nodes.util.{FloatToDouble, MatrixVectorizer, Cacher, ClassLabelIndicatorsFromIntArrayLabels}
 import org.apache.spark.{SparkConf, SparkContext}
+import pipelines._
 import scopt.OptionParser
 import utils.{Image, MatrixUtils}
 import workflow._
 
-object VOCSIFTFisher extends Serializable {
+object VOCSIFTFisher extends Serializable with Logging{
   val appName = "VOCSIFTFisher"
 
   def run(sc: SparkContext, conf: SIFTFisherConfig) {
 
+    val startTime = System.nanoTime()
     // Load the data and extract training labels.
     val parsedRDD = VOCLoader(
       sc,
@@ -105,6 +107,9 @@ object VOCSIFTFisher extends Serializable {
     val map = MeanAveragePrecisionEvaluator(testActuals, predictions, VOCLoader.NUM_CLASSES)
     println(s"TEST APs are: ${map.toArray.mkString(",")}")
     println(s"TEST MAP is: ${mean(map)}")
+
+    val endTime = System.nanoTime()
+    logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")
   }
 
   case class SIFTFisherConfig(
