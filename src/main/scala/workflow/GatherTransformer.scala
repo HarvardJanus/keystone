@@ -17,7 +17,7 @@ class GatherTransformer[T] extends TransformerNode[Seq[T]] {
 
   def transformRDDWithLineage(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]], tag: String): RDD[Seq[T]] = {
   	val out = transformRDD(dataDependencies, fitDependencies)
-    out.cache()
+    //out.cache()
   	val lineage = GatherLineage(dataDependencies.map(_.asInstanceOf[RDD[T]]), out, this)
   	lineage.save(tag)
   	println("collecting lineage for Transformer "+this.label)

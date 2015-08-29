@@ -75,9 +75,9 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     val lineage = ShapeLineage(in, out, circleListRDD)*/
     
     val out = outRDD.map(x => x._1)
-    out.cache()
+    //out.cache()
     val ioList = outRDD.map(x => x._2)
-    ioList.cache()
+    //ioList.cache()
     val lineage = RegionLineage(in, out, ioList, this)
 
     lineage.save(tag)

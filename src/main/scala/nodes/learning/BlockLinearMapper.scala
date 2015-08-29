@@ -42,7 +42,7 @@ class BlockLinearMapper(
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = apply(vectorSplitter(in))
-    out.cache()
+    //out.cache()
     val lineage = LinComLineage(in, out, this, Some(xs(0)))
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label)

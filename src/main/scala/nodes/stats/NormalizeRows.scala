@@ -18,7 +18,7 @@ object NormalizeRows extends Transformer[DenseVector[Double], DenseVector[Double
 
   override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
-    out.cache()
+    //out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0, 0))

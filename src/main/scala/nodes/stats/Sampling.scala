@@ -27,7 +27,7 @@ class ColumnSampler(
       }
     }
     //cache to avoid re-evaluation
-    outRDD.cache()
+    //outRDD.cache()
 
     val out = outRDD.flatMap(x => x.map(t => t._1))
     out.cache()
