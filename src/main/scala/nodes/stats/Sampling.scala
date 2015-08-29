@@ -27,10 +27,10 @@ class ColumnSampler(
       }
     }
     //cache to avoid re-evaluation
-    //outRDD.cache()
+    outRDD.cache()
 
     val out = outRDD.flatMap(x => x.map(t => t._1))
-    out.cache()
+    //out.cache()
     
     val bMappingRDD = outRDD.flatMap(x => x.map(t => (t._2, t._3.toLong)))
 
