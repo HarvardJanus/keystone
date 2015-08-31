@@ -409,14 +409,14 @@ case class MiscMapping(map: Map[Long, _]) extends Mapping{
 
 object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
-		/*val (fMap, bMap) = buildIndex(mapping)
-		new ContourMapping(fMap, bMap)*/
+		val (fMap, bMap) = buildIndex(mapping)
+		new ContourMapping(fMap, bMap)
     /*val (fRTree, bRTree) = buildRTreeIndex(mapping)
     new ContourMappingRTree(fRTree, bRTree)*/
     /*val (fIndex, bIndex) = buildKMeansIndex(mapping)
     new ContourMappingKMeans(fIndex, bIndex)*/
-    val (fIndex, bIndex) = buildDirectIndex(mapping)
-    new ContourMappingDirect(fIndex, bIndex)
+    /*val (fIndex, bIndex) = buildDirectIndex(mapping)
+    new ContourMappingDirect(fIndex, bIndex)*/
 	}
 
 	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
@@ -426,14 +426,14 @@ object ContourMapping{
     //need to change to automatic shape detection
 		val maps = mapping.map{
 			m => {
-				/*val xList = mapping._1.map(x => x._1)
-				val yList = mapping._1.map(x => x._2)
+				/*val xList = m._1.map(x => x._1)
+				val yList = m._1.map(x => x._2)
 				val x = xList.sum.toDouble/xList.size
 				val y = yList.sum.toDouble/yList.size
 				val circle = Circle((x, y), 4)
 
-				val upperLeft = (mapping._2.head._1.toDouble, mapping._2.head._2.toDouble)
-				val lowerRight = (mapping._2.last._1.toDouble, mapping._2.last._2.toDouble)
+				val upperLeft = (m._2.head._1.toDouble, m._2.head._2.toDouble)
+				val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
 				val square = Square(upperLeft, lowerRight)*/
 				val circle = Shape(m._1)
 				val square = Shape(m._2)

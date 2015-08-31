@@ -53,9 +53,13 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
 	def inShape(i: Double, j: Double): Boolean = {
 		val x = c._1
 		val y = c._2
-		val firstItem = ((i-x)*cos(theta) + (j-y)*sin(theta))/a
-		val secondItem = ((j-y)*cos(theta) - (i-x)*sin(theta))/b
-		if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
+		if(a==0&&b==0){
+			return false
+		}else{
+			val firstItem = ((i-x)*cos(theta) + (j-y)*sin(theta))/a
+			val secondItem = ((j-y)*cos(theta) - (i-x)*sin(theta))/b
+			if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
+		}
 	}
 
 	def toBox() = {
@@ -196,13 +200,19 @@ object Shape{
 		val secondList = x.zip(y).filter{
 			x => (x != furthest) && (abs(abs(asin((x._2-centroid._2)/euclideanDistance(x, centroid)) - theta) - 1.57) < 0.01)
 		}
-		val second = secondList.sortWith(euclideanDistance(_,centroid)>euclideanDistance(_,centroid)).head
 
-		val numerator = pow(r*((second._2-centroid._2)*cos(theta)-(second._1-centroid._1)*sin(theta)), 2)
-		val denominator = pow(r, 2)-pow(((second._1-centroid._1)*cos(theta)+(second._2-centroid._2)*sin(theta)), 2)
+		val ellipse = if (secondList.isEmpty){
+			Ellipse((0,0), 0, 0, 0)
+		}
+		else{
+			val second = secondList.sortWith(euclideanDistance(_,centroid)>euclideanDistance(_,centroid)).head
 
-		val b = sqrt(numerator/denominator)
-		val ellipse = Ellipse(centroid, r, b, theta)
+			val numerator = pow(r*((second._2-centroid._2)*cos(theta)-(second._1-centroid._1)*sin(theta)), 2)
+			val denominator = pow(r, 2)-pow(((second._1-centroid._1)*cos(theta)+(second._2-centroid._2)*sin(theta)), 2)
+
+			val b = sqrt(numerator/denominator)
+			Ellipse(centroid, r, b, theta)
+		}
 
 		//calculate the precision of each shape
 		val pre_square = if (square.toCoor.size == 0 || square.toCoor.size < input.size) 0 else square.toCoor.intersect(input).size.toDouble/square.toCoor.size

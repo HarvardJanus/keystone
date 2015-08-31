@@ -203,7 +203,7 @@ object Lineage{
     (System.nanoTime-s)/1e6
   }
 
-  def loadAndQuerySeq(mappingRDD: RDD[Mapping]) = {
+  def loadAndQuerySeq(mappingRDD: RDD[Mapping], xDim: Int, yDim: Int) = {
     val sc = mappingRDD.context
 
     //trivial rdd
@@ -212,27 +212,11 @@ object Lineage{
     val transformer = Transformer[Int, Int](_ * 1)
     val lineage = new NarrowLineage(rdd, rdd, mappingRDD, transformer, Some(None))
 
-    val dimensionRDD = mappingRDD.map(mapping => {
-      val mapped = mapping.asInstanceOf[OneToOneMapping]
-      (mapped.inRows, mapped.inCols)
-    })
-    val dimensionList = dimensionRDD.collect.toList
+    val itemID = 0
+    val timeVector = for(r <- (0 until xDim); j<- (0 until yDim))
+      yield(time(lineage.qForward(itemID, r, j)))
 
-    val indexList= (0 until mappingRDD.count.toInt).toList.zip(dimensionList).map{
-      case (itemID, (inRows, inCols)) => (itemID, inRows, inCols)
-    }
-
-    val (itemID, inRows, inCols) = indexList(indexList.size/2)
-
-    val timeList = if(inCols == 1){
-      (0 until inRows).toList.map(r => time(lineage.qForward(itemID, r)))
-    }
-    /*else{
-      for(r <- (0 until inRows); j<- (0 until inCols))
-        time(lineage.qForward(itemID, r, j))
-    }*/
-
-    timeList.asInstanceOf[List[Double]]
+    timeVector.toList
   }
 }
 

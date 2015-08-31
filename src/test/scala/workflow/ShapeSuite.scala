@@ -39,6 +39,10 @@ class ShapeSuite extends FunSuite with Logging {
 	val square = Shape(slist)
 	val objectSquare = new Square((0,0), 1, 1)
 	assert(square.toCoor == objectSquare.toCoor)
+
+	val rlist = List((0,0), (1,0), (2,0), (3,0), (4,0), (5,0), (6,0), (7,0))
+	val shape = Shape(rlist)
+	println(shape)
   }
 
   test("bounding box test") {
