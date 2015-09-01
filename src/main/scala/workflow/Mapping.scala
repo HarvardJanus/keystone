@@ -225,7 +225,7 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
     val k = key.getOrElse(null)
     k match {
       case (i: Int, j: Int) =>{
-        val shapeList = index((i, j))
+        val shapeList = if(index.contains((i,j))) index((i,j)) else List()
         shapeList.map(s => s.toCoor)
       }
       case _ => {
