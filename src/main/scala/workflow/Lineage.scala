@@ -34,6 +34,28 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   def qForward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int) => {
+        val filtered = mappingRDD.zipWithIndex.filter{
+          case (mapping, index) => (index == i)
+        }.map(x => x._1)
+        filtered.cache()
+        val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j))
+        val innerRet = m.asInstanceOf[List[_]]
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
+      case (i:Int, j:Int, k:Int) => {
+        val filtered = mappingRDD.zipWithIndex.filter{
+          case (mapping, index) => (index == i)
+        }.map(x => x._1)
+        filtered.cache()
+        val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j))
+        val innerRet = m.asInstanceOf[List[_]]
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
+    }
+  }
+  /*def qForward(key: Option[_]) = {
+    key.getOrElse(null) match{
+      case (i:Int, j:Int) => {
         val mapped = mappingRDD.zipWithIndex.map{
           case (mapping, index) =>{
             if (index == i){
@@ -56,7 +78,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         List.fill(innerRet.size){i}.zip(innerRet)
       }
     }
-  }
+  }*/
 
   def qBackward(key: Option[_]) = {
     key.getOrElse(null) match{
