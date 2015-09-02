@@ -47,7 +47,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
           case (mapping, index) => (index == i)
         }.map(x => x._1)
         filtered.cache()
-        val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j))
+        val m = filtered.first.asInstanceOf[Mapping].qForward(Some(i,j))
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
