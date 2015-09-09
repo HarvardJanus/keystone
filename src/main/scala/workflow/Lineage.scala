@@ -206,7 +206,7 @@ object Lineage{
 
     val itemID = 0
     val timeVector = for(r <- (0 until xDim); j<- (0 until yDim))
-      yield(time(lineage.qForward(itemID, r, j)))
+      yield(time(lineage.qBackward(itemID, r, j)))
 
     timeVector.toList
   }
