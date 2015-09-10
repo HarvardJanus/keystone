@@ -227,8 +227,10 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
   def qBackward(key: Option[_]) = query(key, bIndex, bMap)  
 }
 
-case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Shape, Shape)]) extends Mapping{
-  def query(key: Option[_], rTree: RTree[(Shape, Shape)]) = {
+case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape],
+  fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
+
+  def query(key: Option[_], rTree: RTree[Shape], map: Map[Shape, Shape]) = {
     val k = key.getOrElse(null)
     k match {
       case (i: Int, j: Int) =>{
@@ -237,7 +239,7 @@ case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Sha
           List()
         }
         else{
-          shapeArray.filter(x=>x.value._1.inShape(i.toDouble, j.toDouble)).map(x => x.value._2.toCoor).toList
+          shapeArray.filter(x=>x.value.inShape(i.toDouble, j.toDouble)).map(x => map(x.value).toCoor).toList
         }
       }
       case _ => {
@@ -247,8 +249,8 @@ case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Sha
     }
   }
 
-  def qForward(key: Option[_]) = query(key, fRTree)
-  def qBackward(key: Option[_]) = query(key, bRTree)  
+  def qForward(key: Option[_]) = query(key, fRTree, fMap)
+  def qBackward(key: Option[_]) = query(key, bRTree, bMap)  
 }
 
 case class ContourMappingKMeans(fIndex: Map[Shape, List[(Shape, Shape)]], bIndex: Map[Shape, List[(Shape, Shape)]]) extends Mapping{
@@ -383,10 +385,10 @@ object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
 		/*val (fMap, bMap) = buildIndex(mapping)
 		new ContourMapping(fMap, bMap)*/
-    val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
-    new ContourMappingDirect(fIndex, bIndex, fMap, bMap)
-    /*val (fRTree, bRTree) = buildRTreeIndex(mapping)
-    new ContourMappingRTree(fRTree, bRTree)*/
+    /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
+    new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
+    val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
     /*val (fIndex, bIndex) = buildKMeansIndex(mapping)
     new ContourMappingKMeans(fIndex, bIndex)*/
 	}
@@ -417,10 +419,13 @@ object ContourMapping{
 		(fMap, bMap)
 	}
 
-  def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
-      (RTree[(Shape, Shape)], RTree[(Shape, Shape)]) = {
-    var fRTree: RTree[(Shape, Shape)] = RTree()
-    var bRTree: RTree[(Shape, Shape)] = RTree()
+  def buildDirectIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
+      (Map[(Int, Int), List[Shape]], Map[(Int, Int), List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
+
+    var fMap: Map[Shape, Shape] = Map()
+    var bMap: Map[Shape, Shape] = Map()
+    var fIndex: Map[(Int, Int), List[Shape]] = Map()
+    var bIndex: Map[(Int, Int), List[Shape]] = Map()
 
     //need to change to automatic shape detection
     val maps = mapping.map{
@@ -435,11 +440,60 @@ object ContourMapping{
         val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
         val square = Square(upperLeft, lowerRight)
 
-        fRTree = fRTree.insert(Entry(circle.toBox, (circle, square)))
-        bRTree = bRTree.insert(Entry(square.toBox, (square, circle)))
+        //add entries to fMap and bMap
+        fMap += circle->square
+        bMap += square->circle
+
+        //add entries to fIndex[(Int, Int), List(Shape)]
+        m._1.map(t => {
+          if(fIndex.contains(t)){
+            fIndex(t) = fIndex(t) :+ circle
+          }
+          else{
+            fIndex += t->List(circle)
+          }
+        })
+        //add entries to bIndex[(Int, Int), List(Shape)]
+        m._2.map(t => {
+          if(bIndex.contains(t)){
+            bIndex(t) = bIndex(t) :+ square
+          }
+          else{
+            bIndex += t->List(square)
+          }
+        })
       }
     }
-    (fRTree, bRTree)
+    (fIndex, bIndex, fMap, bMap)
+  }
+
+  def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
+      (RTree[Shape], RTree[Shape], Map[Shape, Shape], Map[Shape, Shape]) = {
+    var fMap: Map[Shape, Shape] = Map()
+    var bMap: Map[Shape, Shape] = Map()
+    var fRTree: RTree[Shape] = RTree()
+    var bRTree: RTree[Shape] = RTree()
+
+    //need to change to automatic shape detection
+    val maps = mapping.map{
+      m => {
+        val xList = m._1.map(x => x._1)
+        val yList = m._1.map(x => x._2)
+        val x = xList.sum.toDouble/xList.size
+        val y = yList.sum.toDouble/yList.size
+        val circle = Circle((x, y), 4)
+
+        val upperLeft = (m._2.head._1.toDouble, m._2.head._2.toDouble)
+        val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
+        val square = Square(upperLeft, lowerRight)
+
+        fMap += circle->square
+        bMap += square->circle
+        fRTree = fRTree.insert(Entry(circle.toBox, circle))
+        bRTree = bRTree.insert(Entry(square.toBox, square))
+      }
+    }
+    (fRTree, bRTree, fMap, bMap)
   }
 
   def buildKMeansIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
@@ -529,53 +583,7 @@ object ContourMapping{
     (fIndex, bIndex)
   }
 
-  def buildDirectIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
-      (Map[(Int, Int), List[Shape]], Map[(Int, Int), List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
-
-    var fMap: Map[Shape, Shape] = Map()
-    var bMap: Map[Shape, Shape] = Map()
-    var fIndex: Map[(Int, Int), List[Shape]] = Map()
-    var bIndex: Map[(Int, Int), List[Shape]] = Map()
-
-    //need to change to automatic shape detection
-    val maps = mapping.map{
-      m => {
-        val xList = m._1.map(x => x._1)
-        val yList = m._1.map(x => x._2)
-        val x = xList.sum.toDouble/xList.size
-        val y = yList.sum.toDouble/yList.size
-        val circle = Circle((x, y), 4)
-
-        val upperLeft = (m._2.head._1.toDouble, m._2.head._2.toDouble)
-        val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
-        val square = Square(upperLeft, lowerRight)
-
-        //add entries to fMap and bMap
-        fMap += circle->square
-        bMap += square->circle
-
-        //add entries to fIndex[(Int, Int), List(Shape)]
-        m._1.map(t => {
-          if(fIndex.contains(t)){
-            fIndex(t) = fIndex(t) :+ circle
-          }
-          else{
-            fIndex += t->List(circle)
-          }
-        })
-        //add entries to bIndex[(Int, Int), List(Shape)]
-        m._2.map(t => {
-          if(bIndex.contains(t)){
-            bIndex(t) = bIndex(t) :+ square
-          }
-          else{
-            bIndex += t->List(square)
-          }
-        })
-      }
-    }
-    (fIndex, bIndex, fMap, bMap)
-  }
+  
 }
 
 object SimpleMapping{
