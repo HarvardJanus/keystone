@@ -182,28 +182,11 @@ case class LinComMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
 }
 
 case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:Shape]) extends Mapping{
-	def qBackward(key: Option[_]) = {
+	def query(key: Option[_], map: Map[_<:Shape, _<:Shape]) = {
 		val k = key.getOrElse(null)
 		k match {
 			case (i: Int, j: Int) =>{
-				val shapeTuple = bMap.find(_._1.inShape(i.toDouble, j.toDouble)).getOrElse(null)
-				shapeTuple match {
-					case t:(Shape, Shape) => t._2.toCoor
-					case _ => List()
-				}
-			}
-      case _ => {
-        require((0==1), "input is 2-d structure, use 2-d index")
-        List()
-      }
-		}
-	}
-
-	def qForward(key: Option[_]) = {
-		val k = key.getOrElse(null)
-		k match {
-			case (i: Int, j: Int) =>{
-				val shapeMap= fMap.filter(_._1.inShape(i.toDouble, j.toDouble))
+				val shapeMap= map.filter(_._1.inShape(i.toDouble, j.toDouble))
 				if(shapeMap.isEmpty){
 					List()
 				}
@@ -218,6 +201,9 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
       }
 		}
 	}
+
+  def qForward(key: Option[_]) = query(key, fMap)
+  def qBackward(key: Option[_]) = query(key, bMap) 
 }
 
 case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Map[(Int, Int), List[Shape]]) extends Mapping{
@@ -225,7 +211,8 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
     val k = key.getOrElse(null)
     k match {
       case (i: Int, j: Int) =>{
-        val shapeList = if(index.contains((i,j))) index((i,j)) else List()
+        //val shapeList = if(index.contains((i,j))) index((i,j)) else List()
+        val shapeList = index.getOrElse((i,j), List())
         shapeList.map(s => s.toCoor)
       }
       case _ => {
