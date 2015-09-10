@@ -227,11 +227,11 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
 }
 
 case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Shape, Shape)]) extends Mapping{
-  def qBackward(key: Option[_]) = {
+  def query(key: Option[_], rTree: RTree[(Shape, Shape)]) = {
     val k = key.getOrElse(null)
     k match {
       case (i: Int, j: Int) =>{
-        val shapeArray = bRTree.searchWithIn(Point(i.toFloat, j.toFloat))
+        val shapeArray = rTree.searchWithIn(Point(i.toFloat, j.toFloat))
         if (shapeArray.isEmpty){
           List()
         }
@@ -246,24 +246,8 @@ case class ContourMappingRTree(fRTree: RTree[(Shape, Shape)], bRTree: RTree[(Sha
     }
   }
 
-  def qForward(key: Option[_]) = {
-    val k = key.getOrElse(null)
-    k match {
-      case (i: Int, j: Int) =>{
-        val shapeArray = fRTree.searchWithIn(Point(i.toFloat, j.toFloat))
-        if(shapeArray.isEmpty){
-          List()
-        }
-        else{
-          shapeArray.filter(x=>x.value._1.inShape(i.toDouble, j.toDouble)).map(x => x.value._2.toCoor).toList
-        }
-      }
-      case _ => {
-        require((0==1), "input is 2-d structure, use 2-d index")
-        List()
-      }
-    }
-  }
+  def qForward(key: Option[_]) = query(key, fRTree)
+  def qBackward(key: Option[_]) = query(key, bRTree)  
 }
 
 case class ContourMappingKMeans(fIndex: Map[Shape, List[(Shape, Shape)]], bIndex: Map[Shape, List[(Shape, Shape)]]) extends Mapping{
@@ -396,14 +380,14 @@ case class MiscMapping(map: Map[Long, _]) extends Mapping{
 
 object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
-		val (fMap, bMap) = buildIndex(mapping)
-		new ContourMapping(fMap, bMap)
-    /*val (fRTree, bRTree) = buildRTreeIndex(mapping)
-    new ContourMappingRTree(fRTree, bRTree)*/
-    /*val (fIndex, bIndex) = buildKMeansIndex(mapping)
-    new ContourMappingKMeans(fIndex, bIndex)*/
+		/*val (fMap, bMap) = buildIndex(mapping)
+		new ContourMapping(fMap, bMap)*/
     /*val (fIndex, bIndex) = buildDirectIndex(mapping)
     new ContourMappingDirect(fIndex, bIndex)*/
+    val (fRTree, bRTree) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree)
+    /*val (fIndex, bIndex) = buildKMeansIndex(mapping)
+    new ContourMappingKMeans(fIndex, bIndex)*/
 	}
 
 	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
