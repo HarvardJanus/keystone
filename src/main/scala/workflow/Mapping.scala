@@ -253,8 +253,9 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape],
   def qBackward(key: Option[_]) = query(key, bRTree, bMap)  
 }
 
-case class ContourMappingKMeans(fIndex: Map[Shape, List[(Shape, Shape)]], bIndex: Map[Shape, List[(Shape, Shape)]]) extends Mapping{
-  def query(key: Option[_], index: Map[Shape, List[(Shape, Shape)]]) = {
+case class ContourMappingKMeans(fIndex: Map[Shape, List[Shape]], bIndex: Map[Shape, List[Shape]],
+  fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
+  def query(key: Option[_], index: Map[Shape, List[Shape]], map: Map[Shape, Shape]) = {
     val k = key.getOrElse(null)
     k match {
       case (i: Int, j: Int) =>{
@@ -263,8 +264,8 @@ case class ContourMappingKMeans(fIndex: Map[Shape, List[(Shape, Shape)]], bIndex
           List()
         }
         else{
-          val shapeList = keyList.flatMap(x => index(x).filter(s => s._1.inShape(i.toDouble, j.toDouble)).map(x => x._2))
-          shapeList.map(x=>x.toCoor)
+          val shapeList = keyList.flatMap(x => index(x).filter(s => s.inShape(i.toDouble, j.toDouble)))
+          shapeList.map(x=>map(x).toCoor)
         }
       }
       case _ => {
@@ -274,8 +275,8 @@ case class ContourMappingKMeans(fIndex: Map[Shape, List[(Shape, Shape)]], bIndex
     }
   }
 
-  def qForward(key: Option[_]) = query(key, fIndex)
-  def qBackward(key: Option[_]) = query(key, bIndex)
+  def qForward(key: Option[_]) = query(key, fIndex, fMap)
+  def qBackward(key: Option[_]) = query(key, bIndex, bMap)
 }
 
 case class SimpleMapping(fIndex: Map[(Int, Int), List[List[(Int, Int)]]], bIndex: Map[(Int, Int), List[List[(Int, Int)]]]) extends Mapping{
@@ -387,10 +388,10 @@ object ContourMapping{
 		new ContourMapping(fMap, bMap)*/
     /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
     new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
-    val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
-    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
-    /*val (fIndex, bIndex) = buildKMeansIndex(mapping)
-    new ContourMappingKMeans(fIndex, bIndex)*/
+    /*val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)*/
+    val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
+    new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)
 	}
 
 	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
@@ -497,13 +498,15 @@ object ContourMapping{
   }
 
   def buildKMeansIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
-      (Map[Shape, List[(Shape, Shape)]], Map[Shape, List[(Shape, Shape)]]) = {
-    var fIndex: Map[Shape, List[(Shape, Shape)]] = Map()
-    var bIndex: Map[Shape, List[(Shape, Shape)]] = Map()
+      (Map[Shape, List[Shape]], Map[Shape, List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
+    var fMap: Map[Shape, Shape] = Map()
+    var bMap: Map[Shape, Shape] = Map()
+    var fIndex: Map[Shape, List[Shape]] = Map()
+    var bIndex: Map[Shape, List[Shape]] = Map()
 
     //preprocessing, converting mapping to List[(Shape, Shape)]
     //need to change to automatic shape detection
-    val fShapeMap = mapping.map{
+    val shapeMap = mapping.map{
       m => {
         val xList = m._1.map(x => x._1)
         val yList = m._1.map(x => x._2)
@@ -514,13 +517,17 @@ object ContourMapping{
         val upperLeft = (m._2.head._1.toDouble, m._2.head._2.toDouble)
         val lowerRight = (m._2.last._1.toDouble, m._2.last._2.toDouble)
         val square = Square(upperLeft, lowerRight)
+
+        fMap += circle->square
+        bMap += square->circle
         (circle, square)
       }
     }
-    val bShapeMap = fShapeMap.map(x => (x._2, x._1))
+    val fShapeMap = shapeMap.map(x => x._1)
+    val bShapeMap = shapeMap.map(x => x._2)
 
     //definition of KMeans with iteration as parameter
-    def KMeans(mapping: List[(Shape, Shape)], iteration: Int): Map[Shape, List[(Shape,Shape)]] = {
+    def KMeans(mapping: List[Shape], iteration: Int): Map[Shape, List[Shape]] = {
       val listSize = mapping.size
       val numBuckets = sqrt(listSize).toInt
       val partitions = mapping.sliding(numBuckets, numBuckets)
@@ -534,11 +541,11 @@ object ContourMapping{
       (0 until iteration).map{
         i =>{
           val newCentroidMap = centroidMap.map{
-            case (key, l) => getCentroid(l.toList)->ListBuffer[(Shape, Shape)]()
+            case (key, l) => getCentroid(l.toList)->ListBuffer[Shape]()
           }
           mapping.map{
             t =>{
-              val closest = newCentroidMap.keys.toList.minBy(x => Shape.euclideanDistance(x, t._1.getCenter))
+              val closest = newCentroidMap.keys.toList.minBy(x => Shape.euclideanDistance(x, t.getCenter))
               newCentroidMap(closest) += t
             }
           }
@@ -555,16 +562,15 @@ object ContourMapping{
     }
 
     //helper function computes the centroid of a given list of shapes
-    def getCentroid(l: List[(Shape, Shape)]): (Double, Double) = {
-      val xSum = l.map(x => x._1.getCenter._1.toDouble).sum
-      val ySum = l.map(x => x._1.getCenter._2.toDouble).sum
+    def getCentroid(l: List[Shape]): (Double, Double) = {
+      val xSum = l.map(x => x.getCenter._1.toDouble).sum
+      val ySum = l.map(x => x.getCenter._2.toDouble).sum
       (xSum/l.size, ySum/l.size)
     }
 
     //helper function computes the bounding square of a given list of shapes
-    def getBoundSquare(key: (Double, Double), l: List[(Shape, Shape)]): Shape = {
-      val firstL = l.map(x=>x._1)
-      firstL.foldLeft(Square(key, 0.0, 0.0)){
+    def getBoundSquare(key: (Double, Double), l: List[Shape]): Shape = {
+      l.foldLeft(Square(key, 0.0, 0.0)){
         (x, y) => {
           val s1 = x.toSquare
           val s2 = y.toSquare
@@ -580,7 +586,7 @@ object ContourMapping{
     fIndex = KMeans(fShapeMap, 1)
     bIndex = KMeans(bShapeMap, 1)
 
-    (fIndex, bIndex)
+    (fIndex, bIndex, fMap, bMap)
   }
 
   
