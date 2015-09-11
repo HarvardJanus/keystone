@@ -395,8 +395,10 @@ object ContourMapping{
 	}*/
 
   def apply(mapping: List[(Shape, Shape)]) = {
-    val (fMap, bMap) = buildIndex(mapping)
-    new ContourMapping(fMap, bMap)
+    /*val (fMap, bMap) = buildIndex(mapping)
+    new ContourMapping(fMap, bMap)*/
+    val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
+    new ContourMappingDirect(fIndex, bIndex, fMap, bMap)
   }
 
   def buildIndex(mapping: List[(Shape, Shape)]): (Map[Shape, Shape], Map[Shape, Shape]) = {
@@ -410,6 +412,43 @@ object ContourMapping{
     (fMap, bMap)
   }
 
+def buildDirectIndex(mapping: List[(Shape, Shape)]): 
+      (Map[(Int, Int), List[Shape]], Map[(Int, Int), List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
+
+    var fMap: Map[Shape, Shape] = Map()
+    var bMap: Map[Shape, Shape] = Map()
+    var fIndex: Map[(Int, Int), List[Shape]] = Map()
+    var bIndex: Map[(Int, Int), List[Shape]] = Map()
+
+    //need to change to automatic shape detection
+    val maps = mapping.map{
+      m => {
+        //add entries to fMap and bMap
+        fMap += m._1->m._2
+        bMap += m._2->m._1
+
+        //add entries to fIndex[(Int, Int), List(Shape)]
+        m._1.toCoor.map(t => {
+          if(fIndex.contains(t)){
+            fIndex(t) = fIndex(t) :+ m._1
+          }
+          else{
+            fIndex += t->List(m._1)
+          }
+        })
+        //add entries to bIndex[(Int, Int), List(Shape)]
+        m._2.toCoor.map(t => {
+          if(bIndex.contains(t)){
+            bIndex(t) = bIndex(t) :+ m._2
+          }
+          else{
+            bIndex += t->List(m._2)
+          }
+        })
+      }
+    }
+    (fIndex, bIndex, fMap, bMap)
+  }
 	/*def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
 		var fMap: Map[Shape, Shape] = Map()
 		var bMap: Map[Shape, Shape] = Map()
@@ -436,7 +475,7 @@ object ContourMapping{
 		(fMap, bMap)
 	}*/
 
-  def buildDirectIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
+  /*def buildDirectIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
       (Map[(Int, Int), List[Shape]], Map[(Int, Int), List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
 
     var fMap: Map[Shape, Shape] = Map()
@@ -482,7 +521,7 @@ object ContourMapping{
       }
     }
     (fIndex, bIndex, fMap, bMap)
-  }
+  }*/
 
   def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
       (RTree[Shape], RTree[Shape], Map[Shape, Shape], Map[Shape, Shape]) = {

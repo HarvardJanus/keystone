@@ -5,7 +5,7 @@ import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
 	def getCenter(): (Double, Double)
-	def toCoor(): List[_]
+	def toCoor(): List[(Int, Int)]
 	def inShape(i: Double, j: Double): Boolean
 	def toBox(): Box
 	def toSquare(): Square
