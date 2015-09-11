@@ -384,14 +384,14 @@ case class MiscMapping(map: Map[Long, _]) extends Mapping{
 
 object ContourMapping{
 	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
-		/*val (fMap, bMap) = buildIndex(mapping)
-		new ContourMapping(fMap, bMap)*/
+		val (fMap, bMap) = buildIndex(mapping)
+		new ContourMapping(fMap, bMap)
     /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
     new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
     /*val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
     new ContourMappingRTree(fRTree, bRTree, fMap, bMap)*/
-    val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
-    new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)
+    /*val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
+    new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)*/
 	}
 
 	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
