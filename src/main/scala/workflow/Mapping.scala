@@ -383,7 +383,7 @@ case class MiscMapping(map: Map[Long, _]) extends Mapping{
 }
 
 object ContourMapping{
-	def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
+	/*def apply(mapping: List[(List[(Int, Int)], List[(Int, Int)])]) = {
 		val (fMap, bMap) = buildIndex(mapping)
 		new ContourMapping(fMap, bMap)
     /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
@@ -392,9 +392,25 @@ object ContourMapping{
     new ContourMappingRTree(fRTree, bRTree, fMap, bMap)*/
     /*val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
     new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)*/
-	}
+	}*/
 
-	def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
+  def apply(mapping: List[(Shape, Shape)]) = {
+    val (fMap, bMap) = buildIndex(mapping)
+    new ContourMapping(fMap, bMap)
+  }
+
+  def buildIndex(mapping: List[(Shape, Shape)]): (Map[Shape, Shape], Map[Shape, Shape]) = {
+    var fMap: Map[Shape, Shape] = Map()
+    var bMap: Map[Shape, Shape] = Map()
+    mapping.map( 
+      x => {
+        fMap += x._1->x._2
+        bMap += x._2->x._1
+      })
+    (fMap, bMap)
+  }
+
+	/*def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
 		var fMap: Map[Shape, Shape] = Map()
 		var bMap: Map[Shape, Shape] = Map()
 
@@ -418,7 +434,7 @@ object ContourMapping{
 			}
 		}
 		(fMap, bMap)
-	}
+	}*/
 
   def buildDirectIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
       (Map[(Int, Int), List[Shape]], Map[(Int, Int), List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
