@@ -204,8 +204,8 @@ object Lineage{
     val transformer = Transformer[Int, Int](_ * 1)
     val lineage = new NarrowLineage(rdd, rdd, mappingRDD, transformer, Some(None))
 
-    val itemID = 0
-    val timeVector = for(r <- (0 until xDim); j<- (0 until yDim))
+    val count = mappingRDD.count.toInt
+    val timeVector = for(itemID <- (0 until count); r <- (0 until xDim); j<- (0 until yDim))
       yield(time(lineage.qBackward(itemID, r, j)))
 
     timeVector.toList
