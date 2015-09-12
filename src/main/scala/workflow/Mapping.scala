@@ -397,8 +397,10 @@ object ContourMapping{
   def apply(mapping: List[(Shape, Shape)]) = {
     /*val (fMap, bMap) = buildIndex(mapping)
     new ContourMapping(fMap, bMap)*/
-    val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
-    new ContourMappingDirect(fIndex, bIndex, fMap, bMap)
+    /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
+    new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
+    val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
   }
 
   def buildIndex(mapping: List[(Shape, Shape)]): (Map[Shape, Shape], Map[Shape, Shape]) = {
@@ -412,7 +414,7 @@ object ContourMapping{
     (fMap, bMap)
   }
 
-def buildDirectIndex(mapping: List[(Shape, Shape)]): 
+  def buildDirectIndex(mapping: List[(Shape, Shape)]): 
       (Map[(Int, Int), List[Shape]], Map[(Int, Int), List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
 
     var fMap: Map[Shape, Shape] = Map()
@@ -448,6 +450,25 @@ def buildDirectIndex(mapping: List[(Shape, Shape)]):
       }
     }
     (fIndex, bIndex, fMap, bMap)
+  }
+
+  def buildRTreeIndex(mapping: List[(Shape, Shape)]): 
+      (RTree[Shape], RTree[Shape], Map[Shape, Shape], Map[Shape, Shape]) = {
+    var fMap: Map[Shape, Shape] = Map()
+    var bMap: Map[Shape, Shape] = Map()
+    var fRTree: RTree[Shape] = RTree()
+    var bRTree: RTree[Shape] = RTree()
+
+    //need to change to automatic shape detection
+    val maps = mapping.map{
+      m => {
+        fMap += m._1->m._2
+        bMap += m._2->m._1
+        fRTree = fRTree.insert(Entry(m._1.toBox, m._1))
+        bRTree = bRTree.insert(Entry(m._2.toBox, m._2))
+      }
+    }
+    (fRTree, bRTree, fMap, bMap)
   }
 	/*def buildIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): (Map[Shape, Shape], Map[Shape, Shape]) = {
 		var fMap: Map[Shape, Shape] = Map()
@@ -523,7 +544,7 @@ def buildDirectIndex(mapping: List[(Shape, Shape)]):
     (fIndex, bIndex, fMap, bMap)
   }*/
 
-  def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
+  /*def buildRTreeIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
       (RTree[Shape], RTree[Shape], Map[Shape, Shape], Map[Shape, Shape]) = {
     var fMap: Map[Shape, Shape] = Map()
     var bMap: Map[Shape, Shape] = Map()
@@ -550,7 +571,7 @@ def buildDirectIndex(mapping: List[(Shape, Shape)]):
       }
     }
     (fRTree, bRTree, fMap, bMap)
-  }
+  }*/
 
   def buildKMeansIndex(mapping: List[(List[(Int, Int)], List[(Int, Int)])]): 
       (Map[Shape, List[Shape]], Map[Shape, List[Shape]], Map[Shape, Shape], Map[Shape, Shape]) = {
