@@ -37,7 +37,6 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         val filtered = mappingRDD.zipWithIndex.filter{
           case (mapping, index) => (index == i)
         }.map(x => x._1)
-        filtered.cache()
         val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j))
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
@@ -46,7 +45,6 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         val filtered = mappingRDD.zipWithIndex.filter{
           case (mapping, index) => (index == i)
         }.map(x => x._1)
-        filtered.cache()
         val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j,k))
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
@@ -60,17 +58,26 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         val filtered = mappingRDD.zipWithIndex.filter{
           case (mapping, index) => (index == i)
         }.map(x => x._1)
-        filtered.cache()
         val m = filtered.first.asInstanceOf[Mapping].qBackward(Some(j))
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
       case (i:Int, j:Int, k:Int) => {
-        val filtered = mappingRDD.zipWithIndex.filter{
+        /*val filtered = mappingRDD.zipWithIndex.filter{
           case (mapping, index) => (index == i)
         }.map(x => x._1)
-        filtered.cache()
-        val m = filtered.first.asInstanceOf[Mapping].qBackward(Some(j,k))
+        val m = filtered.first.asInstanceOf[Mapping].qBackward(Some(j,k))*/
+        val resultRDD = mappingRDD.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == i){
+              mapping.asInstanceOf[Mapping].qBackward(Some(j,k))
+            }
+          }
+        }
+        val filteredRDD = resultRDD.zipWithIndex.filter{
+          case (result, index) => (index == i)
+        }.map(x => x._1)
+        val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
@@ -197,6 +204,7 @@ object Lineage{
 
   def loadAndQuerySeq(mappingRDD: RDD[Mapping], xDim: Int, yDim: Int) = {
     val sc = mappingRDD.context
+    mappingRDD.cache
 
     //trivial rdd
     val rdd = sc.parallelize(Seq(1))
