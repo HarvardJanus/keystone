@@ -34,18 +34,32 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   def qForward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int) => {
-        val filtered = mappingRDD.zipWithIndex.filter{
-          case (mapping, index) => (index == i)
+        val resultRDD = mappingRDD.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == i){
+              mapping.asInstanceOf[Mapping].qForward(Some(j))
+            }
+          }
+        }
+        val filteredRDD = resultRDD.zipWithIndex.filter{
+          case (result, index) => (index == i)
         }.map(x => x._1)
-        val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j))
+        val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
       case (i:Int, j:Int, k:Int) => {
-        val filtered = mappingRDD.zipWithIndex.filter{
-          case (mapping, index) => (index == i)
+        val resultRDD = mappingRDD.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == i){
+              mapping.asInstanceOf[Mapping].qForward(Some(j,k))
+            }
+          }
+        }
+        val filteredRDD = resultRDD.zipWithIndex.filter{
+          case (result, index) => (index == i)
         }.map(x => x._1)
-        val m = filtered.first.asInstanceOf[Mapping].qForward(Some(j,k))
+        val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
@@ -55,18 +69,21 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   def qBackward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int) => {
-        val filtered = mappingRDD.zipWithIndex.filter{
-          case (mapping, index) => (index == i)
+        val resultRDD = mappingRDD.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == i){
+              mapping.asInstanceOf[Mapping].qBackward(Some(j))
+            }
+          }
+        }
+        val filteredRDD = resultRDD.zipWithIndex.filter{
+          case (result, index) => (index == i)
         }.map(x => x._1)
-        val m = filtered.first.asInstanceOf[Mapping].qBackward(Some(j))
+        val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
       case (i:Int, j:Int, k:Int) => {
-        /*val filtered = mappingRDD.zipWithIndex.filter{
-          case (mapping, index) => (index == i)
-        }.map(x => x._1)
-        val m = filtered.first.asInstanceOf[Mapping].qBackward(Some(j,k))*/
         val resultRDD = mappingRDD.zipWithIndex.map{
           case (mapping, index) => {
             if(index == i){
