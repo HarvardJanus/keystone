@@ -18,6 +18,20 @@ trait Mapping extends serializable{
 	def qBackward(key: Option[_]): List[_]
 }
 
+object Mapping{
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    (System.nanoTime-s)/1e6
+  }
+
+  def querySeq(m: Mapping, xDim: Int, yDim: Int) = {
+    val timeVector = for(i <- (0 until xDim); j<- (0 until yDim))
+      yield(time(m.qBackward(Some(i,j))))
+    timeVector.toList
+  }
+}
+
 case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
 	seqSize: Int, imageMeta: Option[ImageMetadata] = None) extends Mapping{
 
