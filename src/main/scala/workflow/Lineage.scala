@@ -115,6 +115,8 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
       mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
     }*/
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
+    inRDD.saveAsObjectFile(path+"/"+tag+"/inRDD")
+    outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")
   }
   def size = mappingRDD.count
 }
