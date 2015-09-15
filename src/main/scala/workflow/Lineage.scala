@@ -115,7 +115,8 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
       mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
     }*/
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
-    if(tag.startsWith("0")){
+    val words = tag.split('_')
+    if(words.size > 1 && words(2).startsWith("0")){
       inRDD.saveAsObjectFile(path+"/"+tag+"/inRDD")
     }
     outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")
