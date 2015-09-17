@@ -26,7 +26,6 @@ class LineageSuite extends FunSuite with LocalSparkContext with Logging {
 	//query backward
 	assert(lineage.qBackward(0, 2) == List((0, 2)))
 	//query forward out of bound of RDD
-	println(lineage.qForward(4,2))
 	intercept[java.lang.IndexOutOfBoundsException] {
 	  println(lineage.qForward(4, 2))
 	}
