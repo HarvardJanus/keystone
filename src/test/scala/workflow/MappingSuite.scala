@@ -298,7 +298,8 @@ class MappingSuite extends FunSuite with Logging {
     assert(fResult == List(List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3))))
 
     val bResult = mapping.qBackward(Some(1, 2))
-    assert(bResult == List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2)))
+    println(bResult)
+    assert(bResult == List(List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2))))
 
     //wrong dimensional key
     intercept[java.lang.IllegalArgumentException] {
@@ -316,10 +317,12 @@ class MappingSuite extends FunSuite with Logging {
     val s1 = Square((0,1), (2,3))
     val s2 = Square((0,3), (2,5))
     
-    val fRTree: RTree[(Shape, Shape)] = RTree(Entry(c1.toBox, (c1, s1)), Entry(c2.toBox, (c2, s2)))
-    val bRTree: RTree[(Shape, Shape)] = RTree(Entry(s1.toBox, (s1, c1)), Entry(s2.toBox, (s2, c2)))
+    val fRTree: RTree[Shape] = RTree(Entry(c1.toBox, c1), Entry(c2.toBox, c2))
+    val bRTree: RTree[Shape] = RTree(Entry(s1.toBox, s1), Entry(s2.toBox, s2))
+    val fMap: Map[Shape, Shape] = Map(c1->s1, c2->s2)
+    val bMap: Map[Shape, Shape] = Map(s1->c1, s2->c2)
 
-    val mapping = new ContourMappingRTree(fRTree, bRTree)
+    val mapping = new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
     
     val fResult = mapping.qForward(Some(2,2))
     assert(fResult == List(List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3))))
