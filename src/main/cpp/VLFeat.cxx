@@ -26,6 +26,9 @@ const int dims = 128;
 
 struct DescSet {
   float* descriptors;
+  double* x;
+  double* y;
+  double* s;
   int numDesc;
 };
 
@@ -123,6 +126,10 @@ DescSet* getMultiScaleDSIFTs_f(
   }
   // create the Memory for the results
   retValSet->descriptors = (float*) malloc(retValSet->numDesc*dims*sizeof(float));
+  retValSet->x = (double*) malloc(retValSet->numDesc*dims*sizeof(double));
+  retValSet->y = (double*) malloc(retValSet->numDesc*dims*sizeof(double));
+  retValSet->s = (double*) malloc(retValSet->numDesc*dims*sizeof(double));
+
   int currRes = 0;
   if (retValSet->descriptors == NULL) {
     printf("\nError in allocating memory for return values retValSet->descriptors\n");
@@ -157,6 +164,7 @@ DescSet* getMultiScaleDSIFTs_f(
   } else {
     // concatinate desc. of each scale, one after the other, No groupping based on (x,y) coordinates
     // this is done when the number of desriptors for each scale is not the same. 
+    int metaGlobalLoc = 0;
     for (int scale=0; scale<imgNumScales; scale++) {
       VlDsiftKeypoint const *dkeys = vl_dsift_get_keypoints( dfilt[scale] );
       localoffset = 0;
@@ -175,6 +183,10 @@ DescSet* getMultiScaleDSIFTs_f(
             localoffset++;
           }
         } // x 
+        retValSet->x[metaGlobalLoc] = dkeys[i].x;
+        retValSet->y[metaGlobalLoc] = dkeys[i].y;
+        retValSet->s[metaGlobalLoc] = dkeys[i].s;
+        metaGlobalLoc++;
       }// i 
       fflush(stdout);
     }// scale
@@ -209,7 +221,10 @@ JNIEXPORT jshortArray JNICALL Java_utils_external_VLFeat_getSIFTs (
     jint bin,
     jint numScales,
     jint scaleStep,
-    jfloatArray image) {
+    jfloatArray image,
+    jdoubleArray x,
+    jdoubleArray y, 
+    jdoubleArray s) {
 	  
   // Create and set PGMImage metadata
   VlPgmImage pim ; // image info 
@@ -242,6 +257,9 @@ JNIEXPORT jshortArray JNICALL Java_utils_external_VLFeat_getSIFTs (
   DescSet* dSiftSet = getMultiScaleDSIFTs_f(&pim, pimData, step, bin, numScales, scaleStep);
   int numDesc = dSiftSet->numDesc;
   float* floatResult = dSiftSet->descriptors;
+  double* doubleX = dSiftSet->x;
+  double* doubleY = dSiftSet->y;
+  double* doubleS = dSiftSet->s;
   free (dSiftSet);
   jshort* jshortResult = (jshort*) malloc(numDesc*dims*sizeof(jshort));
 
@@ -277,8 +295,14 @@ JNIEXPORT jshortArray JNICALL Java_utils_external_VLFeat_getSIFTs (
   jshortArray result = env->NewShortArray((numDesc*dims));
   if (jshortResult != 0) {
     env->SetShortArrayRegion(result, 0, numDesc*dims, jshortResult);
+    env->SetDoubleArrayRegion(x, 0, numDesc, doubleX);
+    env->SetDoubleArrayRegion(y, 0, numDesc, doubleY);
+    env->SetDoubleArrayRegion(s, 0, numDesc, doubleS);
     // free the c++ memory allocated in getMultiScaleDSIFTS_f
-    free( jshortResult );
+    free(jshortResult);
+    free(doubleX);
+    free(doubleY);
+    free(doubleS);
   }
   // free the c++ memory for the image data 
   if ( pimData != 0 ) {

@@ -15,6 +15,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import pipelines.Logging
 import scopt.OptionParser
 import workflow.Optimizer
+import workflow._
 
 object VOCSIFTFisher extends Serializable with Logging {
   val appName = "VOCSIFTFisher"
