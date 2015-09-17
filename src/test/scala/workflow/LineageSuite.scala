@@ -16,7 +16,7 @@ class LineageSuite extends FunSuite with LocalSparkContext with Logging {
     val v = DenseVector.zeros[Double](5)
     val sRDD = sc.parallelize(List.fill(4){v})
     
-	val addition = new AdditionNode()
+    val addition = new AdditionNode()
 	val tRDD = addition(sRDD)
 		
 	val lineage = OneToOneLineage(sRDD, tRDD, addition)
