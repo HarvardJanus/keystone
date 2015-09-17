@@ -41,6 +41,9 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
             }
           }
         }
+        /* Need to check the reason for empty resultRDD, 
+         * if it is out of RDD boundary, raise an exception.
+         * If it is really empty, return an empty list.*/
         val filteredRDD = resultRDD.zipWithIndex.filter{
           case (result, index) => (index == i)
         }.map(x => x._1)
