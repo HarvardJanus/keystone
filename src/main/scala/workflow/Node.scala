@@ -16,6 +16,7 @@ private[workflow] abstract class EstimatorNode extends Node with Serializable {
 private[workflow] abstract class TransformerNode[T] extends Node with Serializable {
   private[workflow] def transform(dataDependencies: Seq[_], fitDependencies: Seq[TransformerNode[_]]): T
   private[workflow] def transformRDD(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]]): RDD[T]
+  private[workflow] def transformRDDWithLineage(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]], tag: String): RDD[T]
 }
 
 private[workflow] case class DataNode(rdd: RDD[_]) extends Node {

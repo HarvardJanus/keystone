@@ -21,4 +21,11 @@ private[workflow] class DelegatingTransformer[T](override val label: String)
     fitDependencies: Seq[TransformerNode[_]]): RDD[T] = {
     fitDependencies.head.transformRDD(dataDependencies, Seq()).asInstanceOf[RDD[T]]
   }
+
+  def transformRDDWithLineage(
+  	dataDependencies: Seq[RDD[_]], 
+  	fitDependencies: Seq[TransformerNode[_]],
+  	tag: String): RDD[T] = {
+  	fitDependencies.head.transformRDDWithLineage(dataDependencies, Seq(), tag).asInstanceOf[RDD[T]]
+  }
 }

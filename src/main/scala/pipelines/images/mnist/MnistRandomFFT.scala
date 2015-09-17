@@ -10,7 +10,8 @@ import org.apache.commons.math3.random.MersenneTwister
 import org.apache.spark.{SparkConf, SparkContext}
 import pipelines._
 import scopt.OptionParser
-import workflow.Pipeline
+import workflow._
+import workflow.Lineage._
 
 
 object MnistRandomFFT extends Serializable with Logging {
