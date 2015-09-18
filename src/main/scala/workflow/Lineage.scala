@@ -168,7 +168,7 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: R
         val mapped = fMapping.zipWithIndex.map{
           case (mapping, index) =>{
             if (index == i){
-              mapping.asInstanceOf[Mapping].qForward(Some(k.toLong))
+              mapping.asInstanceOf[Mapping].qForward(Some(k))
             }
           }
         }
@@ -184,14 +184,14 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: R
         val mapped = bMapping.zipWithIndex.map{
           case (mapping, index) =>{
             if (index == i){
-              mapping.asInstanceOf[Mapping].qBackward(Some(1.toLong))
+              mapping.asInstanceOf[Mapping].qBackward(Some(1))
             }
           }
         }
         val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
         val list = innerRet.zip(List.fill(innerRet.size){j})
         list.map(x => {
-          val y = x.asInstanceOf[((Long, Long), Int)]
+          val y = x.asInstanceOf[((Int, Int), Int)]
           (y._1._1, y._2, y._1._2)
         })
       }
@@ -341,7 +341,7 @@ object GatherLineage{
 }
 
 object SampleLineage{
-  def apply(in: RDD[_], out: RDD[_], fList: RDD[List[(Long, Long)]], bList:RDD[(Long, Long)], model: Option[_]=None) = {
+  def apply(in: RDD[_], out: RDD[_], fList: RDD[List[(Int, Int)]], bList:RDD[List[(Int, Int)]], model: Option[_]=None) = {
     val fMapping = fList.map(x => MiscMapping(x))
     val bMapping = bList.map(x => MiscMapping(x))
     new SampleLineage(in ,out, fMapping, bMapping, model)

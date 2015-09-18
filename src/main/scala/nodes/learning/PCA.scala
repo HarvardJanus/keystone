@@ -8,7 +8,8 @@ import org.apache.spark.rdd.RDD
 import org.netlib.util.intW
 import pipelines._
 import utils.MatrixUtils
-import workflow.{Transformer, Estimator}
+import workflow._
+import workflow.Lineage._
 
 
 /**
@@ -38,6 +39,15 @@ case class BatchPCATransformer(pcaMat: DenseMatrix[Float]) extends Transformer[D
   def apply(in: DenseMatrix[Float]): DenseMatrix[Float] = {
     logInfo(s"Multiplying pcaMat:(${pcaMat.rows}x${pcaMat.cols}), in: (${in.rows}x${in.cols})")
     pcaMat.t * in
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
+    val out = in.map(apply)
+    out.cache()
+    val lineage = LinComLineage(in, out, this, Some(pcaMat))
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0, 0)))
+    out
   }
 }
 
