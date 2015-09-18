@@ -51,7 +51,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
         val rawDescData = rawDescDataShort.map(s => s.toFloat)
 
         //below is a new interface for lineage, change back to numCols
-        val numSamples = numCols
+        val numSamples = 50 //numCols
 
         val inList = (0 until numSamples).map(i => Circle((x(i), y(i)), binSize.toDouble)).toList
         val outList = (0 until numSamples).map(i => Square((0.0,i.toDouble), ((descriptorSize-1).toDouble,i.toDouble))).toList
