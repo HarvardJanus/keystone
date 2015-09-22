@@ -66,6 +66,21 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         val innerRet = m.asInstanceOf[List[_]]
         List.fill(innerRet.size){i}.zip(innerRet)
       }
+      case (i:Int, j:Int, k:Int, c:Int) => {
+        val resultRDD = mappingRDD.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == i){
+              mapping.asInstanceOf[Mapping].qForward(Some(j,k,c))
+            }
+          }
+        }
+        val filteredRDD = resultRDD.zipWithIndex.filter{
+          case (result, index) => (index == i)
+        }.map(x => x._1)
+        val m = filteredRDD.first
+        val innerRet = m.asInstanceOf[List[_]]
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
     }
   }
 
@@ -91,6 +106,21 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
           case (mapping, index) => {
             if(index == i){
               mapping.asInstanceOf[Mapping].qBackward(Some(j,k))
+            }
+          }
+        }
+        val filteredRDD = resultRDD.zipWithIndex.filter{
+          case (result, index) => (index == i)
+        }.map(x => x._1)
+        val m = filteredRDD.first
+        val innerRet = m.asInstanceOf[List[_]]
+        List.fill(innerRet.size){i}.zip(innerRet)
+      }
+      case (i:Int, j:Int, k:Int, c:Int) => {
+        val resultRDD = mappingRDD.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == i){
+              mapping.asInstanceOf[Mapping].qBackward(Some(j,k,c))
             }
           }
         }
@@ -190,6 +220,7 @@ object Lineage{
   implicit def intToOption(key: Int): Option[Int] = Some(key)
   implicit def int2DToOption(key: (Int, Int)): Option[(Int, Int)] = Some(key)
   implicit def int3DToOption(key: (Int, Int, Int)): Option[(Int, Int, Int)] = Some(key)
+  implicit def int4DToOption(key: (Int, Int, Int, Int)): Option[(Int, Int, Int, Int)] = Some(key)
   implicit def indexInt2DToOption(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
 
   //need a lineage apply interface to reconstruct the lineage object from files on disk
@@ -242,10 +273,10 @@ object OneToOneLineage{
         new OneToOneMapping(mIn.rows, mIn.cols, mOut.size, 1, 1)
       }
       case (imageIn: MultiLabeledImage, imageOut: Image) => {
-        new OneToOneMapping(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageOut.metadata))
+        new OneToOneMapping(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageIn.image.metadata), Some(imageOut.metadata))
       }
       case (imageIn: Image, imageOut: Image) => {
-        new OneToOneMapping(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageOut.metadata))
+        new OneToOneMapping(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageIn.metadata), Some(imageOut.metadata))
       }
       case _ => None
     })

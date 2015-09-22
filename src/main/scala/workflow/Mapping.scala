@@ -33,7 +33,7 @@ object Mapping{
 }
 
 case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
-	seqSize: Int, imageMeta: Option[ImageMetadata] = None) extends Mapping{
+	seqSize: Int, inMeta: Option[ImageMetadata] = None, outMeta: Option[ImageMetadata] = None) extends Mapping{
 
 	def qForward(key: Option[_]) = {
 		val k = key.getOrElse(null)
@@ -63,6 +63,14 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 					}
 				}
 			}
+      case (i:Int, j:Int, c:Int) =>{
+        /*This is the case for Image-to-Image*/
+        val inputMeta = inMeta.getOrElse(null)
+        val outputMeta = outMeta.getOrElse(null)
+        require((inputMeta != null)&&(outputMeta != null), {"This should be an image mapping, but the metadata is missing"})
+        require((i < inputMeta.xDim)&&(j < inputMeta.yDim)&&(c < inputMeta.numChannels), {"querying out of boundary of input image"})
+        List((i, j, c))
+      }
 			case _ => List()
 		}
 	}
@@ -85,6 +93,14 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 				require((j < outCols), {"querying out of boundary of output vector"})
   			List((i, j))
 			}
+      case (i:Int, j:Int, c:Int) =>{
+        /*This is the case for Image-to-Image*/
+        val inputMeta = inMeta.getOrElse(null)
+        val outputMeta = outMeta.getOrElse(null)
+        require((inputMeta != null)&&(outputMeta != null), {"This should be an image mapping, but the metadata is missing"})
+        require((i < outputMeta.xDim)&&(j < outputMeta.yDim)&&(c < outputMeta.numChannels), {"querying out of boundary of input image"})
+        List((i, j, c))
+      }
 			case _ => List()
 		}
 	}
