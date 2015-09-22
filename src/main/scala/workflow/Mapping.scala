@@ -376,35 +376,15 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
 	}
 }
 
-case class MiscMapping(map: Map[Int, _]) extends Mapping{
-  def qForward(key: Option[_]) = {
-    val k = key.getOrElse(null)
-    k match {
-      case (i: Int) =>{
-        List(map(i))
-      }
-    }
-  }
-
-  def qBackward(key: Option[_]) = {
-    val k = key.getOrElse(null)
-    k match {
-      case (i: Int) =>{
-        List(map(i))
-      }
-    }
-  }
-}
-
 object ContourMapping{
 
   def apply(mapping: List[(Shape, Shape)]) = {
-    /*val (fMap, bMap) = buildIndex(mapping)
-    new ContourMapping(fMap, bMap)*/
+    val (fMap, bMap) = buildIndex(mapping)
+    new ContourMapping(fMap, bMap)
     /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
     new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
-    val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
-    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
+    /*val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)*/
     /*val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
     new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)*/
   }
@@ -644,13 +624,5 @@ object OneManyMapping{
     }
     /*return index*/    
     ((firstFIndex, secondFIndex), (firstBIndex, secondBIndex))
-  }
-}
-
-object MiscMapping{
-  def apply(mapping: List[(Int, Int)]) = {
-    var map: Map[Int, Int] = Map()
-    mapping.map(x => map += x._1->x._2)
-    new MiscMapping(map)
   }
 }

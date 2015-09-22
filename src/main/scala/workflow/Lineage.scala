@@ -160,51 +160,30 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
   def size = inSeq.size
 }
 
-class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], fMapping: RDD[_], bMapping: RDD[_], modelRDD: Option[_]) extends Lineage(modelRDD){
+class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
+  modelRDD: Option[_]) extends NarrowLineage(inRDD, outRDD, mappingRDD, transformer, modelRDD){
   
-  def qForward(key: Option[_]) = {
+  override def qForward(key: Option[_]) = {
+    val interResult = super.qForward(key)
     key.getOrElse(null) match{
       case (i:Int, j:Int, k:Int) => {
-        val mapped = fMapping.zipWithIndex.map{
-          case (mapping, index) =>{
-            if (index == i){
-              mapping.asInstanceOf[Mapping].qForward(Some(k))
-            }
-          }
+        interResult.map{
+          case (itemID: Int, list:List[_]) => (itemID, list(j))
         }
-        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
-        innerRet.zip(List.fill(innerRet.size){j})
       }
     }
   }
 
-  def qBackward(key: Option[_]) = {
-    key.getOrElse(null) match {
-      case (i:Int, j:Int) => {
-        val mapped = bMapping.zipWithIndex.map{
-          case (mapping, index) =>{
-            if (index == i){
-              mapping.asInstanceOf[Mapping].qBackward(Some(1))
-            }
-          }
+  override def qBackward(key: Option[_]) = {
+    val interResult = super.qBackward(key)
+    key.getOrElse(null) match{
+      case (i:Int, j:Int, k:Int) => {
+        interResult.map{
+          case (itemID: Int, list:List[_]) => (itemID, list(j))
         }
-        val innerRet = mapped.filter(_!=()).collect.toList(0).asInstanceOf[List[_]]
-        val list = innerRet.zip(List.fill(innerRet.size){j})
-        list.map(x => {
-          val y = x.asInstanceOf[((Int, Int), Int)]
-          (y._1._1, y._2, y._1._2)
-        })
       }
     }
   }
-
-  //This is a temporary solution since ColumnSampler is not a transformer yet
-  def save(tag: String) = {
-    fMapping.saveAsObjectFile(path+"/"+tag+"/fMappingRDD")
-    bMapping.saveAsObjectFile(path+"/"+tag+"/bMappingRDD")
-  }
-
-  def size = fMapping.count
 }
 
 object Lineage{
@@ -331,19 +310,19 @@ object RegionLineage{
   }
 }
 
+object SampleLineage{
+  def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(Shape, Shape)]], 
+    transformer: Transformer[_, _], model: Option[_]=None) = {
+    val mapping = ioList.map(l => ContourMapping(l))
+    new SampleLineage(in, out, mapping, transformer, model)
+  }
+}
+
 object GatherLineage{
   def apply[T](in: Seq[RDD[T]], out: RDD[Seq[T]], transformer: GatherTransformer[_], model: Option[_]=None) = {
     val sampleIn = in(0)
     val sampleOut = out.first
     val mapping = TransposeMapping(in.size, sampleIn.count, out.count, sampleOut.size)
     new GatherLineage(in, out, mapping, transformer, model)
-  }
-}
-
-object SampleLineage{
-  def apply(in: RDD[_], out: RDD[_], fList: RDD[List[(Int, Int)]], bList:RDD[List[(Int, Int)]], model: Option[_]=None) = {
-    val fMapping = fList.map(x => MiscMapping(x))
-    val bMapping = bList.map(x => MiscMapping(x))
-    new SampleLineage(in ,out, fMapping, bMapping, model)
   }
 }

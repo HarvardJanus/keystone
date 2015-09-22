@@ -71,7 +71,7 @@ private[workflow] class ConcretePipeline[A, B](
       case _: TransformerNode[_] =>
         throw new RuntimeException("Pipeline DAG error: Cannot have a data dependency on a Transformer")
       case estimator: EstimatorNode =>
-        val nodeDataDeps = dataDeps(node).map(x => rddDataEval(x, null))
+        val nodeDataDeps = dataDeps(node).map(x => rddDataEvalWithLineage(x, null))
         logInfo(s"Fitting '${estimator.label}' [$node]")
         val fitOut = estimator.fit(nodeDataDeps)
         fitCache(node) = Some(fitOut)
@@ -127,7 +127,11 @@ private[workflow] class ConcretePipeline[A, B](
         nodes(node) match {
           case DataNode(rdd) => rdd
           case transformer: TransformerNode[_] =>
-            val tag = transformer.label+"_"+node+"_"+in.id
+            val id = in match {
+              case rdd: RDD[_] => rdd.id
+              case null => "null"
+            }
+            val tag = transformer.label+"_"+node+"_"+id
             val nodeFitDeps = fitDeps(node).map(fitEstimator)
             val nodeDataDeps = dataDeps(node).map(x => rddDataEvalWithLineage(x, in))
             val outputData = transformer.transformRDDWithLineage(nodeDataDeps, nodeFitDeps, tag)
