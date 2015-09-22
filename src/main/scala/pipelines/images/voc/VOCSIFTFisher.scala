@@ -22,6 +22,7 @@ object VOCSIFTFisher extends Serializable with Logging {
 
   def run(sc: SparkContext, conf: SIFTFisherConfig) {
 
+    val startTime = System.nanoTime()
     // Load the data and extract training labels.
     val parsedRDD = VOCLoader(
       sc,
@@ -106,6 +107,8 @@ object VOCSIFTFisher extends Serializable with Logging {
     val map = MeanAveragePrecisionEvaluator(testActuals, predictions, VOCLoader.NUM_CLASSES)
     logInfo(s"TEST APs are: ${map.toArray.mkString(",")}")
     logInfo(s"TEST MAP is: ${mean(map)}")
+    val endTime = System.nanoTime()
+    logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")
   }
 
   case class SIFTFisherConfig(
