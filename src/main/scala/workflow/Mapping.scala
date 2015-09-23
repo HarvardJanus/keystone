@@ -32,6 +32,91 @@ object Mapping{
   }
 }
 
+case class ElementMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
+  def query(key: Option[_], inMeta: Metadata, outMeta: Metadata) = {
+    (inMeta, outMeta) match {
+      case (in: VectorMeta, out: VectorMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case i:Int => {
+            require((i < in.dim)&&(i < out.dim), {"querying out of boundary of input vector"})
+            List(i)
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+      case (in: VectorMeta, out: MatrixMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case i:Int => {
+            require((i < in.dim), {"querying out of boundary of input vector"})
+            require((i < out.xDim*out.yDim), {"querying out of boundary of output matrix"})
+            List((i%out.xDim, i/out.xDim))
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+      case (in: MatrixMeta, out: MatrixMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
+            require((i < out.xDim)&&(j < out.yDim), {"querying out of boundary of output matrix"})
+            List((i,j))
+          }
+          case _ => {
+            require(0==1, {"input is 2-d structure, use 2-d index"})
+            List()
+          }
+        }
+      }
+      case (in: MatrixMeta, out: VectorMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
+            require(j*in.xDim+i < out.dim, {"querying out of boundary of output vector"})
+            List(j*in.xDim+i)
+          }
+          case _ => {
+            require(0==1, {"input is 2-d structure, use 2-d index"})
+            List()
+          }
+        }
+      }
+      case (in: ImageMeta, out: ImageMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((in.cDim==1), "input image has multiple channels, use 3-d index")
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input image"})
+            require((i < out.xDim)&&(j < out.yDim), {"querying out of boundary of output image"})
+            List((i,j,0))
+          }
+          case (i:Int, j:Int, c:Int) => {
+            require((i < in.xDim)&&(j < in.yDim)&&(c < in.cDim), {"querying out of boundary of input image"})
+            require((i < out.xDim)&&(j < out.yDim)&&(c < out.cDim), {"querying out of boundary of output image"})
+            List((i,j,c))
+          }
+          case _ => {
+            require(0==1, {"input is 3-d structure, use 3-d index"})
+            List()
+          }
+        }
+      }
+    }
+  }
+
+  def qForward(key: Option[_]) = query(key, inMeta, outMeta)
+  def qBackward(key: Option[_]) = query(key, outMeta, inMeta)
+}
+
 case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int, 
 	seqSize: Int, inMeta: Option[ImageMetadata] = None, outMeta: Option[ImageMetadata] = None) extends Mapping{
 
@@ -56,11 +141,6 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 						require((i < outRows) && (j < outCols), {"querying out of boundary of input matrix"})
 						List((i, j))
 					}
-					case (1, _) => {
-						require((i < seqSize), {"Sequence index out of bound"})
-						require((inRows*i+j < outRows), {"querying out of boundary of input vector sequence"})
-						List(inRows * i + j)	
-					}
 				}
 			}
       case (i:Int, j:Int, c:Int) =>{
@@ -83,7 +163,7 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
 				require((i < outRows), {"querying out of boundary of output vector"})
 				(inCols, seqSize) match {
   				case (1, 1) => List(i)
-  				case (1, _) => List((i/inRows, i%inRows))
+  				/*case (1, _) => List((i/inRows, i%inRows))*/
   				case (_, 1) => List((i%inRows, i/inRows))
   			}
 			}
@@ -94,7 +174,6 @@ case class OneToOneMapping(inRows: Int, inCols: Int, outRows:Int, outCols: Int,
   			List((i, j))
 			}
       case (i:Int, j:Int, c:Int) =>{
-        /*This is the case for Image-to-Image*/
         val inputMeta = inMeta.getOrElse(null)
         val outputMeta = outMeta.getOrElse(null)
         require((inputMeta != null)&&(outputMeta != null), {"This should be an image mapping, but the metadata is missing"})

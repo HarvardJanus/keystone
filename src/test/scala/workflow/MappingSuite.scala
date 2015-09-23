@@ -14,7 +14,7 @@ import scala.io.Source
 
 class MappingSuite extends FunSuite with Logging {
   test("OneToOne Vector-to-Vector Mapping Test"){
-    val mapping = new OneToOneMapping(5, 1, 5, 1, 1)
+    val mapping = new ElementMapping(VectorMeta(5), VectorMeta(5))
     val fResult = mapping.qForward(Some(0))
     assert(fResult == List(0))
 
@@ -41,7 +41,7 @@ class MappingSuite extends FunSuite with Logging {
   }
 
   test("OneToOne Matrix-to-Matrix Mapping Test"){
-    val mapping = new OneToOneMapping(5, 5, 5, 5, 1)
+    val mapping = new ElementMapping(MatrixMeta(5,5), MatrixMeta(5,5))
     val fResult = mapping.qForward(Some(0,0))
     assert(fResult == List((0,0)))
 
@@ -68,11 +68,12 @@ class MappingSuite extends FunSuite with Logging {
   }
 
   test("OneToOne Matrix-to-Vector Mapping Test"){
-    val mapping = new OneToOneMapping(5, 5, 25, 1, 1)
+    val mapping = new ElementMapping(MatrixMeta(5,5), VectorMeta(25))
     val fResult = mapping.qForward(Some(0,0))
     assert(fResult == List(0))
 
     val bResult = mapping.qBackward(Some(24))
+    println(bResult)
     assert(bResult == List((4,4)))
 
     //out of bound query
@@ -95,7 +96,8 @@ class MappingSuite extends FunSuite with Logging {
   }
 
   test("OneToOne Seq[Vector]-to-Vector Mapping Test"){
-    val mapping = new OneToOneMapping(5, 1, 15, 1, 3)
+    /*use a matrix(seq.size, vector.size) instead of recording seq*/
+    val mapping = new ElementMapping(MatrixMeta(3,5), VectorMeta(15))
     val fResult = mapping.qForward(Some(2,4))
     assert(fResult == List(14))
 
@@ -122,13 +124,12 @@ class MappingSuite extends FunSuite with Logging {
   }
 
   test("OneToOne Image-to-Image Mapping test"){
-    val meta = new ImageMetadata(2, 2, 2)
-    val mapping = new OneToOneMapping(8, 1, 8, 1, 1, Some(meta))
-    val fResult = mapping.qForward(Some(0))
-    assert(fResult == List(0))
+    val mapping = new ElementMapping(ImageMeta(2,2,2), ImageMeta(2,2,2))
+    val fResult = mapping.qForward(Some(0,0,0))
+    assert(fResult == List((0,0,0)))
 
-    val bResult = mapping.qBackward(Some(0))
-    assert(bResult == List(0))
+    val bResult = mapping.qBackward(Some(0,0,0))
+    assert(bResult == List((0,0,0)))
 
     //out of bound query
     intercept[java.lang.IllegalArgumentException] {
@@ -147,9 +148,16 @@ class MappingSuite extends FunSuite with Logging {
     intercept[java.lang.IllegalArgumentException] {
       val result = mapping.qBackward(Some(0,0))
     }
+
+    val mapping2 = new ElementMapping(ImageMeta(2,2,1), ImageMeta(2,2,1))
+    val fResult2 = mapping2.qForward(Some(0,0))
+    assert(fResult2 == List((0,0,0)))
+
+    val bResult2 = mapping2.qBackward(Some(0,0))
+    assert(bResult2 == List((0,0,0)))
   }
 
-  test("AllToOne Vector-to-Vector Mapping Test"){
+  /*test("AllToOne Vector-to-Vector Mapping Test"){
     val mapping = new AllToOneMapping(5, 1, 5, 1)
     val fResult = mapping.qForward(Some(2))
     assert(fResult == List(0, 1, 2, 3, 4))
@@ -377,16 +385,5 @@ class MappingSuite extends FunSuite with Logging {
     intercept[java.lang.IllegalArgumentException] {
       val result = mapping.qBackward(Some(0))
     }
-  }
-
-  test("Misc Mapping with Map test"){
-    val map = Map(0L->(0,0), 1L->(1,1))
-    val mapping = new MiscMapping(map)
-
-    val fResult = mapping.qForward(Some(0L))
-    assert(fResult == List((0,0)))
-
-    val bResult = mapping.qBackward(Some(0L))
-    assert(bResult == fResult)
-  }
+  }*/
 }

@@ -9,7 +9,7 @@ import pipelines.Logging
 import utils.{ImageUtils, MatrixUtils, TestUtils}
 
 class VLFeatSuite extends FunSuite with Logging {
-  test("Load an Image and compute SIFT Features") {
+  /*test("Load an Image and compute SIFT Features") {
     val testImage = TestUtils.loadTestImage("images/000012.jpg")
     val singleImage = ImageUtils.mapPixels(testImage, _/255.0)
     val grayImage = ImageUtils.toGrayScale(singleImage)
@@ -49,5 +49,5 @@ class VLFeatSuite extends FunSuite with Logging {
 
     assert(absdiff.findAll(_ > 1.0).length.toDouble < 0.005*absdiff.length,
       "Fewer than 0.05% of entries may be different by more than 1.")
-  }
+  }*/
 }

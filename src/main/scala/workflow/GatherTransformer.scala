@@ -20,7 +20,7 @@ private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
     out.cache()
   	val lineage = GatherLineage(dataDependencies.map(_.asInstanceOf[RDD[T]]), out, this)
   	lineage.save(tag)
-  	println("collecting lineage for Transformer "+this.label)
+  	println("collecting lineage for Transformer "+this.label+"\tmapping: "+lineage.qBackward(0,1,0))
   	out
   }
 }
