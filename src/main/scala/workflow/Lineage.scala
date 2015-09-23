@@ -259,24 +259,24 @@ object OneToOneLineage{
   def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
     val mapping = in.zip(out).map({
       case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
-        new OneToOneMapping(vIn.size, 1, vOut.size, 1, 1)
+        new ElementMapping(Metadata(vIn.size), Metadata(vOut.size))
       }
       case (sIn: Seq[_], vOut: DenseVector[_]) => {
         //sIn should be Seq[DenseVetor[_]]
         val sampleInVector = sIn(0).asInstanceOf[DenseVector[_]]
-        new OneToOneMapping(sampleInVector.size, 1, vOut.size, 1, sIn.size)
+        new ElementMapping(Metadata(sIn.size,sampleInVector.size), Metadata(vOut.size))
       }
       case (mIn: DenseMatrix[_], mOut: DenseMatrix[_]) => {
-        new OneToOneMapping(mIn.rows, mIn.cols, mOut.rows, mOut.cols, 1)
+        new ElementMapping(Metadata(mIn.rows, mIn.cols), Metadata(mOut.rows, mOut.cols))
       }
       case (mIn: DenseMatrix[_], mOut: DenseVector[_]) => {
-        new OneToOneMapping(mIn.rows, mIn.cols, mOut.size, 1, 1)
+        new ElementMapping(Metadata(mIn.rows, mIn.cols), Metadata(mOut.size))
       }
       case (imageIn: MultiLabeledImage, imageOut: Image) => {
-        new OneToOneMapping(imageIn.image.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageIn.image.metadata), Some(imageOut.metadata))
+        new ElementMapping(Metadata(imageIn.image.metadata), Metadata(imageOut.metadata))
       }
       case (imageIn: Image, imageOut: Image) => {
-        new OneToOneMapping(imageIn.flatSize, 1, imageOut.flatSize, 1, 1, Some(imageIn.metadata), Some(imageOut.metadata))
+        new ElementMapping(Metadata(imageIn.metadata), Metadata(imageOut.metadata))
       }
       case _ => None
     })
