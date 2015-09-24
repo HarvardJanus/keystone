@@ -155,7 +155,7 @@ case class AllMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
         val k = key.getOrElse(null)
         k match {
           case (i:Int, j:Int) => {
-            require((in.cDim==1), "in.cDim: "+in.cDim+" input image has multiple channels, use 3-d index")
+            require((in.cDim==1), "input image has multiple channels, use 3-d index")
             require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input image"})
             require((i < out.xDim)&&(j < out.yDim), {"querying out of boundary of output image"})
             List.fill(out.cDim){(i,j)}.zip((0 until out.yDim)).map{case (t, c) => (t._1, t._2, c)}

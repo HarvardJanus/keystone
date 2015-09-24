@@ -297,7 +297,7 @@ object AllToOneLineage{
         new AllMapping(Metadata(vIn.rows, vIn.cols), Metadata(vOut.rows, vOut.cols))
       }
       case (vIn: Image, vOut: Image) => {
-        new AllMapping(Metadata(vIn.metadata), Metadata(vIn.metadata))
+        new AllMapping(Metadata(vIn.metadata), Metadata(vOut.metadata))
       }
       case _ => None
     })
