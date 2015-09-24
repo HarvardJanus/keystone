@@ -288,16 +288,16 @@ object AllToOneLineage{
   def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
     val mapping = in.zip(out).map({
       case (vIn: DenseVector[_], vOut: DenseVector[_]) => {
-        new AllToOneMapping(vIn.size, 1, vOut.size, 1)
+        new AllMapping(Metadata(vIn.size), Metadata(vOut.size))
       }
       case (vIn: DenseVector[_], vOut: Int) => {
-        new AllToOneMapping(vIn.size, 1, 1, 1)
+        new AllMapping(Metadata(vIn.size), Metadata(1))
       }
       case (vIn: DenseMatrix[_], vOut: DenseMatrix[_]) => {
-        new AllToOneMapping(vIn.rows, vIn.cols, vOut.rows, vOut.cols)
+        new AllMapping(Metadata(vIn.rows, vIn.cols), Metadata(vOut.rows, vOut.cols))
       }
       case (vIn: Image, vOut: Image) => {
-        new AllToOneMapping(vIn.flatSize, 1, vOut.flatSize, 1, Some(vIn.metadata))
+        new AllMapping(Metadata(vIn.metadata), Metadata(vIn.metadata))
       }
       case _ => None
     })
