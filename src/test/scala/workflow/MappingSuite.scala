@@ -13,7 +13,7 @@ import scala.reflect.ClassTag
 import scala.io.Source
 
 class MappingSuite extends FunSuite with Logging {
-  test("OneToOne Vector-to-Vector Mapping Test"){
+  test("Element Vector-to-Vector Mapping Test"){
     val mapping = new ElementMapping(VectorMeta(5), VectorMeta(5))
     val fResult = mapping.qForward(Some(0))
     assert(fResult == List(0))
@@ -40,7 +40,7 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("OneToOne Matrix-to-Matrix Mapping Test"){
+  test("Element Matrix-to-Matrix Mapping Test"){
     val mapping = new ElementMapping(MatrixMeta(5,5), MatrixMeta(5,5))
     val fResult = mapping.qForward(Some(0,0))
     assert(fResult == List((0,0)))
@@ -67,13 +67,12 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("OneToOne Matrix-to-Vector Mapping Test"){
+  test("Element Matrix-to-Vector Mapping Test"){
     val mapping = new ElementMapping(MatrixMeta(5,5), VectorMeta(25))
     val fResult = mapping.qForward(Some(0,0))
     assert(fResult == List(0))
 
     val bResult = mapping.qBackward(Some(24))
-    println(bResult)
     assert(bResult == List((4,4)))
 
     //out of bound query
@@ -95,7 +94,7 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("OneToOne Seq[Vector]-to-Vector Mapping Test"){
+  test("Element Seq[Vector]-to-Vector Mapping Test"){
     /*use a matrix(seq.size, vector.size) instead of recording seq*/
     val mapping = new ElementMapping(MatrixMeta(3,5), VectorMeta(15))
     val fResult = mapping.qForward(Some(2,4))
@@ -123,7 +122,7 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("OneToOne Image-to-Image Mapping test"){
+  test("Element Image-to-Image Mapping test"){
     val mapping = new ElementMapping(ImageMeta(2,2,2), ImageMeta(2,2,2))
     val fResult = mapping.qForward(Some(0,0,0))
     assert(fResult == List((0,0,0)))
@@ -157,8 +156,8 @@ class MappingSuite extends FunSuite with Logging {
     assert(bResult2 == List((0,0,0)))
   }
 
-  /*test("AllToOne Vector-to-Vector Mapping Test"){
-    val mapping = new AllToOneMapping(5, 1, 5, 1)
+  test("All Vector-to-Vector Mapping Test"){
+    val mapping = new AllMapping(VectorMeta(5), VectorMeta(5))
     val fResult = mapping.qForward(Some(2))
     assert(fResult == List(0, 1, 2, 3, 4))
 
@@ -184,8 +183,8 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("AllToOne Matrix-to-Matrix Mapping test"){
-    val mapping = new AllToOneMapping(2, 2, 2, 2)
+  test("All Matrix-to-Matrix Mapping test"){
+    val mapping = new AllMapping(MatrixMeta(2,2), MatrixMeta(2,2))
     val fResult = mapping.qForward(Some(0,0))
     assert(fResult == List((0,0), (0,1), (1,0), (1,1)))
 
@@ -211,22 +210,23 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("AllToOne Image-to-Image Mapping test"){
-    val meta = new ImageMetadata(2, 2, 2)
-    val mapping = new AllToOneMapping(8, 1, 8, 1, Some(meta))
-    val fResult = mapping.qForward(Some(0))
-    assert(fResult == List(0))
+  test("All Image-to-Image Mapping test"){
+    val mapping = new AllMapping(ImageMeta(2,2,2), ImageMeta(2,2,1))
+    val fResult = mapping.qForward(Some(0,0,0))
+    println(fResult)
+    assert(fResult == List((0,0,0)))
 
-    val bResult = mapping.qBackward(Some(0))
-    assert(bResult == List(0,4))
+    val bResult = mapping.qBackward(Some(0,0))
+    println(bResult)
+    assert(bResult == List((0,0,0),(0,0,1)))
 
     //out of bound query
     intercept[java.lang.IllegalArgumentException] {
-      val result = mapping.qForward(Some(8))
+      val result = mapping.qForward(Some(2,2,0))
     }
 
     intercept[java.lang.IllegalArgumentException] {
-      val result = mapping.qBackward(Some(8))
+      val result = mapping.qBackward(Some(2,2))
     }
 
     //wrong dimensional key
@@ -235,7 +235,7 @@ class MappingSuite extends FunSuite with Logging {
     }
 
     intercept[java.lang.IllegalArgumentException] {
-      val result = mapping.qBackward(Some(0,0))
+      val result = mapping.qBackward(Some(0))
     }
   }
 
@@ -385,5 +385,5 @@ class MappingSuite extends FunSuite with Logging {
     intercept[java.lang.IllegalArgumentException] {
       val result = mapping.qBackward(Some(0))
     }
-  }*/
+  }
 }

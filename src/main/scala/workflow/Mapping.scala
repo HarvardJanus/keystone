@@ -117,6 +117,80 @@ case class ElementMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
   def qBackward(key: Option[_]) = query(key, outMeta, inMeta)
 }
 
+case class AllMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
+  def query(key: Option[_], inMeta: Metadata, outMeta: Metadata) = {
+    (inMeta, outMeta) match {
+      case (in: VectorMeta, out: VectorMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case i:Int => {
+            require((i < in.dim), {"querying out of boundary of input vector"})
+            (0 until out.dim).toList
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+      case (in: MatrixMeta, out: MatrixMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
+            require((i < out.xDim)&&(j < out.yDim), {"querying out of boundary of output matrix"})
+            val rSeq = for {
+              x <- 0 until out.xDim
+              y <- 0 until out.yDim
+            } yield (x, y)
+            rSeq.toList
+          }
+          case _ => {
+            require(0==1, {"input is 2-d structure, use 2-d index"})
+            List()
+          }
+        }
+      }
+      case (in: ImageMeta, out: ImageMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((in.cDim==1), "input image has multiple channels, use 3-d index")
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input image"})
+            require((i < out.xDim)&&(j < out.yDim), {"querying out of boundary of output image"})
+            List.fill(out.cDim){(i,j)}.zip((0 until out.yDim)).map{case (t, c) => (t._1, t._2, c)}
+          }
+          case (i:Int, j:Int, c:Int) => {
+            require((i < in.xDim)&&(j < in.yDim)&&(c < in.cDim), {"querying out of boundary of input image"})
+            require((i < out.xDim)&&(j < out.yDim)&&(c < out.cDim), {"querying out of boundary of output image"})
+            out.cDim match {
+              case 1 => {
+                List((i,j,0))
+              }
+              case _ =>{
+                val rSeq = for {
+                  x <- 0 until out.xDim
+                  y <- 0 until out.yDim
+                  c <- 0 until out.cDim
+                } yield (x, y, c)
+                rSeq.toList
+              }
+            }
+            
+          }
+          case _ => {
+            require(0==1, {"input is 3-d structure, use 3-d index"})
+            List()
+          }
+        }
+      }
+    }
+  }
+
+  def qForward(key: Option[_]) = query(key, inMeta, outMeta)
+  def qBackward(key: Option[_]) = query(key, outMeta, inMeta)
+}
+
 
 case class AllToOneMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int, 
 	imageMeta: Option[ImageMetadata] = None) extends Mapping{
