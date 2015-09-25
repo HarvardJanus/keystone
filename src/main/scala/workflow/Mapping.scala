@@ -240,7 +240,7 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
 				}
 				else{
 					val shapes = shapeMap.values.toList
-					shapes.map(x => x.toCoor)
+					shapes.flatMap(x => x.toCoor)
 				}
 			}
       case _ => {
@@ -262,7 +262,7 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
     k match {
       case (i: Int, j: Int) =>{
         val shapeList = index.getOrElse((i,j), List())
-        shapeList.map(s => map(s).toCoor)
+        shapeList.flatMap(s => map(s).toCoor)
       }
       case _ => {
         require((0==1), "input is 2-d structure, use 2-d index")
@@ -287,7 +287,7 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape],
           List()
         }
         else{
-          shapeArray.filter(x=>x.value.inShape(i.toDouble, j.toDouble)).map(x => map(x.value).toCoor).toList
+          shapeArray.filter(x=>x.value.inShape(i.toDouble, j.toDouble)).flatMap(x => map(x.value).toCoor).toList
         }
       }
       case _ => {
@@ -313,7 +313,7 @@ case class ContourMappingKMeans(fIndex: Map[Shape, List[Shape]], bIndex: Map[Sha
         }
         else{
           val shapeList = keyList.flatMap(x => index(x).filter(s => s.inShape(i.toDouble, j.toDouble)))
-          shapeList.map(x=>map(x).toCoor)
+          shapeList.flatMap(x=>map(x).toCoor)
         }
       }
       case _ => {
@@ -413,12 +413,12 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
 object ContourMapping{
 
   def apply(mapping: List[(Shape, Shape)]) = {
-    val (fMap, bMap) = buildIndex(mapping)
-    new ContourMapping(fMap, bMap)
+    /*val (fMap, bMap) = buildIndex(mapping)
+    new ContourMapping(fMap, bMap)*/
     /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
     new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
-    /*val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
-    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)*/
+    val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
+    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
     /*val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
     new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)*/
   }

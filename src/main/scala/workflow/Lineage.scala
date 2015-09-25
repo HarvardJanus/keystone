@@ -64,7 +64,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet)
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
       }
       case (i:Int, j:Int, k:Int, c:Int) => {
         val resultRDD = mappingRDD.zipWithIndex.map{
@@ -79,7 +79,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet)
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
       }
     }
   }
@@ -114,7 +114,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet)
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
       }
       case (i:Int, j:Int, k:Int, c:Int) => {
         val resultRDD = mappingRDD.zipWithIndex.map{
@@ -129,7 +129,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet)
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
       }
     }
   }
@@ -154,6 +154,14 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     }
     outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")*/
   }
+
+  def flatten(in: (Int, _)) = {
+    in match {
+      case (i: Int, (j: Int, k: Int)) => (i, j, k)
+      case (i: Int, (j: Int, k: Int, c: Int)) => (i, j, k, c)
+    }
+  }
+
   def size = mappingRDD.count
 }
 
@@ -196,23 +204,44 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   override def qForward(key: Option[_]) = {
     val interResult = super.qForward(key)
     key.getOrElse(null) match{
-      case (i:Int, j:Int, k:Int) => {
-        interResult.map{
-          case (itemID: Int, list:List[_]) => (itemID, list(j))
-        }
-      }
+      case (i:Int, j:Int, k:Int) => List(interResult(j))
     }
   }
 
   override def qBackward(key: Option[_]) = {
     val interResult = super.qBackward(key)
     key.getOrElse(null) match{
-      case (i:Int, j:Int, k:Int) => {
-        interResult.map{
-          case (itemID: Int, list:List[_]) => (itemID, list(j))
+      case (i:Int, j:Int, k:Int) => List(interResult(j))
+    }
+  }
+}
+
+class PipelineLineage(lineageList: List[Lineage]){
+  def qForward(keys: List[_], list: List[Lineage]=lineageList): List[_] = {
+    list match {
+      case first::rest => {
+        val innerResults = keys.flatMap(key => first.qForward(Some(key)))
+        if(rest.isEmpty){
+          innerResults
+        }
+        else{
+          qForward(innerResults, rest)
         }
       }
+      case List() => List()
     }
+  }
+}
+
+object PipelineLineage{
+  def apply(paths: List[String], sc: SparkContext) = {
+    val lineageList = paths.map(p => {
+      val s = sc.parallelize(Seq(1))
+      val transformer = Transformer[Int, Int](_ * 1)
+      val rdd = sc.objectFile[Mapping](p+"/mappingRDD")
+      new NarrowLineage(s, s, rdd, transformer, Some(None))
+      })
+    new PipelineLineage(lineageList)
   }
 }
 
@@ -254,6 +283,7 @@ object Lineage{
     timeVector.toList
   }
 }
+
 
 object OneToOneLineage{
   def apply(in: RDD[_], out:RDD[_], transformer: Transformer[_, _], model: Option[_] = None) = {
