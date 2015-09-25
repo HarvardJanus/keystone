@@ -340,10 +340,10 @@ object LinComLineage{
     val m = model.getOrElse(None).asInstanceOf[DenseMatrix[T]]
     val mapping = in.zip(out).map({
       case (sIn: DenseVector[_], sOut: DenseVector[_]) => {
-        new LinComMapping(sIn.size, 1, sOut.size, 1, m.rows, m.cols)
+        new LinComMapping(VectorMeta(sIn.size), VectorMeta(sOut.size), MatrixMeta(m.rows, m.cols))
       }
       case (sIn: DenseMatrix[_], sOut: DenseMatrix[_]) => {
-        new LinComMapping(sIn.rows, sIn.cols, sOut.rows, sOut.cols, m.rows, m.cols)
+        new LinComMapping(MatrixMeta(sIn.rows, sIn.cols), MatrixMeta(sOut.rows, sOut.cols), MatrixMeta(m.rows, m.cols))
       }
       case _ => None
     })

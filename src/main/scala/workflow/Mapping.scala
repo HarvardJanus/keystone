@@ -191,42 +191,72 @@ case class AllMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
   def qBackward(key: Option[_]) = query(key, outMeta, inMeta)
 }
 
+case class LinComMapping(inMeta: Metadata, outMeta: Metadata, modelMeta: MatrixMeta) extends Mapping{
+  def query(key: Option[_], inMeta: Metadata, outMeta: Metadata) = {
+    (inMeta, outMeta) match {
+      case (in: VectorMeta, out: VectorMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case i:Int => {
+            require((i < in.dim), {"querying out of boundary of input vector"})
+            (0 until out.dim).toList
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+      case (in: MatrixMeta, out: MatrixMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
+            List.fill(out.yDim){i}.zipWithIndex
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+    }
+  }
 
-case class LinComMapping(inRows: Int, inCols: Int, outRows: Int, outCols: Int,
-	modelRows: Int, modelCols: Int) extends Mapping{
+  def qForward(key: Option[_]) = query(key, inMeta, outMeta)
+  def qBackward(key: Option[_]) = query(key, outMeta, inMeta)
 
-	def qBackward(key: Option[_]) = {
-		val k = key.getOrElse(null)
-		k match {
-			case i: Int =>{
-				require((outCols == 1)&&(inCols == 1), {"output is 2-d structure, use 2-d index"})
-				require((i < outRows), {"querying out of boundary of output vector"})
-				List(((0 until inRows).toList, (0 until inRows).toList.zip(List.fill(modelRows){i})))
-			}
-			case (i: Int, j: Int) => {
-				require((outCols > 1)&&(inCols > 1), {"output is 1-d structure, use 1-d index"})
-				require((i < outRows)&&(j < outCols), {"querying out of boundary of output matrix"})
-				List((List.fill(inCols){i}.zip((0 until inCols).toList), (0 until modelRows).toList.zip(List.fill(modelRows){j})))
-			}
-		}
-	}
-
-	def qForward(key: Option[_]) = {
-		val k = key.getOrElse(null)
-		k match {
-			case i: Int =>{
-				require((outCols == 1)&&(inCols == 1), {"input is 2-d structure, use 2-d index"})
-				require((i < inRows), {"querying out of boundary of input vector"})
-				(0 until outRows).toList
-			}
-			case (i: Int, j: Int) => {
-				require((outCols > 1)&&(inCols > 1), {"input is 1-d structure, use 1-d index"})
-				require((i < inRows)&&(j < inCols), {"querying out of boundary of input matrix"})
-				List.fill(outCols){i}.zip((0 until outCols).toList)
-			}
-			case _ => List()
-		}
-	}
+  def qBackwardModel(key: Option[_]) = {
+    (inMeta, outMeta) match {
+      case (in: VectorMeta, out: VectorMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case i:Int => {
+            require((i < out.dim), {"querying out of boundary of input vector"})
+            (0 until modelMeta.xDim).toList.zip(List.fill(modelMeta.xDim){i})
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+      case (in: MatrixMeta, out: MatrixMeta) => {
+        val k = key.getOrElse(null)
+        k match {
+          case (i:Int, j:Int) => {
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
+            require((i < out.xDim)&&(j < out.yDim), {"querying out of boundary of output matrix"})
+            (0 until modelMeta.xDim).toList.zip(List.fill(modelMeta.xDim){j})
+          }
+          case _ => {
+            require(0==1, {"input is 1-d structure, use 1-d index"})
+            List()
+          }
+        }
+      }
+    }
+  }
 }
 
 case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:Shape]) extends Mapping{

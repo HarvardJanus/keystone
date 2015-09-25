@@ -240,12 +240,15 @@ class MappingSuite extends FunSuite with Logging {
   }
 
   test("LinCom Vector-to-Vector Mapping test"){
-    val mapping = new LinComMapping(2, 1, 2, 1, 2, 2)
+    val mapping = new LinComMapping(VectorMeta(2), VectorMeta(2), MatrixMeta(2,2))
     val fResult = mapping.qForward(Some(0))
     assert(fResult == List(0, 1))
 
     val bResult = mapping.qBackward(Some(0))
-    assert(bResult == List((List(0, 1),List((0,0), (1,0)))))
+    assert(bResult == List(0, 1))
+
+    val mResult = mapping.qBackwardModel(Some(0))
+    assert(mResult == List((0,0), (1,0)))
 
     //out of bound query
     intercept[java.lang.IllegalArgumentException] {
@@ -267,13 +270,16 @@ class MappingSuite extends FunSuite with Logging {
   }
 
   test("LinCom Matrix-to-Matrix Mapping test"){
-    val mapping = new LinComMapping(2, 2, 2, 2, 2, 2)
+    val mapping = new LinComMapping(MatrixMeta(2,2), MatrixMeta(2,2), MatrixMeta(2,2))
     val fResult = mapping.qForward(Some(0, 0))
     assert(fResult == List((0,0), (0,1)))
 
     val bResult = mapping.qBackward(Some(0, 0))
-    assert(bResult == List((List((0,0), (0,1)),List((0,0), (1,0)))))
+    assert(bResult == List((0,0), (0,1)))
 
+    val mResult = mapping.qBackwardModel(Some(0,0))
+    assert(mResult == List((0,0), (1,0)))
+  
     //out of bound query
     intercept[java.lang.IllegalArgumentException] {
       val result = mapping.qForward(Some(2,2))
@@ -303,10 +309,10 @@ class MappingSuite extends FunSuite with Logging {
     val mapping = new ContourMapping(fMap, bMap)
     
     val fResult = mapping.qForward(Some(2,2))
-    assert(fResult == List(List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3))))
+    assert(fResult == List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3)))
 
     val bResult = mapping.qBackward(Some(1, 2))
-    assert(bResult == List(List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2))))
+    assert(bResult == List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2)))
 
     //wrong dimensional key
     intercept[java.lang.IllegalArgumentException] {
@@ -332,19 +338,19 @@ class MappingSuite extends FunSuite with Logging {
     val mapping = new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
     
     val fResult = mapping.qForward(Some(2,2))
-    assert(fResult == List(List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3))))
+    assert(fResult == List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3)))
 
     val bResult = mapping.qBackward(Some(1,2))
-    assert(bResult == List(List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2))))
+    assert(bResult == List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2)))
 
     //multiple results
     val fResult2 = mapping.qForward(Some(2,3))
-    assert(fResult2 == List(List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3)), 
-      List((0,3), (0,4), (0,5), (1,3), (1,4), (1,5), (2,3), (2,4), (2,5))))
+    assert(fResult2 == List((0,1), (0,2), (0,3), (1,1), (1,2), (1,3), (2,1), (2,2), (2,3), 
+      (0,3), (0,4), (0,5), (1,3), (1,4), (1,5), (2,3), (2,4), (2,5)))
 
     val bResult2 = mapping.qBackward(Some(2,3))
-    assert(bResult2 == List(List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2)), 
-      List((0,5), (1,4), (1,5), (1,6), (2,3), (2,4), (2,5), (2,6), (2,7), (3,4), (3,5), (3,6), (4,5))))
+    assert(bResult2 == List((0,2), (1,1), (1,2), (1,3), (2,0), (2,1), (2,2), (2,3), (2,4), (3,1), (3,2), (3,3), (4,2), 
+      (0,5), (1,4), (1,5), (1,6), (2,3), (2,4), (2,5), (2,6), (2,7), (3,4), (3,5), (3,6), (4,5)))
 
     //search key in shape.toBox but not actually in shape
     val fResult3 = mapping.qForward(Some(0,0))
