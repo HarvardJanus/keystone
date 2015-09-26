@@ -263,6 +263,16 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
 	def query(key: Option[_], map: Map[_<:Shape, _<:Shape]) = {
 		val k = key.getOrElse(null)
 		k match {
+      case (i: Int, j: Int, c: Int) => {
+        val shapeMap= map.filter(_._1.inShape(i.toDouble, j.toDouble))
+        if(shapeMap.isEmpty){
+          List()
+        }
+        else{
+          val shapes = shapeMap.values.toList
+          shapes.flatMap(x => x.toCoor)
+        }
+      }
 			case (i: Int, j: Int) =>{
 				val shapeMap= map.filter(_._1.inShape(i.toDouble, j.toDouble))
 				if(shapeMap.isEmpty){
@@ -290,6 +300,10 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
   def query(key: Option[_], index: Map[(Int, Int), List[Shape]], map: Map[Shape, Shape]) = {
     val k = key.getOrElse(null)
     k match {
+      case (i: Int, j: Int, c: Int) => {
+        val shapeList = index.getOrElse((i,j), List())
+        shapeList.flatMap(s => map(s).toCoor)
+      }
       case (i: Int, j: Int) =>{
         val shapeList = index.getOrElse((i,j), List())
         shapeList.flatMap(s => map(s).toCoor)
@@ -311,6 +325,15 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape],
   def query(key: Option[_], rTree: RTree[Shape], map: Map[Shape, Shape]) = {
     val k = key.getOrElse(null)
     k match {
+      case (i: Int, j: Int, c: Int) => {
+        val shapeArray = rTree.searchWithIn(Point(i.toFloat, j.toFloat))
+        if (shapeArray.isEmpty){
+          List()
+        }
+        else{
+          shapeArray.filter(x=>x.value.inShape(i.toDouble, j.toDouble)).flatMap(x => map(x.value).toCoor).toList
+        }
+      }
       case (i: Int, j: Int) =>{
         val shapeArray = rTree.searchWithIn(Point(i.toFloat, j.toFloat))
         if (shapeArray.isEmpty){
@@ -336,6 +359,16 @@ case class ContourMappingKMeans(fIndex: Map[Shape, List[Shape]], bIndex: Map[Sha
   def query(key: Option[_], index: Map[Shape, List[Shape]], map: Map[Shape, Shape]) = {
     val k = key.getOrElse(null)
     k match {
+      case (i: Int, j: Int, c: Int) =>{
+        val keyList = index.keys.toList.filter(_.inShape(i.toDouble, j.toDouble))
+        if (keyList.isEmpty){
+          List()
+        }
+        else{
+          val shapeList = keyList.flatMap(x => index(x).filter(s => s.inShape(i.toDouble, j.toDouble)))
+          shapeList.flatMap(x=>map(x).toCoor)
+        }
+      }
       case (i: Int, j: Int) =>{
         val keyList = index.keys.toList.filter(_.inShape(i.toDouble, j.toDouble))
         if (keyList.isEmpty){

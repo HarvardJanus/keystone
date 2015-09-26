@@ -231,6 +231,21 @@ class PipelineLineage(lineageList: List[Lineage]){
       case List() => List()
     }
   }
+
+  def qBackward(keys: List[_], list: List[Lineage]=lineageList.reverse): List[_] = {
+    list match {
+      case first::rest => {
+        val innerResults = keys.flatMap(key => first.qBackward(Some(key)))
+        if(rest.isEmpty){
+          innerResults
+        }
+        else{
+          qBackward(innerResults, rest)
+        }
+      }
+      case List() => List()
+    }
+  }
 }
 
 object PipelineLineage{
