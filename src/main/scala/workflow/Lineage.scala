@@ -161,6 +161,33 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     })
   }
 
+  def qBackwardBatch(keyRDD: RDD[_]) = {
+    val layeredKeyRDD = keyRDD.map(k => {
+      k match {
+        case (i:Int, j:Int) => (i,j)
+        case (i:Int, j:Int, k:Int) => (i, (j,k))
+        case (i:Int, j:Int, k:Int, c:Int) => (i, (j,k,c))
+      }
+    })
+    val indexedRDD = mappingRDD.zipWithIndex.map{
+      case (mapping, index) => (index.toInt, mapping)
+    }
+    val resultsRDD = layeredKeyRDD.cogroup(indexedRDD).map{
+      case (index, (keys, mappings)) => {
+        val mapping = mappings.toList(0).asInstanceOf[Mapping]
+        val innerResults = mapping.qBackwardBatch(keys.map(Some(_)).toList)
+        innerResults.flatMap(x => x.map(e => (index,e)))
+      }
+    }
+    resultsRDD.flatMap(identity).map(x =>{
+      x match {
+        case (i:Int, j:Int) => (i,j)
+        case (i:Int, (j:Int, k:Int)) => (i,j,k)
+        case (i:Int, (j:Int, k:Int, c:Int)) => (i,j,k,c)
+      }
+    })
+  }
+
   def save(tag: String) = {
     val context = mappingRDD.context
     val tRDD = context.parallelize(Seq(transformer), 1)
@@ -289,6 +316,21 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
       case Nil => keyRDD
     }
   }
+
+  def qBackwardBatch(keyRDD: RDD[_], list: List[NarrowLineage] = lineageList.reverse): RDD[_] = {
+    list match {
+      case first::rest => {
+        val innerRDD = first.qBackwardBatch(keyRDD)
+        if(rest.isEmpty){
+          innerRDD
+        }
+        else{
+          qBackwardBatch(innerRDD, rest)
+        }
+      }
+      case Nil => keyRDD
+    }
+  }
 }
 
 object PipelineLineage{
@@ -339,6 +381,12 @@ object Lineage{
       yield(time(lineage.qBackward(itemID, r, j)))
 
     timeVector.toList
+  }
+
+  def loadAndQueryBatch(paths: List[String], numQuery: Int, sc: SparkContext) = {
+    val lineage = PipelineLineage(paths, sc)
+    val list = List.fill(numQuery){(0,0)}.zip((0 until numQuery)).map(x=> (x._1._1, x._1._2, x._2))
+    lineage.qBackwardBatch(sc.parallelize(list))
   }
 }
 
