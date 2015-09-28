@@ -134,6 +134,33 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     }
   }
 
+  def qForwardBatch(keyRDD: RDD[_]) = {
+    val layeredKeyRDD = keyRDD.map(k => {
+      k match {
+        case (i:Int, j:Int) => (i,j)
+        case (i:Int, j:Int, k:Int) => (i, (j,k))
+        case (i:Int, j:Int, k:Int, c:Int) => (i, (j,k,c))
+      }
+    })
+    val indexedRDD = mappingRDD.zipWithIndex.map{
+      case (mapping, index) => (index.toInt, mapping)
+    }
+    val resultsRDD = layeredKeyRDD.cogroup(indexedRDD).map{
+      case (index, (keys, mappings)) => {
+        val mapping = mappings.toList(0).asInstanceOf[Mapping]
+        val innerResults = mapping.qForwardBatch(keys.map(Some(_)).toList)
+        innerResults.flatMap(x => x.map(e => (index,e)))
+      }
+    }
+    resultsRDD.flatMap(identity).map(x =>{
+      x match {
+        case (i:Int, j:Int) => (i,j)
+        case (i:Int, (j:Int, k:Int)) => (i,j,k)
+        case (i:Int, (j:Int, k:Int, c:Int)) => (i,j,k,c)
+      }
+    })
+  }
+
   def save(tag: String) = {
     val context = mappingRDD.context
     val tRDD = context.parallelize(Seq(transformer), 1)
@@ -155,8 +182,9 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")*/
   }
 
-  def flatten(in: (Int, _)) = {
+  def flatten[T](in: (Int,T)) = {
     in match {
+      case (i: Int, j: Int) => (i, j)
       case (i: Int, (j: Int, k: Int)) => (i, j, k)
       case (i: Int, (j: Int, k: Int, c: Int)) => (i, j, k, c)
     }
@@ -216,8 +244,8 @@ class SampleLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
   }
 }
 
-class PipelineLineage(lineageList: List[Lineage]){
-  def qForward(keys: List[_], list: List[Lineage]=lineageList): List[_] = {
+class PipelineLineage(lineageList: List[NarrowLineage]){
+  def qForward(keys: List[_], list: List[NarrowLineage]=lineageList): List[_] = {
     list match {
       case first::rest => {
         val innerResults = keys.flatMap(key => first.qForward(Some(key)))
@@ -232,7 +260,7 @@ class PipelineLineage(lineageList: List[Lineage]){
     }
   }
 
-  def qBackward(keys: List[_], list: List[Lineage]=lineageList.reverse): List[_] = {
+  def qBackward(keys: List[_], list: List[NarrowLineage]=lineageList.reverse): List[_] = {
     list match {
       case first::rest => {
         val innerResults = keys.flatMap(key => first.qBackward(Some(key)))
@@ -244,6 +272,21 @@ class PipelineLineage(lineageList: List[Lineage]){
         }
       }
       case List() => List()
+    }
+  }
+
+  def qForwardBatch(keyRDD: RDD[_], list: List[NarrowLineage] = lineageList): RDD[_] = {
+    list match {
+      case first::rest => {
+        val innerRDD = first.qForwardBatch(keyRDD)
+        if(rest.isEmpty){
+          innerRDD
+        }
+        else{
+          qForwardBatch(innerRDD, rest)
+        }
+      }
+      case Nil => keyRDD
     }
   }
 }
