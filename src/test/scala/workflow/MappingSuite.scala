@@ -13,6 +13,16 @@ import scala.reflect.ClassTag
 import scala.io.Source
 
 class MappingSuite extends FunSuite with Logging {
+  test("Batch Mapping Query Test"){
+    val vMapping = new ElementMapping(VectorMeta(5), VectorMeta(5))
+    val bVResult = vMapping.qForwardBatch(List(Some(0), Some(1), Some(2)))
+    assert(bVResult == List(List(0), List(1), List(2)))
+
+    val mMapping = new ElementMapping(MatrixMeta(5,5), MatrixMeta(5,5))
+    val bMResult = mMapping.qForwardBatch(List(Some((0,0)), Some((0,1)), Some((0,2))))
+    assert(bMResult == List(List((0,0)), List((0,1)), List((0,2))))
+  }
+
   test("Element Vector-to-Vector Mapping Test"){
     val mapping = new ElementMapping(VectorMeta(5), VectorMeta(5))
     val fResult = mapping.qForward(Some(0))

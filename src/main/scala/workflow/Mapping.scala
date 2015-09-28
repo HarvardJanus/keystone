@@ -16,6 +16,9 @@ import scala.io.Source
 trait Mapping extends serializable{
 	def qForward(key: Option[_]): List[_]
 	def qBackward(key: Option[_]): List[_]
+
+  def qForwardBatch(keys: List[Option[_]]) = keys.map(key => qForward(key))
+  def qBackwardBatch(keys: List[Option[_]]) = keys.map(key => qBackward(key))
 }
 
 object Mapping{
