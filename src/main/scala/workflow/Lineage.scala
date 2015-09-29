@@ -306,6 +306,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
     list match {
       case first::rest => {
         val innerRDD = first.qForwardBatch(keyRDD)
+        innerRDD.cache()
         if(rest.isEmpty){
           innerRDD
         }
@@ -321,6 +322,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
     list match {
       case first::rest => {
         val innerRDD = first.qBackwardBatch(keyRDD)
+        innerRDD.cache()
         if(rest.isEmpty){
           innerRDD
         }
