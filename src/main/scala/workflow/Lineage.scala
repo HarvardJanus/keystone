@@ -388,7 +388,7 @@ object Lineage{
   def loadAndQueryBatch(paths: List[String], numQuery: Int, sc: SparkContext) = {
     val lineage = PipelineLineage(paths, sc)
     val list = List.fill(numQuery){(0,0)}.zip((0 until numQuery)).map(x=> (x._1._1, x._1._2, x._2))
-    val ellapsed = time(lineage.qBackwardBatch(sc.parallelize(list)).count)
+    val ellapsed = time(lineage.qBackwardBatch(sc.parallelize(list)).collect)
     println(ellapsed)
   }
 }
