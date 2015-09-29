@@ -28,7 +28,7 @@ abstract class Lineage(modelRDD: Option[_]) extends serializable{
   def size: Long
 }
 
-class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
+case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], 
   modelRDD: Option[_]) extends Lineage(modelRDD){
 
   def qForward(key: Option[_]) = {
@@ -64,7 +64,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => Lineage.flatten(v))
       }
       case (i:Int, j:Int, k:Int, c:Int) => {
         val resultRDD = mappingRDD.zipWithIndex.map{
@@ -79,7 +79,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => Lineage.flatten(v))
       }
     }
   }
@@ -114,7 +114,7 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => Lineage.flatten(v))
       }
       case (i:Int, j:Int, k:Int, c:Int) => {
         val resultRDD = mappingRDD.zipWithIndex.map{
@@ -129,63 +129,59 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet).map(v => flatten(v))
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => Lineage.flatten(v))
       }
     }
   }
 
-  def qForwardBatch(keyRDD: RDD[_]) = {
-    val layeredKeyRDD = keyRDD.map(k => {
+  def qForwardBatch(keyList: List[_]) = {
+    val layeredKeyList:List[(Int, Option[_])] = keyList.map(k => {
       k match {
-        case (i:Int, j:Int) => (i,j)
-        case (i:Int, j:Int, k:Int) => (i, (j,k))
-        case (i:Int, j:Int, k:Int, c:Int) => (i, (j,k,c))
+        case (i:Int, j:Int) => (i,Some(j))
+        case (i:Int, j:Int, k:Int) => (i, Some(j,k))
+        case (i:Int, j:Int, k:Int, c:Int) => (i, Some(j,k,c))
       }
     })
-    val indexedRDD = mappingRDD.zipWithIndex.map{
-      case (mapping, index) => (index.toInt, mapping)
-    }
-    val resultsRDD = layeredKeyRDD.cogroup(indexedRDD).map{
-      case (index, (keys, mappings)) => {
-        val mapping = mappings.toList(0).asInstanceOf[Mapping]
-        val innerResults = mapping.qForwardBatch(keys.map(Some(_)).toList)
-        innerResults.flatMap(x => x.map(e => (index,e)))
+    val sampleKey = layeredKeyList(0)
+    val sampleI = sampleKey.asInstanceOf[(Int, _)]._1
+
+    val resultRDD = mappingRDD.zipWithIndex.map{
+      case (mapping, index) => {
+        if(index == sampleI) mapping.asInstanceOf[Mapping].qForwardBatch(layeredKeyList.map(_._2)).flatMap(identity)
       }
     }
-    resultsRDD.flatMap(identity).map(x =>{
-      x match {
-        case (i:Int, j:Int) => (i,j)
-        case (i:Int, (j:Int, k:Int)) => (i,j,k)
-        case (i:Int, (j:Int, k:Int, c:Int)) => (i,j,k,c)
-      }
-    })
+
+    val filteredRDD = resultRDD.zipWithIndex.filter{
+      case (result, index) => (index == sampleI)
+    }.map(_._1)
+
+    val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+    List.fill(innerRet.size){sampleI}.zip(innerRet).map(Lineage.flatten(_))
   }
 
-  def qBackwardBatch(keyRDD: RDD[_]) = {
-    val layeredKeyRDD = keyRDD.map(k => {
+  def qBackwardBatch(keyList: List[_]) = {
+    val layeredKeyList:List[(Int, Option[_])] = keyList.map(k => {
       k match {
-        case (i:Int, j:Int) => (i,j)
-        case (i:Int, j:Int, k:Int) => (i, (j,k))
-        case (i:Int, j:Int, k:Int, c:Int) => (i, (j,k,c))
+        case (i:Int, j:Int) => (i,Some(j))
+        case (i:Int, j:Int, k:Int) => (i, Some(j,k))
+        case (i:Int, j:Int, k:Int, c:Int) => (i, Some(j,k,c))
       }
     })
-    val indexedRDD = mappingRDD.zipWithIndex.map{
-      case (mapping, index) => (index.toInt, mapping)
-    }
-    val resultsRDD = layeredKeyRDD.cogroup(indexedRDD).map{
-      case (index, (keys, mappings)) => {
-        val mapping = mappings.toList(0).asInstanceOf[Mapping]
-        val innerResults = mapping.qBackwardBatch(keys.map(Some(_)).toList)
-        innerResults.flatMap(x => x.map(e => (index,e)))
+    val sampleKey = layeredKeyList(0)
+    val sampleI = sampleKey.asInstanceOf[(Int, _)]._1
+
+    val resultRDD = mappingRDD.zipWithIndex.map{
+      case (mapping, index) => {
+        if(index == sampleI) mapping.asInstanceOf[Mapping].qBackwardBatch(layeredKeyList.map(_._2)).flatMap(identity)
       }
     }
-    resultsRDD.flatMap(identity).map(x =>{
-      x match {
-        case (i:Int, j:Int) => (i,j)
-        case (i:Int, (j:Int, k:Int)) => (i,j,k)
-        case (i:Int, (j:Int, k:Int, c:Int)) => (i,j,k,c)
-      }
-    })
+
+    val filteredRDD = resultRDD.zipWithIndex.filter{
+      case (result, index) => (index == sampleI)
+    }.map(_._1)
+
+    val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+    List.fill(innerRet.size){sampleI}.zip(innerRet).map(Lineage.flatten(_))
   }
 
   def save(tag: String) = {
@@ -208,15 +204,6 @@ class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transform
     }
     outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")*/
   }
-
-  def flatten[T](in: (Int,T)) = {
-    in match {
-      case (i: Int, j: Int) => (i, j)
-      case (i: Int, (j: Int, k: Int)) => (i, j, k)
-      case (i: Int, (j: Int, k: Int, c: Int)) => (i, j, k, c)
-    }
-  }
-
   def size = mappingRDD.count
 }
 
@@ -302,35 +289,105 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
     }
   }
 
-  def qForwardBatch(keyRDD: RDD[_], list: List[NarrowLineage] = lineageList): RDD[_] = {
-    list match {
-      case first::rest => {
-        val innerRDD = first.qForwardBatch(keyRDD)
-        innerRDD.cache()
-        if(rest.isEmpty){
-          innerRDD
+  def qForwardBatch(keyList: List[_], list: List[NarrowLineage] = lineageList) = {
+    val innerKeyList = keyList.map(k => {
+      k match {
+        case (i:Int, j:Int) => Some(j)
+        case (i:Int, j:Int, k:Int) => Some(j,k)
+        case (i:Int, j:Int, k:Int, c:Int) => Some(j,k,c)
+      }
+    })
+    val sampleKey = keyList(0)
+    val sampleI:Int = sampleKey match {
+      case (i,j) => i.asInstanceOf[Int]
+      case (i,j,k) => i.asInstanceOf[Int]
+      case (i,j,k,c) => i.asInstanceOf[Int]
+    }
+
+    val mappingRDDList: List[RDD[Mapping]] = list.map(_.mappingRDD.asInstanceOf[RDD[Mapping]])
+
+    val innerRet = qForwardBatchRecursive(innerKeyList, mappingRDDList, sampleI)
+    val layeredRet = List.fill(innerRet.size){sampleI}.zip(innerRet.map(_.get))
+    layeredRet.map(Lineage.flatten(_))
+  }
+
+  def qForwardBatchRecursive(keyList: List[Option[_]], list: List[RDD[Mapping]], sampleI:Int):List[Option[_]] = {
+    list match{
+      case head::tail => {
+        val resultsRDD = head.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == sampleI){
+              mapping.qForwardBatch(keyList).flatMap(identity)
+            }
+          }
+        }
+
+        val filteredRDD = resultsRDD.zipWithIndex.filter{
+          case (result, index) => (index == sampleI)
+        }.map(_._1)
+
+        val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+        val results = innerRet.map(Some(_))
+
+        if(tail.isEmpty){
+          results
         }
         else{
-          qForwardBatch(innerRDD, rest)
+          qForwardBatchRecursive(results, tail, sampleI)
         }
       }
-      case Nil => keyRDD
+      case Nil => keyList
     }
   }
 
-  def qBackwardBatch(keyRDD: RDD[_], list: List[NarrowLineage] = lineageList.reverse): RDD[_] = {
-    list match {
-      case first::rest => {
-        val innerRDD = first.qBackwardBatch(keyRDD)
-        innerRDD.cache()
-        if(rest.isEmpty){
-          innerRDD
+  def qBackwardBatch(keyList: List[_], list: List[NarrowLineage] = lineageList.reverse) = {
+    val innerKeyList = keyList.map(k => {
+      k match {
+        case (i:Int, j:Int) => Some(j)
+        case (i:Int, j:Int, k:Int) => Some(j,k)
+        case (i:Int, j:Int, k:Int, c:Int) => Some(j,k,c)
+      }
+    })
+    val sampleKey = keyList(0)
+    val sampleI:Int = sampleKey match {
+      case (i,j) => i.asInstanceOf[Int]
+      case (i,j,k) => i.asInstanceOf[Int]
+      case (i,j,k,c) => i.asInstanceOf[Int]
+    }
+
+    val mappingRDDList: List[RDD[Mapping]] = list.map(_.mappingRDD.asInstanceOf[RDD[Mapping]])
+
+    val innerRet = qBackwardBatchRecursive(innerKeyList, mappingRDDList, sampleI)
+    val layeredRet = List.fill(innerRet.size){sampleI}.zip(innerRet.map(_.get))
+    layeredRet.map(Lineage.flatten(_))
+  }
+
+  def qBackwardBatchRecursive(keyList: List[Option[_]], list: List[RDD[Mapping]], sampleI:Int):List[Option[_]] = {
+    list match{
+      case head::tail => {
+        val resultsRDD = head.zipWithIndex.map{
+          case (mapping, index) => {
+            if(index == sampleI){
+              mapping.qBackwardBatch(keyList).flatMap(identity)
+            }
+          }
+        }
+
+        val filteredRDD = resultsRDD.zipWithIndex.filter{
+          case (result, index) => (index == sampleI)
+        }.map(_._1)
+
+        val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+        val results = innerRet.map(Some(_))
+
+        if(tail.isEmpty){
+          results
         }
         else{
-          qBackwardBatch(innerRDD, rest)
+          qBackwardBatchRecursive(results, tail, sampleI)
         }
       }
-      case Nil => keyRDD
+      case Nil => keyList
     }
   }
 }
@@ -353,6 +410,14 @@ object Lineage{
   implicit def int3DToOption(key: (Int, Int, Int)): Option[(Int, Int, Int)] = Some(key)
   implicit def int4DToOption(key: (Int, Int, Int, Int)): Option[(Int, Int, Int, Int)] = Some(key)
   implicit def indexInt2DToOption(key: (Int, (Int, Int))): Option[(Int, (Int, Int))] = Some(key)
+
+  def flatten[T](in: (Int,T)) = {
+    in match {
+      case (i: Int, j: Int) => (i, j)
+      case (i: Int, (j: Int, k: Int)) => (i, j, k)
+      case (i: Int, (j: Int, k: Int, c: Int)) => (i, j, k, c)
+    }
+  }
 
   //need a lineage apply interface to reconstruct the lineage object from files on disk
   def load(mappingRDD: RDD[Mapping], transformerRDD: RDD[_]): NarrowLineage = {
@@ -388,8 +453,9 @@ object Lineage{
   def loadAndQueryBatch(paths: List[String], numQuery: Int, sc: SparkContext) = {
     val lineage = PipelineLineage(paths, sc)
     val list = List.fill(numQuery){(0,0)}.zip((0 until numQuery)).map(x=> (x._1._1, x._1._2, x._2))
-    val ellapsed = time(lineage.qBackwardBatch(sc.parallelize(list)).collect)
-    println(ellapsed)
+    lineage.qBackwardBatch(list)
+    //val ellapsed = time(lineage.qBackwardBatch(list).count)
+    //println(ellapsed)
   }
 }
 

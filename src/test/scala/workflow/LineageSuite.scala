@@ -21,9 +21,9 @@ class LineageSuite extends FunSuite with LocalSparkContext with Logging {
     
     val lineage = AllToOneLineage(sRDD, tRDD, addition)
 
-    val keyRDD = sc.parallelize(List((0,0)))
-    val rdd = lineage.qForwardBatch(keyRDD)
-    assert(rdd.collect.toList == List((0,0), (0,1), (0,2), (0,3), (0,4)))
+    val keyList = List((0,0), (0,1))
+    val results = lineage.qBackwardBatch(keyList)
+    assert(results == List((0,0), (0,1), (0,2), (0,3), (0,4), (0,0), (0,1), (0,2), (0,3), (0,4)))
   }
 
   test("Batch Query Matrix Test") {
@@ -37,15 +37,16 @@ class LineageSuite extends FunSuite with LocalSparkContext with Logging {
     
     val lineage = AllToOneLineage(sRDD, tRDD, addition)
 
-    val keyRDD = sc.parallelize(List((0,0,0)))
-    val rdd = lineage.qForwardBatch(keyRDD)
-    assert(rdd.collect.toList == List((0,0,0), (0,0,1), (0,0,2), (0,0,3), 
+    val keyList = List((0,0,0))
+    val results = lineage.qBackwardBatch(keyList)
+    println(results)
+    assert(results == List((0,0,0), (0,0,1), (0,0,2), (0,0,3), 
       (0,0,4), (0,1,0), (0,1,1), (0,1,2), (0,1,3), (0,1,4), (0,2,0), (0,2,1), 
       (0,2,2), (0,2,3), (0,2,4), (0,3,0), (0,3,1), (0,3,2), (0,3,3), (0,3,4), 
       (0,4,0), (0,4,1), (0,4,2), (0,4,3), (0,4,4)))
   }
 
-  test("OneToOne Vector Lineage") {
+  /*test("OneToOne Vector Lineage") {
   	sc = new SparkContext("local", "test")
 
   	val v = DenseVector.zeros[Double](5)
@@ -87,7 +88,7 @@ class LineageSuite extends FunSuite with LocalSparkContext with Logging {
   	assert(lineage.qForward((0,1,1)) == List((0,1,1)))
   	/*query backward*/
   	assert(lineage.qBackward((0,1,1)) == List((0,1,1)))
-  }
+  }*/
 }
 
 case class AdditionNode()
