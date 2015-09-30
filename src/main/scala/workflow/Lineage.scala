@@ -456,7 +456,7 @@ object Lineage{
     val lineage = PipelineLineage(paths, sc)
     lineage.qBackward(List(0,0,0))
     val list = List.fill(numQuery){(0,0)}.zip((0 until numQuery)).map(x=> (x._1._1, x._1._2, x._2))
-    val ellapsed = time(lineage.qBackwardBatch(list).count)
+    val ellapsed = time(lineage.qBackwardBatch(list))
     println(ellapsed)
   }
 }
