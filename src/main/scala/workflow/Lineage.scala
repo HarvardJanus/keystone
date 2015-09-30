@@ -358,6 +358,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
     val mappingRDDList: List[RDD[Mapping]] = list.map(_.mappingRDD.asInstanceOf[RDD[Mapping]])
 
     val innerRet = qBackwardBatchRecursive(innerKeyList, mappingRDDList, sampleI)
+
     val layeredRet = List.fill(innerRet.size){sampleI}.zip(innerRet.map(_.get))
     layeredRet.map(Lineage.flatten(_))
   }
@@ -398,6 +399,7 @@ object PipelineLineage{
       val s = sc.parallelize(Seq(1))
       val transformer = Transformer[Int, Int](_ * 1)
       val rdd = sc.objectFile[Mapping](p+"/mappingRDD")
+      rdd.cache
       new NarrowLineage(s, s, rdd, transformer, Some(None))
       })
     new PipelineLineage(lineageList)
@@ -452,10 +454,10 @@ object Lineage{
 
   def loadAndQueryBatch(paths: List[String], numQuery: Int, sc: SparkContext) = {
     val lineage = PipelineLineage(paths, sc)
+    lineage.qBackward(List(0,0,0))
     val list = List.fill(numQuery){(0,0)}.zip((0 until numQuery)).map(x=> (x._1._1, x._1._2, x._2))
-    lineage.qBackwardBatch(list)
-    //val ellapsed = time(lineage.qBackwardBatch(list).count)
-    //println(ellapsed)
+    val ellapsed = time(lineage.qBackwardBatch(list).count)
+    println(ellapsed)
   }
 }
 
