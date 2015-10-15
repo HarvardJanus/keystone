@@ -1,5 +1,6 @@
 package loaders
 
+import breeze.linalg._
 import java.lang.{ Double => jDouble }
 import java.nio.ByteBuffer
 import java.io._
@@ -17,7 +18,7 @@ object FitsLoader {
    * @param path The path to the FITS files
    * @return RDD of HDULists, one per FITS file
    */
-  def apply(sc: SparkContext, path: String): RDD[Array[Array[Double]]] = {
+  def apply(sc: SparkContext, path: String): RDD[DenseMatrix[Double]] = {
     val flist = sc.binaryFiles(path)
     flist.map{ content =>
       val is = new ByteArrayInputStream(content._2.toArray)
@@ -29,20 +30,16 @@ object FitsLoader {
       val ncol = naxis(0)
       val nval = dm.getNoValues()
       val nrow = nval / ncol
-      println("nrow: " + nrow + "\t ncol:" + ncol)
+      println("nval: "+nval+"\t nrow: " + nrow + "\t ncol:" + ncol)
       // build and populate an array
-      var matrix = Array.ofDim[Float](nrow, ncol)
-      (0 until nrow).map(i => dm.getFloatValues(i * ncol, ncol, matrix(i)))
+      var stream = Array.ofDim[Float](nval)
+      var buffer = Array.ofDim[Float](ncol)
+      (0 until nrow).map(i => {
+        dm.getFloatValues(i*ncol, ncol, buffer)
+        Array.copy(buffer, 0, stream, i*ncol, ncol)
+      })
 
-      println("matrix: height: " + nrow + "\twidth: " + ncol)
-
-      var rmatrix = Array.ofDim[Double](nrow, ncol)
-      for (i <- (0 until nrow)) {
-        for (j <- (0 until ncol)) {
-          rmatrix(i)(j) = matrix(i)(j).toDouble
-        }
-      }
-      rmatrix
+      new DenseMatrix(nrow, ncol, stream.map(_.toDouble))
     }
   }
 }

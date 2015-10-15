@@ -1,5 +1,6 @@
 package pipelines.astronomy
 
+import breeze.linalg._
 import loaders.FitsLoader
 import nodes.util.MaxClassifier
 import org.apache.commons.math3.random.MersenneTwister
@@ -9,25 +10,49 @@ import pipelines.Logging
 import workflow._
 import scopt.OptionParser
 
-object BkgSubstract extends Transformer[Array[Array[Double]], (Array[Array[Double]], Double)] {
-  def apply(in: Array[Array[Double]]): (Array[Array[Double]], Double) = {
-    var bkg = new Background(in)
-    val newMatrix = bkg.subfrom(in)
-    return (newMatrix, bkg.bkgmap.globalrms)
+object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
+  def apply(in: DenseMatrix[Double]): DenseMatrix[Double] = {
+    var matrix = Array.ofDim[Double](in.rows, in.cols)
+    for(i <- 0 until in.rows; j <- 0 until in.cols)
+      matrix(i)(j) = in(i,j)
+
+    var bkg = new Background(matrix)
+    val newMatrix = bkg.subfrom(matrix)
+
+    var stream = Array.ofDim[Double](in.rows * in.cols)
+    (0 until in.rows).map(i => {
+      Array.copy(newMatrix(i), 0, stream, i*in.cols, in.cols)
+    })
+    new DenseMatrix(in.rows, in.cols, stream)
   }
 }
 
-object Extract extends Transformer[(Array[Array[Double]], Double), Array[Sepobj]] {
-  def apply(in: (Array[Array[Double]], Double)): Array[Sepobj] = {
+object Extract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
+  def apply(in: DenseMatrix[Double]): DenseMatrix[Double] = {
+    /*hard-coded rms results in more objects detected, this is temporary
+     *solution to make intermediate data solely as dense matrix
+     */
+    val rms = 4.7
     val ex = new Extractor
-    val (matrix, rms) = in
+    var matrix = Array.ofDim[Double](in.rows, in.cols)
+    for(i <- 0 until in.rows; j <- 0 until in.cols)
+      matrix(i)(j) = in(i,j)
+
     val objects = ex.extract(matrix, (1.5 * rms).toFloat)
-    return objects
+    val array = objects.map(_.toDoubleArray)
+
+    val rows = objects.size
+    val cols = 28
+    var stream = Array.ofDim[Double](rows*cols)
+    (0 until rows).map(i => {
+      Array.copy(array(i), 0, stream, i*cols, cols)
+    })
+    new DenseMatrix(rows, cols, stream)
   }
 }
 
-object Counter extends Transformer[Array[Sepobj], Int] {
-  def apply(in: Array[Sepobj]): Int = in.size
+object Counter extends Transformer[DenseMatrix[Double], Int] {
+  def apply(in: DenseMatrix[Double]): Int = in.rows
 }
 
 object SourceExtractor extends Serializable with Logging {
