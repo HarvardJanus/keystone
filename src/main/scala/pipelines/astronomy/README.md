@@ -9,7 +9,7 @@ git clone https://github.com/zhaozhang/keystone.git
 
 cd keystone
 
-git checkout lineage-v3-se
+git checkout sourceextractor
 
 sbt/sbt assembly
 
