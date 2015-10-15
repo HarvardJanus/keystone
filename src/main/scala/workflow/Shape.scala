@@ -148,9 +148,9 @@ object Circle{
 }
 
 /*object Ellipse{
-	override def apply(c: (Double, Double), a: Double, b: Double, theta: Double): Shape = {
+	def apply(x: Double, y: Double, a: Double, b: Double, theta: Double): Shape = {
 		require((a >= b), {"ellipse major has to be greater than or equal to minor"})
-		new Ellipse(c, a, b, theta)
+		new Ellipse((x,y), a, b, theta)
 	}
 }*/
 

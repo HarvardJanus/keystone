@@ -8,6 +8,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import pipelines.Logging
 import workflow._
+import workflow.Lineage._
 import scopt.OptionParser
 
 object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
@@ -24,6 +25,16 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
       Array.copy(newMatrix(i), 0, stream, i*in.cols, in.cols)
     })
     new DenseMatrix(in.rows, in.cols, stream)
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+    in.cache()
+    val out = in.map(apply)
+    out.cache()
+    val lineage = AllToOneLineage(in, out, this)
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
+    out
   }
 }
 
@@ -48,6 +59,47 @@ object Extract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
       Array.copy(array(i), 0, stream, i*cols, cols)
     })
     new DenseMatrix(rows, cols, stream)
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+    in.cache()
+    val outRDD = in.map(m=>{
+      val rms = 4.71
+      val ex = new Extractor
+      var matrix = Array.ofDim[Double](m.rows, m.cols)
+      for(i <- 0 until m.rows; j <- 0 until m.cols)
+        matrix(i)(j) = m(i,j)
+
+      val objects = ex.extract(matrix, (1.5 * rms).toFloat)
+      val array = objects.map(_.toDoubleArray)
+
+      val ioList = array.zipWithIndex.map{
+        case (row, index) => {
+          val ellipse:Shape = new Ellipse((row(7), row(8)), row(12), row(13), row(14))
+          val square = Square((index, 0), (index, row.size))
+          (ellipse, square)
+        }
+      }.toList     
+
+      val rows = objects.size
+      val cols = 28
+      var stream = Array.ofDim[Double](rows*cols)
+      (0 until rows).map(i => {
+        Array.copy(array(i), 0, stream, i*cols, cols)
+      })
+      (new DenseMatrix(rows, cols, stream), ioList)
+    })
+    
+    val out = outRDD.map(_._1)
+    out.cache()
+
+    val ioList = outRDD.map(_._2)
+    ioList.cache()
+
+    val lineage = RegionLineage(in, out, ioList, this)
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
+    out
   }
 }
 
