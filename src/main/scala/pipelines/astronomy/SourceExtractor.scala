@@ -32,7 +32,7 @@ object Extract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
     /*hard-coded rms results in more objects detected, this is temporary
      *solution to make intermediate data solely as dense matrix
      */
-    val rms = 4.7
+    val rms = 4.71
     val ex = new Extractor
     var matrix = Array.ofDim[Double](in.rows, in.cols)
     for(i <- 0 until in.rows; j <- 0 until in.cols)

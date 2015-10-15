@@ -27,6 +27,8 @@ edit spark-env.sh
 
 edit spark-default.conf
 
+    spark.executor.memory   4096m
+    
     spark.locality.wait 0
 
 #Run SourceExtractor
