@@ -31,8 +31,7 @@ class Background(matrix: Array[Array[Double]], mask: Array[Array[Boolean]] = nul
   /**Macro definition from sepcore.h*/
   val MEMORY_ALLOC_ERROR: Int = 1
 
-  //System.loadLibrary("BackgroundImpl")
-  System.load("/Users/zhaozhang/projects/KeystoneML/keystone-se/src/main/c/libBackgroundImpl.jnilib")
+  System.loadLibrary("BackgroundImpl")
   var bkgmap = new Sepbackmap()
 
   val data: Array[Byte] = Utils.flatten(matrix)

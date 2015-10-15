@@ -28,8 +28,8 @@ class Extractor {
 
   /**Macro definition from sepcore.h*/
   val MEMORY_ALLOC_ERROR: Int = 1
-  //System.loadLibrary("BackgroundImpl")
-  System.load("/Users/zhaozhang/projects/KeystoneML/keystone-se/src/main/c/libBackgroundImpl.jnilib")
+  
+  System.loadLibrary("BackgroundImpl")
 
   @native
   def sep_sum_circle(data: Array[Byte], err: Array[Byte], mask: Array[Byte],
