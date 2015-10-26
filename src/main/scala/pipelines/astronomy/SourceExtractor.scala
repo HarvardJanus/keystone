@@ -22,14 +22,14 @@ object RMS extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
     new DenseMatrix(1, 1, Array(bkg.bkgmap.globalrms.toDouble))
   }
 
-  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
-  }
+  }*/
 }
 
 object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
