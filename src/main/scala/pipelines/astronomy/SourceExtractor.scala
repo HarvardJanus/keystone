@@ -11,24 +11,18 @@ import workflow._
 import workflow.Lineage._
 import scopt.OptionParser
 
-object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
-  def apply(in: DenseMatrix[Double]): DenseMatrix[Double] = {
+object RMS extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
+  def apply(in: DenseMatrix[Double]):DenseMatrix[Double] = {
     var matrix = Array.ofDim[Double](in.rows, in.cols)
     for(i <- 0 until in.rows; j <- 0 until in.cols)
       matrix(i)(j) = in(i,j)
 
     var bkg = new Background(matrix)
-    val newMatrix = bkg.subfrom(matrix)
 
-    var stream = Array.ofDim[Double](in.rows * in.cols)
-    (0 until in.rows).map(i => {
-      Array.copy(newMatrix(i), 0, stream, i*in.cols, in.cols)
-    })
-    new DenseMatrix(in.rows, in.cols, stream)
+    new DenseMatrix(1, 1, Array(bkg.bkgmap.globalrms.toDouble))
   }
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
-    in.cache()
     val out = in.map(apply)
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
@@ -38,12 +32,47 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
   }
 }
 
-object Extract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
+object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
+  def apply(in: DenseMatrix[Double]): DenseMatrix[Double] = {
+    var matrix = Array.ofDim[Double](in.rows, in.cols)
+    for(i <- 0 until in.rows; j <- 0 until in.cols)
+      matrix(i)(j) = in(i,j)
+
+    var bkg = new Background(matrix)
+    println("rms: "+bkg.bkgmap.globalrms)
+    val newMatrix = bkg.subfrom(matrix)
+
+    var stream = Array.ofDim[Double](in.rows * in.cols)
+    (0 until in.rows).map(i => {
+      Array.copy(newMatrix(i), 0, stream, i*in.cols, in.cols)
+    })
+    new DenseMatrix(in.rows, in.cols, stream)
+  }
+
+  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+    val out = in.map(apply)
+    out.cache()
+    val lineage = AllToOneLineage(in, out, this)
+    lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
+    out
+  }*/
+}
+
+class RMSEstimator extends Estimator[DenseMatrix[Double], DenseMatrix[Double]] with Logging{
+  def fit(samples: RDD[DenseMatrix[Double]]): ExtractTransformer = {
+    val sampleList = samples.map(x=>x(0,0)).collect
+    val rms = DenseVector(sampleList.sum/sampleList.size)
+    new ExtractTransformer(rms)
+  }
+}
+
+case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
   def apply(in: DenseMatrix[Double]): DenseMatrix[Double] = {
     /*hard-coded rms results in more objects detected, this is temporary
      *solution to make intermediate data solely as dense matrix
      */
-    val rms = 4.71
+    val rms = rmsVector(0)
     val ex = new Extractor
     var matrix = Array.ofDim[Double](in.rows, in.cols)
     for(i <- 0 until in.rows; j <- 0 until in.cols)
@@ -61,10 +90,10 @@ object Extract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
     new DenseMatrix(rows, cols, stream)
   }
 
-  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     in.cache()
     val outRDD = in.map(m=>{
-      val rms = 4.71
+      val rms = rmsVector(0)
       val ex = new Extractor
       var matrix = Array.ofDim[Double](m.rows, m.cols)
       for(i <- 0 until m.rows; j <- 0 until m.cols)
@@ -100,7 +129,7 @@ object Extract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
     out
-  }
+  }*/
 }
 
 object Counter extends Transformer[DenseMatrix[Double], Int] {
@@ -111,9 +140,16 @@ object SourceExtractor extends Serializable with Logging {
   val appName = "SourceExtractor"
 
   def run(sc: SparkContext, conf: SourceExtractorConfig) {
-    val pipeline = BkgSubstract andThen Extract andThen Counter
     val startTime = System.nanoTime()
-    val count = pipeline(FitsLoader(sc, conf.inputPath)).reduce(_ + _)
+    
+    val dataset = FitsLoader(sc, conf.inputPath)
+    dataset.cache
+
+    val extractor = (new RMSEstimator).fit(RMS(dataset))
+
+    val pipeline = BkgSubstract andThen extractor andThen Counter
+
+    val count = pipeline(dataset).collect.toList
     logInfo(s"Detected ${count} objects")
     val endTime = System.nanoTime()
     logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")
