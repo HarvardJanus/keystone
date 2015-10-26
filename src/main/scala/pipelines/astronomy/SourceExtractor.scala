@@ -149,7 +149,7 @@ object SourceExtractor extends Serializable with Logging {
 
     val pipeline = BkgSubstract andThen extractor andThen Counter
 
-    val count = pipeline(dataset).collect.toList
+    val count = pipeline(dataset).reduce(_+_)
     logInfo(s"Detected ${count} objects")
     val endTime = System.nanoTime()
     logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")

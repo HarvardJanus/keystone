@@ -264,7 +264,7 @@ class Extractor {
 
     val nstream = if (noise == null) null else Utils.flatten(noise)
 
-    var objects: Array[Sepobj] = Array.ofDim[Sepobj](8192)
+    var objects: Array[Sepobj] = Array.ofDim[Sepobj](16384)
     val nobj = sep_extract(data, nstream, dtype, ndtype, 0.toShort, w, h, thresh,
       minarea, cstream, convw, convh, deblend_nthresh, deblend_cont, clean, clean_param, objects, 0)
 
