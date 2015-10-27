@@ -39,7 +39,7 @@ object FitsLoader {
         Array.copy(buffer, 0, stream, i*ncol, ncol)
       })
 
-      new DenseMatrix(nrow, ncol, stream.map(_.toDouble))
+      new DenseMatrix(ncol, nrow, stream.map(_.toDouble)).t
     }
   }
 }

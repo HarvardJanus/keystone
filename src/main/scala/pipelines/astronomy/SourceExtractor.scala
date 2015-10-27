@@ -22,14 +22,14 @@ object RMS extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
     new DenseMatrix(1, 1, Array(bkg.bkgmap.globalrms.toDouble))
   }
 
-  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
-  }*/
+  }
 }
 
 object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
@@ -46,17 +46,17 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
     (0 until in.rows).map(i => {
       Array.copy(newMatrix(i), 0, stream, i*in.cols, in.cols)
     })
-    new DenseMatrix(in.rows, in.cols, stream)
+    new DenseMatrix(in.cols, in.rows, stream).t
   }
 
-  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
-  }*/
+  }
 }
 
 class RMSEstimator extends Estimator[DenseMatrix[Double], DenseMatrix[Double]] with Logging{
@@ -80,17 +80,17 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
 
     val objects = ex.extract(matrix, (1.5 * rms).toFloat)
     val array = objects.map(_.toDoubleArray)
-
+    //array.map(o=>println("a: "+o(12)+", b: "+o(13)+", theta:"+o(14)))
     val rows = objects.size
     val cols = 28
     var stream = Array.ofDim[Double](rows*cols)
     (0 until rows).map(i => {
       Array.copy(array(i), 0, stream, i*cols, cols)
     })
-    new DenseMatrix(rows, cols, stream)
+    new DenseMatrix(cols, rows, stream).t
   }
 
-  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     in.cache()
     val outRDD = in.map(m=>{
       val rms = rmsVector(0)
@@ -129,7 +129,7 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
     lineage.save(tag)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
     out
-  }*/
+  }
 }
 
 object Counter extends Transformer[DenseMatrix[Double], Int] {
