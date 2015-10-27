@@ -116,7 +116,7 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
       (0 until rows).map(i => {
         Array.copy(array(i), 0, stream, i*cols, cols)
       })
-      (new DenseMatrix(rows, cols, stream), ioList)
+      (new DenseMatrix(rows, cols, stream).t, ioList)
     })
     
     val out = outRDD.map(_._1)
