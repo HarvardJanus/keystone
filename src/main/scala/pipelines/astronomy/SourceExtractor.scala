@@ -27,7 +27,7 @@ object RMS extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
   }
 }
@@ -54,7 +54,7 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
   }
 }
@@ -91,7 +91,7 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
   }
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
-    //in.cache()
+    in.cache()
     val outRDD = in.map(m=>{
       val rms = rmsVector(0)
       val ex = new Extractor
@@ -127,7 +127,7 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
 
     val lineage = RegionLineage(in, out, ioList, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
     out
   }
 }
@@ -142,9 +142,9 @@ object SourceExtractor extends Serializable with Logging {
   def run(sc: SparkContext, conf: SourceExtractorConfig) {
     val startTime = System.nanoTime()
     
-    val data = FitsLoader(sc, conf.inputPath)
-    val dataset = data.coalesce(500)
-    //dataset.cache
+    val dataset = FitsLoader(sc, conf.inputPath)
+    //val dataset = data.coalesce(500)
+    dataset.cache
 
     //val extractor = (new RMSEstimator).fit(RMS(dataset))
     val extractor = new ExtractTransformer(DenseVector[Double](4.71))
