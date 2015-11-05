@@ -199,11 +199,11 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     }*/
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
     mappingRDD.unpersist(true)
-    val words = tag.split('_')
+    /*val words = tag.split('_')
     if(words.size > 1 && words(0).startsWith("BkgSubstract")){
       inRDD.saveAsObjectFile(path+"/"+tag+"/inRDD")
     }
-    outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")
+    outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")*/
     inRDD.unpersist(true)
     outRDD.unpersist(true)
   }
