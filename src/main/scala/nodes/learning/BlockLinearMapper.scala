@@ -46,7 +46,7 @@ class BlockLinearMapper(
     out.cache()
     val lineage = LinComLineage(in, out, this, Some(xs(0)))
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label)
+    //println("collecting lineage for Transformer "+this.label)
     out
   }
   /**

@@ -24,7 +24,7 @@ case class PaddedFFT() extends Transformer[DenseVector[Double], DenseVector[Doub
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0, 0).size)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0, 0).size)
     out
   }
 

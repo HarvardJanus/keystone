@@ -20,7 +20,7 @@ object NormalizeRows extends Transformer[DenseVector[Double], DenseVector[Double
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0, 0))
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0, 0))
     out
   }
 }

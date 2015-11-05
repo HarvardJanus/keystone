@@ -21,7 +21,7 @@ object SignedHellingerMapper extends Transformer[DenseVector[Double], DenseVecto
     out.cache()
     val lineage = OneToOneLineage(in, out, this)
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0, 0))
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0, 0))
     out
   }
 }

@@ -46,7 +46,7 @@ case class BatchPCATransformer(pcaMat: DenseMatrix[Float]) extends Transformer[D
     out.cache()
     val lineage = LinComLineage(in, out, this, Some(pcaMat))
     lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0, 0)))
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0, 0, 0)))
     out
   }
 }
