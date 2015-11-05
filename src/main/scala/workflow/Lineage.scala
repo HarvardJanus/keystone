@@ -198,11 +198,14 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
     }*/
     mappingRDD.saveAsObjectFile(path+"/"+tag+"/mappingRDD")
-    /*val words = tag.split('_')
+    mappingRDD.unpersist()
+    val words = tag.split('_')
     if(words.size > 1 && words(0).startsWith("BkgSubstract")){
       inRDD.saveAsObjectFile(path+"/"+tag+"/inRDD")
     }
-    outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")*/
+    outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")
+    inRDD.unpersist()
+    outRDD.unpersist()
   }
   def size = mappingRDD.count
 }

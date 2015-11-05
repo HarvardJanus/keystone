@@ -51,7 +51,7 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
-    //out.cache()
+    out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
@@ -120,7 +120,7 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
     })
     
     val out = outRDD.map(_._1)
-    //out.cache()
+    out.cache()
 
     val ioList = outRDD.map(_._2)
     //ioList.cache()
@@ -143,7 +143,7 @@ object SourceExtractor extends Serializable with Logging {
     val startTime = System.nanoTime()
     
     val data = FitsLoader(sc, conf.inputPath)
-    val dataset = data.coalesce(512)
+    val dataset = data.coalesce(500)
     //dataset.cache
 
     //val extractor = (new RMSEstimator).fit(RMS(dataset))
