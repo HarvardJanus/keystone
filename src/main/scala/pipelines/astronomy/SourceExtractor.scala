@@ -54,7 +54,7 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
-    //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
+    println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
   }
 }
@@ -123,11 +123,11 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
     out.cache()
 
     val ioList = outRDD.map(_._2)
-    //ioList.cache()
+    ioList.cache()
 
     val lineage = RegionLineage(in, out, ioList, this)
     lineage.save(tag)
-    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
     out
   }
 }
