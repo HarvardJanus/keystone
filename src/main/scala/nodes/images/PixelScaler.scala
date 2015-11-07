@@ -14,12 +14,12 @@ object PixelScaler extends Transformer[Image,Image] {
     ImageUtils.mapPixels(im, _/255.0)
   }
 
-  override def saveLineageAndApply(in: RDD[Image], tag: String): RDD[Image] = {
+  /*override def saveLineageAndApply(in: RDD[Image], tag: String): RDD[Image] = {
     val out = in.map(apply)
     out.cache()
     val lineage = OneToOneLineage(in, out, this)
     lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0,0,0,0))
     out
-  }
+  }*/
 }

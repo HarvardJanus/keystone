@@ -20,7 +20,7 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
     in(::, cols).toDenseMatrix
   }
 
-  override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
+  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
     val outRDD = in.map{ m =>
       val cols = Seq.fill(numSamplesPerMatrix) {
         scala.util.Random.nextInt(m.cols)
@@ -43,7 +43,7 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
     lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0,0,0))
     out
-  }
+  }*/
 }
 
 

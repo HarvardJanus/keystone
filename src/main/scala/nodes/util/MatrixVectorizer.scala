@@ -11,12 +11,12 @@ import workflow.Lineage._
 object MatrixVectorizer extends Transformer[DenseMatrix[Double], DenseVector[Double]] {
   def apply(in: DenseMatrix[Double]): DenseVector[Double] = in.toDenseVector
 
-  override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseVector[Double]] = {
+  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseVector[Double]] = {
     val out = in.map(apply)
     out.cache()
     val lineage = OneToOneLineage(in, out, this)
     lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(0,0))
     out
-  }
+  }*/
 }
