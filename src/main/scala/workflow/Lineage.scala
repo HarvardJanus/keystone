@@ -393,6 +393,30 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
   }
 }
 
+class ParallelLineage(lineageList: List[PipelineLineage]){
+  def qForward(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
+    list.zipWithIndex.map{
+      case (lineage, index) => {
+        val innerRet = lineage.qForwardBatch(keys)
+        List.fill(innerRet.size){index}.zip(innerRet).map{
+          case (i: Int, t:(Int, Int)) => (i, t._1, t._2)
+        }
+      }
+    }.flatMap(identity)
+  }
+
+  def qBackward(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
+    keys.map{
+      case key: (Int, Int, Int) => {
+        val index = key._1
+        val innerKey = (key._2, key._3)
+        val lineage = list(index)
+        lineage.qBackwardBatch(List(innerKey)).asInstanceOf[List[(Int,Int)]]
+      }
+    }.flatMap(identity)
+  }
+}
+
 object PipelineLineage{
   def apply(paths: List[String], sc: SparkContext) = {
     val lineageList = paths.map(p => {
