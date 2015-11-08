@@ -57,7 +57,7 @@ case class ElementMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
           case i:Int => {
             require((i < in.dim), {"querying out of boundary of input vector"})
             require((i < out.xDim*out.yDim), {"querying out of boundary of output matrix"})
-            List((i%out.xDim, i/out.xDim))
+            List((i/out.yDim, i%out.yDim))
           }
           case _ => {
             require(0==1, {"input is 1-d structure, use 1-d index"})
@@ -85,7 +85,7 @@ case class ElementMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
           case (i:Int, j:Int) => {
             require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
             require(j*in.xDim+i < out.dim, {"querying out of boundary of output vector"})
-            List(j*in.xDim+i)
+            List(i*in.yDim+j)
           }
           case _ => {
             require(0==1, {"input is 2-d structure, use 2-d index"})

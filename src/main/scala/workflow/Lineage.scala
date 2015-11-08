@@ -24,6 +24,8 @@ abstract class Lineage(modelRDD: Option[_]) extends serializable{
   //qForward() and qBackward() methods need implementation, should call to mappingRDD
   def qForward(key: Option[_]):List[_]
   def qBackward(key: Option[_]):List[_]
+  def qForwardBatch(keys: List[_]):List[_]
+  def qBackwardBatch(keys: List[_]):List[_]
   def save(tag: String)
   def size: Long
 }
@@ -99,7 +101,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
         }.map(x => x._1)
         val m = filteredRDD.first
         val innerRet = m.asInstanceOf[List[_]]
-        List.fill(innerRet.size){i}.zip(innerRet)
+        List.fill(innerRet.size){i}.zip(innerRet).map(v => Lineage.flatten(v))
       }
       case (i:Int, j:Int, k:Int) => {
         val resultRDD = mappingRDD.zipWithIndex.map{
@@ -210,6 +212,8 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
 class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMapping, transformer: GatherTransformer[_], 
   modelRDD: Option[_]) extends Lineage(modelRDD){
 
+  def qForwardBatch(keys: List[_]) = keys.map(k => qForward(Some(k))).flatMap(identity)
+  def qBackwardBatch(keys: List[_]) = keys.map(k => qBackward(Some(k))).flatMap(identity)
   def qForward(key: Option[_]) = {
     key.getOrElse(null) match{
       case (i:Int, j:Int, k:Int) => {
@@ -393,8 +397,8 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
   }
 }
 
-class ParallelLineage(lineageList: List[PipelineLineage]){
-  def qForward(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
+class ParallelLineage(lineageList: List[PipelineLineage]) extends Lineage(Some(1)){
+  def qForwardBatch(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
     list.zipWithIndex.map{
       case (lineage, index) => {
         val innerRet = lineage.qForwardBatch(keys)
@@ -405,7 +409,7 @@ class ParallelLineage(lineageList: List[PipelineLineage]){
     }.flatMap(identity)
   }
 
-  def qBackward(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
+  def qBackwardBatch(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
     keys.map{
       case key: (Int, Int, Int) => {
         val index = key._1
@@ -414,6 +418,42 @@ class ParallelLineage(lineageList: List[PipelineLineage]){
         lineage.qBackwardBatch(List(innerKey)).asInstanceOf[List[(Int,Int)]]
       }
     }.flatMap(identity)
+  }
+  def qForward(key: Option[_]) = qForwardBatch(List(key.get))
+  def qBackward(key: Option[_]) = qBackwardBatch(List(key.get))
+  def qForwardBatch(keys: List[_]) = qForwardBatch(keys, lineageList)
+  def qBackwardBatch(keys: List[_]) = qBackwardBatch(keys, lineageList)
+  def save(tag:String) = {}
+  def size = lineageList.size
+}
+
+class ComplexLineage(list: List[Lineage]){
+  def qForward(keys: List[_], fList: List[Lineage] = list):List[_] = {
+    fList match{
+      case head::tail => {
+        qForward(head.qForwardBatch(keys), tail)
+      }
+      case Nil => keys
+    }
+  }
+
+  def qBackward(keys: List[_], rList: List[Lineage] = list.reverse):List[_] = {
+    rList match{
+      case head::tail => {
+        qBackward(head.qBackwardBatch(keys), tail)
+      }
+      case Nil => keys
+    }
+  }
+}
+
+object NarrowLineage{
+  def apply(path: String, sc: SparkContext) = {
+    val s = sc.parallelize(Seq(1))
+    val transformer = Transformer[Int, Int](_ * 1)
+    val rdd = sc.objectFile[Mapping](path+"/mappingRDD")
+    rdd.cache
+    new NarrowLineage(s, s, rdd, transformer, Some(None))
   }
 }
 
@@ -494,7 +534,7 @@ object OneToOneLineage{
       case (sIn: Seq[_], vOut: DenseVector[_]) => {
         //sIn should be Seq[DenseVetor[_]]
         val sampleInVector = sIn(0).asInstanceOf[DenseVector[_]]
-        new ElementMapping(Metadata(sIn.size,sampleInVector.size), Metadata(vOut.size))
+        new ElementMapping(Metadata(sampleInVector.size, sIn.size), Metadata(vOut.size))
       }
       case (mIn: DenseMatrix[_], mOut: DenseMatrix[_]) => {
         new ElementMapping(Metadata(mIn.rows, mIn.cols), Metadata(mOut.rows, mOut.cols))
@@ -585,5 +625,12 @@ object GatherLineage{
     val sampleOut = out.first
     val mapping = TransposeMapping(in.size, sampleIn.count, out.count, sampleOut.size)
     new GatherLineage(in, out, mapping, transformer, model)
+  }
+  def apply[T](path: String, sc: SparkContext) = {
+    val s = sc.parallelize(Seq(1))
+    val transformer = sc.objectFile[GatherTransformer[T]](path+"/transformerRDD").first
+    val rdd = sc.objectFile[TransposeMapping](path+"/mappingRDD")
+    val mapping = rdd.first.asInstanceOf[TransposeMapping]
+    new GatherLineage(Seq(s), s, mapping, transformer, Some(None))
   }
 }
