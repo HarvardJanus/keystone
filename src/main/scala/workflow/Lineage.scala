@@ -431,18 +431,18 @@ class ComplexLineage(list: List[Lineage]){
   def qForward(keys: List[_], fList: List[Lineage] = list):List[_] = {
     fList match{
       case head::tail => {
-        qForward(head.qForwardBatch(keys), tail)
+        qForward(head.qForwardBatch(keys).distinct, tail)
       }
-      case Nil => keys
+      case Nil => keys.distinct
     }
   }
 
   def qBackward(keys: List[_], rList: List[Lineage] = list.reverse):List[_] = {
     rList match{
       case head::tail => {
-        qBackward(head.qBackwardBatch(keys), tail)
+        qBackward(head.qBackwardBatch(keys).distinct, tail)
       }
-      case Nil => keys
+      case Nil => keys.distinct
     }
   }
 }
