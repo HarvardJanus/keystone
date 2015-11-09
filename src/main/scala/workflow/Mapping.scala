@@ -17,8 +17,8 @@ trait Mapping extends serializable{
 	def qForward(key: Option[_]): List[_]
 	def qBackward(key: Option[_]): List[_]
 
-  def qForwardBatch(keys: List[Option[_]]) = keys.map(key => qForward(key))
-  def qBackwardBatch(keys: List[Option[_]]) = keys.map(key => qBackward(key))
+  def qForwardBatch(keys: List[Option[_]]) = keys.map(key => qForward(key)).distinct
+  def qBackwardBatch(keys: List[Option[_]]) = keys.map(key => qBackward(key)).distinct
 }
 
 object Mapping{

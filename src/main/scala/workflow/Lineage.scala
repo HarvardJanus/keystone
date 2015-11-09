@@ -157,7 +157,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       case (result, index) => (index == sampleI)
     }.map(_._1)
 
-    val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+    val innerRet = filteredRDD.first.asInstanceOf[List[_]].distinct
     List.fill(innerRet.size){sampleI}.zip(innerRet).map(Lineage.flatten(_))
   }
 
@@ -182,7 +182,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       case (result, index) => (index == sampleI)
     }.map(_._1)
 
-    val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+    val innerRet = filteredRDD.first.asInstanceOf[List[_]].distinct
     List.fill(innerRet.size){sampleI}.zip(innerRet).map(Lineage.flatten(_))
   }
 
@@ -219,7 +219,7 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
       case (i:Int, j:Int, k:Int) => {
         val innerRet = mapping.qForward(Some((i, j)))
         val list = innerRet.zip(List.fill(innerRet.size){k})
-        list.map(x => (x._1._1, x._1._2, x._2))
+        list.map(x => (x._1._1, x._1._2, x._2)).distinct
       }
     }
   }
@@ -229,7 +229,7 @@ class GatherLineage(inSeq: Seq[RDD[_]], outRDD: RDD[_], mapping: TransposeMappin
       case (i:Int, j:Int, k:Int) => {
         val innerRet = mapping.qBackward(Some((i, j)))
         val list = innerRet.zip(List.fill(innerRet.size){k})
-        list.map(x => (x._1._1, x._1._2, x._2))
+        list.map(x => (x._1._1, x._1._2, x._2)).distinct
       }
     }
   }
@@ -310,7 +310,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
 
     val mappingRDDList: List[RDD[Mapping]] = list.map(_.mappingRDD.asInstanceOf[RDD[Mapping]])
 
-    val innerRet = qForwardBatchRecursive(innerKeyList, mappingRDDList, sampleI)
+    val innerRet = qForwardBatchRecursive(innerKeyList, mappingRDDList, sampleI).distinct
     val layeredRet = List.fill(innerRet.size){sampleI}.zip(innerRet.map(_.get))
     layeredRet.map(Lineage.flatten(_))
   }
@@ -330,7 +330,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
           case (result, index) => (index == sampleI)
         }.map(_._1)
 
-        val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+        val innerRet = filteredRDD.first.asInstanceOf[List[_]].distinct
         val results = innerRet.map(Some(_))
 
         if(tail.isEmpty){
@@ -340,7 +340,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
           qForwardBatchRecursive(results, tail, sampleI)
         }
       }
-      case Nil => keyList
+      case Nil => keyList.distinct
     }
   }
 
@@ -361,7 +361,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
 
     val mappingRDDList: List[RDD[Mapping]] = list.map(_.mappingRDD.asInstanceOf[RDD[Mapping]])
 
-    val innerRet = qBackwardBatchRecursive(innerKeyList, mappingRDDList, sampleI)
+    val innerRet = qBackwardBatchRecursive(innerKeyList, mappingRDDList, sampleI).distinct
 
     val layeredRet = List.fill(innerRet.size){sampleI}.zip(innerRet.map(_.get))
     layeredRet.map(Lineage.flatten(_))
@@ -382,7 +382,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
           case (result, index) => (index == sampleI)
         }.map(_._1)
 
-        val innerRet = filteredRDD.first.asInstanceOf[List[_]]
+        val innerRet = filteredRDD.first.asInstanceOf[List[_]].distinct
         val results = innerRet.map(Some(_))
 
         if(tail.isEmpty){
@@ -392,7 +392,7 @@ class PipelineLineage(lineageList: List[NarrowLineage]){
           qBackwardBatchRecursive(results, tail, sampleI)
         }
       }
-      case Nil => keyList
+      case Nil => keyList.distinct
     }
   }
 }
@@ -410,14 +410,20 @@ class ParallelLineage(lineageList: List[PipelineLineage]) extends Lineage(Some(1
   }
 
   def qBackwardBatch(keys: List[_], list: List[PipelineLineage]=lineageList): List[_] = {
-    keys.map{
-      case key: (Int, Int, Int) => {
-        val index = key._1
-        val innerKey = (key._2, key._3)
-        val lineage = list(index)
-        lineage.qBackwardBatch(List(innerKey)).asInstanceOf[List[(Int,Int)]]
+    val keyList = keys.groupBy(_.asInstanceOf[(Int, Int, Int)]._1).map{
+      case (key, value) => {
+        val ks = value.map {
+          case (i: Int, j: Int, k: Int) => (j, k)
+        }
+        (key, ks)
       }
-    }.flatMap(identity)
+    }
+
+    keyList.zip(list).map{
+      case ((id: Int, keys: List[_]), lineage: PipelineLineage) =>{
+        lineage.qBackwardBatch(keys).asInstanceOf[List[_]]
+      }
+    }.flatMap(identity).toList
   }
   def qForward(key: Option[_]) = qForwardBatch(List(key.get))
   def qBackward(key: Option[_]) = qBackwardBatch(List(key.get))
@@ -438,12 +444,14 @@ class ComplexLineage(list: List[Lineage]){
   }
 
   def qBackward(keys: List[_], rList: List[Lineage] = list.reverse):List[_] = {
-    rList match{
+    val ret = rList match{
       case head::tail => {
-        qBackward(head.qBackwardBatch(keys).distinct, tail)
+        val ret = qBackward(head.qBackwardBatch(keys).distinct, tail)
+        ret
       }
       case Nil => keys.distinct
     }
+    ret
   }
 }
 
