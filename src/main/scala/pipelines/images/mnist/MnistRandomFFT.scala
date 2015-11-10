@@ -42,7 +42,10 @@ object MnistRandomFFT extends Serializable with Logging {
       }
     } andThen VectorCombiner()
 
-    val pipeline = featurizer
+    val data = featurizer(train.data)
+    new BlockLeastSquaresEstimator(conf.blockSize, 1, conf.lambda.getOrElse(0)).fit(data, labels)
+
+    /*val pipeline = featurizer
         .andThen(new BlockLeastSquaresEstimator(conf.blockSize, 1, conf.lambda.getOrElse(0)), train.data, labels)
         .andThen(MaxClassifier)
 
@@ -61,7 +64,7 @@ object MnistRandomFFT extends Serializable with Logging {
 
     // Calculate test error
     val testEval = MulticlassClassifierEvaluator(model(test.data), test.labels, numClasses)
-    logInfo("TEST Error is " + (100 * testEval.totalError) + "%")
+    logInfo("TEST Error is " + (100 * testEval.totalError) + "%")*/
 
     val endTime = System.nanoTime()
     logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")
