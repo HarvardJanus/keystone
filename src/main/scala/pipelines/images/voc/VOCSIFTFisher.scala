@@ -80,8 +80,10 @@ object VOCSIFTFisher extends Serializable with Logging {
         NormalizeRows andThen
         new Cacher
 
+    val dataset = fisherFeaturizer(trainingData)    
+    dataset.count()
     // Part 4: Fit a linear model to the data.
-    val pipeline = fisherFeaturizer andThen
+    /*val pipeline = fisherFeaturizer andThen
         (new BlockLeastSquaresEstimator(4096, 1, conf.lambda, Some(2 * conf.descDim * conf.vocabSize)),
         trainingData,
         trainingLabels)
@@ -106,7 +108,7 @@ object VOCSIFTFisher extends Serializable with Logging {
 
     val map = MeanAveragePrecisionEvaluator(testActuals, predictions, VOCLoader.NUM_CLASSES)
     logInfo(s"TEST APs are: ${map.toArray.mkString(",")}")
-    logInfo(s"TEST MAP is: ${mean(map)}")
+    logInfo(s"TEST MAP is: ${mean(map)}")*/
     val endTime = System.nanoTime()
     logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")
   }

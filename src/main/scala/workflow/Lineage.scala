@@ -611,7 +611,12 @@ object RegionLineage{
 
   def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(Shape, Shape)]], 
     transformer: Transformer[_, _], model: Option[_]=None) = {
-    val mapping = ioList.map(l => ContourMapping(l))
+    //val mapping = ioList.map(l => ContourMapping(l))
+    val mapping = in.zip(out).zip(ioList).map{
+      case ((imageIn:Image, mOut:DenseMatrix[_]), l: List[(Shape, Shape)]) => {
+        ContourMapping(Metadata(imageIn.metadata.xDim, imageIn.metadata.yDim), Metadata(mOut.rows, mOut.cols), l)
+      }
+    }
     //val mapping = ioList.map(l => OneManyMapping(l))
     //val mapping = ioList.map(l => SimpleMapping(l))
 
@@ -622,7 +627,12 @@ object RegionLineage{
 object SampleLineage{
   def apply(in: RDD[_], out: RDD[_], ioList: RDD[List[(Shape, Shape)]], 
     transformer: Transformer[_, _], model: Option[_]=None) = {
-    val mapping = ioList.map(l => ContourMapping(l))
+    //val mapping = ioList.map(l => ContourMapping(l))
+    val mapping = in.zip(out).zip(ioList).map{
+      case ((mIn: DenseMatrix[_], mOut:DenseMatrix[_]), l: List[(Shape, Shape)]) => {
+        ContourMapping(Metadata(mIn.rows, mIn.cols), Metadata(mOut.rows, mOut.cols), l)
+      }
+    }
     new SampleLineage(in, out, mapping, transformer, model)
   }
 }

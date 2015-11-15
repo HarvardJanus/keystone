@@ -274,7 +274,7 @@ case class LinComMapping(inMeta: Metadata, outMeta: Metadata, modelMeta: MatrixM
   }
 }
 
-case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:Shape]) extends Mapping{
+case class ContourMapping(inMeta: Metadata, outMeta: Metadata, fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:Shape]) extends Mapping{
 	def query(key: Option[_], map: Map[_<:Shape, _<:Shape]) = {
 		val k = key.getOrElse(null)
 		k match {
@@ -309,7 +309,7 @@ case class ContourMapping(fMap: Map[_<:Shape, _<:Shape], bMap: Map[_<:Shape, _<:
   def qBackward(key: Option[_]) = query(key, bMap) 
 }
 
-case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Map[(Int, Int), List[Shape]], 
+case class ContourMappingDirect(inMeta: Metadata, outMeta: Metadata, fIndex: Map[(Int, Int), List[Shape]], bIndex: Map[(Int, Int), List[Shape]], 
   fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
 
   def query(key: Option[_], index: Map[(Int, Int), List[Shape]], map: Map[Shape, Shape]) = {
@@ -334,7 +334,7 @@ case class ContourMappingDirect(fIndex: Map[(Int, Int), List[Shape]], bIndex: Ma
   def qBackward(key: Option[_]) = query(key, bIndex, bMap)  
 }
 
-case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape],
+case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTree[Shape], bRTree: RTree[Shape],
   fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
 
   def query(key: Option[_], rTree: RTree[Shape], map: Map[Shape, Shape]) = {
@@ -366,10 +366,42 @@ case class ContourMappingRTree(fRTree: RTree[Shape], bRTree: RTree[Shape],
   }
 
   def qForward(key: Option[_]) = query(key, fRTree, fMap)
-  def qBackward(key: Option[_]) = query(key, bRTree, bMap)  
+  def qBackward(key: Option[_]) = query(key, bRTree, bMap)
+  //temporary implementation
+  override def qForwardBatch(keys: List[Option[_]]) = {
+    val size = inMeta.size
+    keys.size match {
+      case size => outMeta match {
+        case meta: MatrixMeta => {
+          val rSeq = for {
+            x <- 0 until meta.xDim
+            y <- 0 until meta.yDim
+          } yield (x, y)
+          List(rSeq.toList)
+        }
+      }
+      case _ => keys.map(key => qForward(key)).distinct
+    }
+  }
+
+  override def qBackwardBatch(keys: List[Option[_]]) = {
+    val size = inMeta.size
+    keys.size match {
+      case size => inMeta match {
+        case meta: MatrixMeta => {
+          val rSeq = for {
+            x <- 0 until meta.xDim
+            y <- 0 until meta.yDim
+          } yield (x, y)
+          List(rSeq.toList)
+        }
+      }
+      case _ => keys.map(key => qBackward(key)).distinct
+    }
+  }
 }
 
-case class ContourMappingKMeans(fIndex: Map[Shape, List[Shape]], bIndex: Map[Shape, List[Shape]],
+case class ContourMappingKMeans(inMeta: Metadata, outMeta: Metadata, fIndex: Map[Shape, List[Shape]], bIndex: Map[Shape, List[Shape]],
   fMap: Map[Shape, Shape], bMap: Map[Shape, Shape]) extends Mapping{
   def query(key: Option[_], index: Map[Shape, List[Shape]], map: Map[Shape, Shape]) = {
     val k = key.getOrElse(null)
@@ -490,13 +522,13 @@ case class TransposeMapping(inX: Long, inY: Long, outX: Long, outY: Long) extend
 
 object ContourMapping{
 
-  def apply(mapping: List[(Shape, Shape)]) = {
+  def apply(inMeta:Metadata, outMeta: Metadata, mapping: List[(Shape, Shape)]) = {
     /*val (fMap, bMap) = buildIndex(mapping)
     new ContourMapping(fMap, bMap)*/
     /*val (fIndex, bIndex, fMap, bMap) = buildDirectIndex(mapping)
     new ContourMappingDirect(fIndex, bIndex, fMap, bMap)*/
     val (fRTree, bRTree, fMap, bMap) = buildRTreeIndex(mapping)
-    new ContourMappingRTree(fRTree, bRTree, fMap, bMap)
+    new ContourMappingRTree(inMeta:Metadata, outMeta: Metadata, fRTree, bRTree, fMap, bMap)
     /*val (fIndex, bIndex, fMap, bMap) = buildKMeansIndex(mapping)
     new ContourMappingKMeans(fIndex, bIndex, fMap, bMap)*/
   }
