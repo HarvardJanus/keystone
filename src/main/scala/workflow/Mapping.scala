@@ -192,8 +192,18 @@ case class AllMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
 
   def qForward(key: Option[_]) = query(key, inMeta, outMeta)
   def qBackward(key: Option[_]) = query(key, outMeta, inMeta)
-  override def qForwardBatch(keys: List[Option[_]]) = List(qForward(keys.head))
-  override def qBackwardBatch(keys: List[Option[_]]) = List(qBackward(keys.head))
+  override def qForwardBatch(keys: List[Option[_]]) = {
+    (inMeta, outMeta) match{
+      case (in: ImageMeta, out: ImageMeta) => keys.map(qForward(_))
+      case _ => List(qForward(keys.head))
+    }    
+  }
+  override def qBackwardBatch(keys: List[Option[_]]) = {
+    (inMeta, outMeta) match{
+      case (in: ImageMeta, out: ImageMeta) => keys.map(qBackward(_))
+      case _ => List(qBackward(keys.head))
+    }    
+  }
 }
 
 case class LinComMapping(inMeta: Metadata, outMeta: Metadata, modelMeta: MatrixMeta) extends Mapping{
