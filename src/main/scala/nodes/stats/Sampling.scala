@@ -34,7 +34,7 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
     val ioListRDD = indexRDD.map{
       case (seq, rows) => {
         seq.toList.zipWithIndex.map(
-          t => (Square((0,t._1), (rows,t._1)), Square((0,t._2), (rows,t._2)))
+          t => (Square((0,t._1), (rows-1,t._1)), Square((0,t._2), (rows-1,t._2)))
         )
       }
     }
