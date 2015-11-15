@@ -369,10 +369,11 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
   def qBackward(key: Option[_]) = query(key, bRTree, bMap)
   //temporary implementation
   override def qForwardBatch(keys: List[Option[_]]) = {
+    println("short path forward query")
     val size = inMeta.size
-    keys.size match {
-      case size => outMeta match {
-        case meta: MatrixMeta => {
+    if (keys.size == size) {
+      inMeta match {
+        case meta:MatrixMeta => {
           val rSeq = for {
             x <- 0 until meta.xDim
             y <- 0 until meta.yDim
@@ -380,15 +381,18 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
           List(rSeq.toList)
         }
       }
-      case _ => keys.map(key => qForward(key)).distinct
+    }
+    else{
+      keys.map(key => qForward(key)).distinct
     }
   }
 
   override def qBackwardBatch(keys: List[Option[_]]) = {
+    println("short path backward query")
     val size = inMeta.size
-    keys.size match {
-      case size => inMeta match {
-        case meta: MatrixMeta => {
+    if (keys.size == size) {
+      outMeta match {
+        case meta:MatrixMeta => {
           val rSeq = for {
             x <- 0 until meta.xDim
             y <- 0 until meta.yDim
@@ -396,7 +400,9 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
           List(rSeq.toList)
         }
       }
-      case _ => keys.map(key => qBackward(key)).distinct
+    }
+    else{
+      keys.map(key => qBackward(key)).distinct
     }
   }
 }
