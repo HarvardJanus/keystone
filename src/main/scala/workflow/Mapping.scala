@@ -83,7 +83,7 @@ case class ElementMapping(inMeta: Metadata, outMeta: Metadata) extends Mapping{
         val k = key.getOrElse(null)
         k match {
           case (i:Int, j:Int) => {
-            require((i < in.yDim)&&(j < in.xDim), {"querying out of boundary of input matrix"})
+            require((i < in.xDim)&&(j < in.yDim), {"querying out of boundary of input matrix"})
             require(i*in.xDim+j < out.dim, {"querying out of boundary of output vector"})
             List(i*in.xDim+j)
           }
@@ -374,7 +374,7 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
     if (keys.size == size) {
       outMeta match {
         case meta:MatrixMeta => {
-          val rSeq = for {
+          (val rSeq = for {
             x <- 0 until meta.xDim
             y <- 0 until meta.yDim
           } yield (x, y)
