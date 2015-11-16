@@ -372,7 +372,7 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
     println("short path forward query")
     val size = inMeta.size
     if (keys.size == size) {
-      inMeta match {
+      outMeta match {
         case meta:MatrixMeta => {
           val rSeq = for {
             x <- 0 until meta.xDim
@@ -389,9 +389,9 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
 
   override def qBackwardBatch(keys: List[Option[_]]) = {
     println("short path backward query")
-    val size = inMeta.size
+    val size = outMeta.size
     if (keys.size == size) {
-      outMeta match {
+      inMeta match {
         case meta:MatrixMeta => {
           val rSeq = for {
             x <- 0 until meta.xDim
