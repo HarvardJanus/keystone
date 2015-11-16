@@ -374,7 +374,7 @@ case class ContourMappingRTree(inMeta: Metadata, outMeta: Metadata, fRTree: RTre
     if (keys.size == size) {
       outMeta match {
         case meta:MatrixMeta => {
-          (val rSeq = for {
+          val rSeq = for {
             x <- 0 until meta.xDim
             y <- 0 until meta.yDim
           } yield (x, y)

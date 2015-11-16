@@ -309,7 +309,7 @@ class MappingSuite extends FunSuite with Logging {
     }
   }
 
-  test("Contour Matrix-to-Matrix Mapping test"){
+  /*test("Contour Matrix-to-Matrix Mapping test"){
     val c1 = Circle((2,2), 2)
     val c2 = Circle((2,5), 2)
     val s1 = Square((1,2), 1, 1)
@@ -374,7 +374,7 @@ class MappingSuite extends FunSuite with Logging {
     intercept[java.lang.IllegalArgumentException] {
       val result = mapping.qBackward(Some(0))
     }
-  }
+  }*/
 
   test("Transpose Matrix-to-Matrix Mapping test"){
     val mapping  = new TransposeMapping(5, 3, 3, 5)
