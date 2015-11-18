@@ -38,7 +38,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     new DenseMatrix(descriptorSize, numCols, rawDescData)
   }
 
-  override def saveLineageAndApply(in: RDD[Image], tag: String): RDD[DenseMatrix[Float]] = {
+  /*override def saveLineageAndApply(in: RDD[Image], tag: String): RDD[DenseMatrix[Float]] = {
     val outRDD = in.zipWithIndex.map{ 
       case (image, id) => {
         val descriptorCount = scales * image.metadata.xDim * image.metadata.yDim / stepSize / stepSize
@@ -70,7 +70,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
     out
-  }
+  }*/
 }
 
 object SIFTExtractor {

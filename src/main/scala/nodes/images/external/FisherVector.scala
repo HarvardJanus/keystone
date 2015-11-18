@@ -35,14 +35,14 @@ case class FisherVector(
     new DenseMatrix(numDims, numCentroids*2, fisherVector)
   }
 
-  override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
+  /*override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
     val out = in.map(apply)
     out.cache()
     val lineage = AllToOneLineage(in, out, this)
     lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)).size)
     out
-  }
+  }*/
 }
 
 /**
