@@ -45,9 +45,9 @@ object VOCSIFTFisher extends Serializable with Logging {
         new Cacher andThen
         new SIFTExtractor(scaleStep = conf.scaleStep)
 
-    val siftFeatures = siftExtractor(trainingData)
-    siftFeatures.count()
-    /*// Part 1a: If necessary, perform PCA on samples of the SIFT features, or load a PCA matrix from disk.
+    //val siftFeatures = siftExtractor(trainingData)
+    //siftFeatures.count()
+    // Part 1a: If necessary, perform PCA on samples of the SIFT features, or load a PCA matrix from disk.
     // Part 2: Compute dimensionality-reduced PCA features.
     val pcaFeaturizer = (conf.pcaFile match {
       case Some(fname) =>
@@ -82,6 +82,8 @@ object VOCSIFTFisher extends Serializable with Logging {
         NormalizeRows andThen
         new Cacher
 
+    //val dataset = fisherFeaturizer(trainingData)
+    //dataset.count	
     // Part 4: Fit a linear model to the data.
     val pipeline = fisherFeaturizer andThen
         (new BlockLeastSquaresEstimator(4096, 1, conf.lambda, Some(2 * conf.descDim * conf.vocabSize)),
@@ -108,7 +110,7 @@ object VOCSIFTFisher extends Serializable with Logging {
 
     val map = MeanAveragePrecisionEvaluator(testActuals, predictions, VOCLoader.NUM_CLASSES)
     logInfo(s"TEST APs are: ${map.toArray.mkString(",")}")
-    logInfo(s"TEST MAP is: ${mean(map)}")*/
+    logInfo(s"TEST MAP is: ${mean(map)}")
     val endTime = System.nanoTime()
     logInfo(s"Pipeline took ${(endTime - startTime)/1e9} s")
   }

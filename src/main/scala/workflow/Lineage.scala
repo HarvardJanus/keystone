@@ -201,8 +201,8 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     /*val words = tag.split('_')
     if(words.size > 1 && words(1).startsWith("0")){
       inRDD.saveAsObjectFile(path+"/"+tag+"/inRDD")
-    }
-    outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")*/
+    }*/
+    //outRDD.saveAsObjectFile(path+"/"+tag+"/outRDD")
   }
   def size = mappingRDD.count
 }
