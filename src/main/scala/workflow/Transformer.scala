@@ -27,7 +27,6 @@ abstract class Transformer[A, B : ClassTag] extends TransformerNode[B] with Pipe
   def apply(in: RDD[A]): RDD[B] = in.map(apply)
   def saveLineageAndApply(in: RDD[A], tag: String): RDD[B] = in.map(apply) 
   def apply(in: RDD[A], optimizer: Option[RuleExecutor]): RDD[B] = in.map(apply)
-  def saveLineageAndApply(in: RDD[A], optimizer: Option[RuleExecutor], tag: String): RDD[B] = in.map(apply)
 
   /**
    * Apply this Transformer to a single input item
