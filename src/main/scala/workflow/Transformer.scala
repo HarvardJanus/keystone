@@ -25,7 +25,9 @@ abstract class Transformer[A, B : ClassTag] extends TransformerNode[B] with Pipe
    * @return The bulk RDD output for the given input
    */
   def apply(in: RDD[A]): RDD[B] = in.map(apply)
+  def saveLineageAndApply(in: RDD[A], tag: String): RDD[B] = in.map(apply) 
   def apply(in: RDD[A], optimizer: Option[RuleExecutor]): RDD[B] = in.map(apply)
+  def saveLineageAndApply(in: RDD[A], optimizer: Option[RuleExecutor], tag: String): RDD[B] = in.map(apply)
 
   /**
    * Apply this Transformer to a single input item
@@ -45,6 +47,13 @@ abstract class Transformer[A, B : ClassTag] extends TransformerNode[B] with Pipe
     dataDependencies: Seq[RDD[_]],
     fitDependencies: Seq[TransformerNode[_]]): RDD[B] = {
     apply(dataDependencies.head.asInstanceOf[RDD[A]])
+  }
+
+  private[workflow] final def transformRDDWithLineage(
+    dataDependencies: Seq[RDD[_]], 
+    fitDependencies: Seq[TransformerNode[_]],
+    tag: String): RDD[B] = {
+    saveLineageAndApply(dataDependencies.head.asInstanceOf[RDD[A]], tag)
   }
 }
 

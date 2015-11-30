@@ -119,6 +119,31 @@ private[workflow] class ConcretePipeline[A, B](
     }
   }
 
+  final private[workflow] def rddDataEvalWithLineage(node: Int, in: RDD[A]): RDD[_] = {
+    if (node == Pipeline.SOURCE) {
+      in
+    } else {
+      dataCache.getOrElse((node, in), {
+        nodes(node) match {
+          case DataNode(rdd) => rdd
+          case transformer: TransformerNode[_] =>
+            val id = in match {
+              case rdd: RDD[_] => rdd.id
+              case null => "null"
+            }
+            val tag = transformer.label+"_"+node+"_"+id
+            val nodeFitDeps = fitDeps(node).map(fitEstimator)
+            val nodeDataDeps = dataDeps(node).map(x => rddDataEvalWithLineage(x, in))
+            val outputData = transformer.transformRDDWithLineage(nodeDataDeps, nodeFitDeps, tag)
+            dataCache((node, in)) = outputData
+            outputData
+          case _: EstimatorNode =>
+            throw new RuntimeException("Pipeline DAG error: Cannot have a data dependency on an Estimator")
+        }
+      })
+    }
+  }
+  
   override def apply(in: A): B = apply(in, Some(Optimizer))
 
   override def apply(in: RDD[A]): RDD[B] = apply(in, Some(Optimizer))
@@ -133,7 +158,7 @@ private[workflow] class ConcretePipeline[A, B](
   def apply(in: RDD[A], optimizer: Option[RuleExecutor]): RDD[B] = {
     optimizer match {
       case Some(opt) => opt.execute(this).apply(in, None)
-      case None => rddDataEval(sink, in).asInstanceOf[RDD[B]]
+      case None => rddDataEvalWithLineage(sink, in).asInstanceOf[RDD[B]]
     }
   }
 }
