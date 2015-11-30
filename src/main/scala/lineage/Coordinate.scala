@@ -1,7 +1,6 @@
 package lineage
 
-abstract class Coor extends Serializable{
-}
+abstract class Coor extends Serializable
 
 case class Coor1D(x: Int) extends Coor {
   override def toString = x.toString
