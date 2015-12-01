@@ -1,6 +1,7 @@
 package lineage
 
-import utils.ImageMetadata
+import breeze.linalg._
+import utils.{MultiLabeledImage, Image=>KeystoneImage, LabeledImage, ImageMetadata}
 
 abstract class SubSpace extends Serializable {
   def contain(c: Coor): Boolean
@@ -44,7 +45,13 @@ case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
 
 object SubSpace {
   def apply(dim: Int): SubSpace = Vector(dim)
+  def apply(v: DenseVector[_]): SubSpace = Vector(v.size)
+
   def apply(xDim: Int, yDim: Int): SubSpace = Matrix(xDim, yDim)
+  def apply(m: DenseMatrix[_]): SubSpace = Matrix(m.rows, m.cols)
+  
   def apply(xDim: Int, yDim: Int, cDim: Int): SubSpace = Image(xDim, yDim, cDim)
   def apply(meta: ImageMetadata): SubSpace = Image(meta.xDim, meta.yDim, meta.numChannels)
+  def apply(kImage: KeystoneImage): SubSpace = SubSpace(kImage.metadata)
+  def apply(inImage: MultiLabeledImage): SubSpace = SubSpace(inImage.image.metadata)
 }

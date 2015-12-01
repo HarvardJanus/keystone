@@ -9,12 +9,12 @@ case class Coor1D(x: Int) extends Coor {
 
 case class Coor2D(x:Int, y:Int) extends Coor {
   require((x>=0)&&(y>=0), {"coordinate can not be negative"})
-  override def toString = "("+x+", "+y+")"
+  override def toString = "("+x+","+y+")"
 }
 
 case class Coor3D(x:Int, y:Int, c:Int) extends Coor {
   require((x>=0)&&(y>=0)&&(c>=0), {"coordinate can not be negative"})
-  override def toString = "("+x+", "+y+", "+c+")"
+  override def toString = "("+x+","+y+","+c+")"
 }
 
 object Coor{
