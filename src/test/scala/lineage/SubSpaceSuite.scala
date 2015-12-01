@@ -65,4 +65,18 @@ class SubSpaceSuite extends FunSuite with Logging {
     val s = SubSpace(meta)
     assert(s.expand.toString == "List((0,0,0), (0,1,0), (1,0,0), (1,1,0), (2,0,0), (2,1,0))")
   }
+
+  test("SubSpace Contain CoorNull Test"){
+    val v = DenseVector.zeros[Double](5)
+    val vs = SubSpace(v)
+    assert(vs.contain(Coor()) == false)
+
+    val m = DenseMatrix.zeros[Double](5,5)
+    val ms = SubSpace(m)
+    assert(vs.contain(Coor()) == false)
+
+    val meta = ImageMetadata(5,4,3)
+    val is = SubSpace(meta)
+    assert(is.contain(Coor()) == false)
+  }
 }

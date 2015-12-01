@@ -17,8 +17,13 @@ case class Coor3D(x:Int, y:Int, c:Int) extends Coor {
   override def toString = "("+x+","+y+","+c+")"
 }
 
+case class CoorNull() extends Coor{
+  override def toString = "null"
+}
+
 object Coor{
   def apply(x:Int): Coor = new Coor1D(x)
   def apply(x:Int, y:Int): Coor = new Coor2D(x, y)
   def apply(x:Int, y:Int, c:Int): Coor = new Coor3D(x, y, c)
+  def apply() = new CoorNull()
 }
