@@ -12,7 +12,10 @@ case class Vector(dim: Int) extends SubSpace {
   override def contain(c: Coor) = {
     c match {
       case coor: Coor1D => if (coor.x < dim) true else false
-      case _ => false
+      case _ => {
+        require(0==1, {"input is 1-d structure, use 1-d index"})
+        false
+      }
     }
   }
 
@@ -24,7 +27,10 @@ case class Matrix(xDim: Int, yDim: Int) extends SubSpace {
   override def contain(c: Coor) = {
     c match {
       case coor: Coor2D => if ((coor.x < xDim)&&(coor.y < yDim)) true else false
-      case _ => false
+      case _ => {
+        require(0==1, {"input is 2-d structure, use 2-d index"})
+        false
+      }
     }
   }
 
@@ -36,7 +42,10 @@ case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
   override def contain(c: Coor) = {
     c match {
       case coor: Coor3D => if ((coor.x < xDim)&&(coor.y < yDim)&&(coor.c < cDim)) true else false
-      case _ => false
+      case _ => {
+        require(0==1, {"input is 3-d structure, use 3-d index"})
+        false
+      }
     }
   }
   override def expand  = (for(i <- 0 until xDim; j <- 0 until yDim; c <- 0 until cDim) yield Coor(i,j,c)).toList

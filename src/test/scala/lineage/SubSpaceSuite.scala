@@ -17,6 +17,10 @@ class SubSpaceSuite extends FunSuite with Logging {
     val m = SubSpace(v)
     assert(m.contain(Coor(0)) == true)
     assert(m.contain(Coor(5)) == false)
+
+    intercept[java.lang.IllegalArgumentException] {
+      m.contain(Coor(0,0))
+    }
   }
 
   test("Vector SubSpace Expand Test"){
@@ -69,14 +73,20 @@ class SubSpaceSuite extends FunSuite with Logging {
   test("SubSpace Contain CoorNull Test"){
     val v = DenseVector.zeros[Double](5)
     val vs = SubSpace(v)
-    assert(vs.contain(Coor()) == false)
+    intercept[java.lang.IllegalArgumentException] {
+      vs.contain(Coor())
+    }
 
     val m = DenseMatrix.zeros[Double](5,5)
     val ms = SubSpace(m)
-    assert(vs.contain(Coor()) == false)
+    intercept[java.lang.IllegalArgumentException] {
+      vs.contain(Coor())
+    }
 
     val meta = ImageMetadata(5,4,3)
     val is = SubSpace(meta)
-    assert(is.contain(Coor()) == false)
+    intercept[java.lang.IllegalArgumentException] {
+      is.contain(Coor())
+    }
   }
 }
