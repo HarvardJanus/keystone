@@ -6,9 +6,9 @@ import pipelines.Logging
 
 class MappingSuite extends FunSuite with Logging {
   test("IdentityMapping Test"){
-    val s1 = Vector(5)
-    val s2 = Vector(5)
-    val mapping = IdentityMapping(s1, s2)
+    val v1 = DenseVector.zeros[Double](5)
+    val v2 = DenseVector.zeros[Double](5)
+    val mapping = IdentityMapping(v1, v2)
     assert(mapping.qForward(List(Coor(0))).toString == "List(0)")
     assert(mapping.qForward(List(Coor(5))).toString == "List(null)")
   }
