@@ -10,6 +10,9 @@ class MappingSuite extends FunSuite with Logging {
     val v2 = DenseVector.zeros[Double](5)
     val mapping = IdentityMapping(v1, v2)
     assert(mapping.qForward(List(Coor(0))).toString == "List(0)")
-    assert(mapping.qForward(List(Coor(5))).toString == "List(null)")
+
+    intercept[java.lang.IllegalArgumentException] {
+      mapping.qForward(List(Coor(5)))
+    }
   }
 }

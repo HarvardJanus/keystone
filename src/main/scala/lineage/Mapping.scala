@@ -11,18 +11,14 @@ trait Mapping extends Serializable{
 case class IdentityMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping{
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
-    flag match {
-      case true => keys
-      case false => List(Coor())
-    }
+    require((flag==true), {"query out of subspace boundary"})
+    keys
   }
 
   def qBackward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
-    flag match {
-      case true => keys
-      case false => List(Coor())
-    }
+    require((flag==true), {"query out of subspace boundary"})
+    keys
   }
 }
 
