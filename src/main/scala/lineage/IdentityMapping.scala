@@ -5,13 +5,13 @@ import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledIma
 
 case class IdentityMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping{
   def qForward(keys: List[Coor]) = {
-    val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
+    val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
     keys
   }
 
   def qBackward(keys: List[Coor]) = {
-    val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
+    val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
     keys
   }
