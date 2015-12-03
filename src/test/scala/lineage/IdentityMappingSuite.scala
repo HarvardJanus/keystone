@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 import pipelines.Logging
 import utils.ImageMetadata
 
-class MappingSuite extends FunSuite with Logging {
+class IdentityMappingSuite extends FunSuite with Logging {
   test("IdentityMapping Vector Test"){
     val v1 = DenseVector.zeros[Double](5)
     val v2 = DenseVector.zeros[Double](5)
