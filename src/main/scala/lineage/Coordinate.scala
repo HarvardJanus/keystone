@@ -2,6 +2,7 @@ package lineage
 
 abstract class Coor extends Serializable
 
+
 case class Coor1D(x: Int) extends Coor {
   require(x>=0, {"coordinate can not be negative"})
   override def toString = x.toString

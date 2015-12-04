@@ -7,13 +7,71 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    outSpace.expand()
+    (inSpace, outSpace) match {
+      case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
+      case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
+    }
+  }
+
+  def qForwardM2V(in: Matrix, out: Vector, dim: Int, keys: List[Coor]) = {
+    require((dim >= 0)&&(dim < 2), {"Input is 2-d, it can only collapse along two dimensions"})
+    dim match{
+      case 0 => keys.map(key => Coor(key.asInstanceOf[Coor2D].y)).distinct
+      case 1 => keys.map(key => Coor(key.asInstanceOf[Coor2D].x)).distinct
+    }
+  }
+
+  def qForwardI2M(in: Image, out: Matrix, dim: Int=2, keys: List[Coor]) = {
+    require((dim >= 0)&&(dim < 3), {"Input is 3-d, it can only collapse along three dimensions"})
+    dim match{
+      case 0 => keys.map(key => Coor(key.asInstanceOf[Coor3D].y, key.asInstanceOf[Coor3D].c)).distinct
+      case 1 => keys.map(key => Coor(key.asInstanceOf[Coor3D].x, key.asInstanceOf[Coor3D].c)).distinct
+      case 2 => keys.map(key => Coor(key.asInstanceOf[Coor3D].x, key.asInstanceOf[Coor3D].y)).distinct
+    }
   }
 
   def qBackward(keys: List[Coor]) = {
     val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    outSpace.expand()
+    (inSpace, outSpace) match {
+      case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
+      case (in: Image, out: Matrix) => qBackwardI2M(in, out, dim, keys)
+    }
+  }
+
+  def qBackwardM2V(in: Matrix, out: Vector, dim: Int, keys: List[Coor]) = {
+    require((dim >= 0)&&(dim < 2), {"Input is 2-d, it can only collapse along two dimensions"})
+    dim match{
+      case 0 => keys.flatMap(key => {
+        val xDim = in.asInstanceOf[Matrix].xDim
+        (0 until xDim).toList.zip(List.fill(xDim){key.asInstanceOf[Coor1D].x}).map{case (x,y)=>Coor(x,y)}
+      })
+        
+      case 1 => keys.flatMap(key => {
+        val yDim = in.asInstanceOf[Matrix].yDim
+        (0 until yDim).toList.zip(List.fill(yDim){key.asInstanceOf[Coor1D].x}).map{case (x,y)=>Coor(y,x)}
+      })
+    }
+  }
+
+  def qBackwardI2M(in: Image, out: Matrix, dim: Int=2, keys: List[Coor]) = {
+    require((dim >= 0)&&(dim < 3), {"Input is 3-d, it can only collapse along three dimensions"})
+    dim match{
+      case 0 => keys.flatMap(key => {
+        val xDim = in.asInstanceOf[Image].xDim
+        (0 until xDim).toList.zip(List.fill(xDim){key.asInstanceOf[Coor2D]}).map{case (x,y)=>Coor(x, y.x, y.y)}
+      })
+      
+      case 1 => keys.flatMap(key => {
+        val yDim = in.asInstanceOf[Image].xDim
+        (0 until yDim).toList.zip(List.fill(yDim){key.asInstanceOf[Coor2D]}).map{case (x,y)=>Coor(y.x, x, y.y)}
+      })
+
+      case 2 => keys.flatMap(key => {
+        val cDim = in.asInstanceOf[Image].cDim
+        (0 until cDim).toList.zip(List.fill(cDim){key.asInstanceOf[Coor2D]}).map{case (x,y)=>Coor(y.x, y.y, x)}
+      })
+    }
   }
 }
 

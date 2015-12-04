@@ -9,6 +9,12 @@ abstract class SubSpace extends Serializable {
   def numDim(): Int
 }
 
+case class NullSpace() extends SubSpace {
+  def contain(c: Coor) = false
+  def expand() = List(Coor())
+  def numDim() = 0
+}
+
 case class Vector(dim: Int) extends SubSpace {
   override def contain(c: Coor) = {
     c match {
@@ -57,6 +63,7 @@ case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
 }
 
 object SubSpace {
+  def apply(): SubSpace = NullSpace()
   def apply(dim: Int): SubSpace = Vector(dim)
   def apply(v: DenseVector[_]): SubSpace = Vector(v.size)
 
