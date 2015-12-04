@@ -28,8 +28,12 @@ class CollapseMappingSuite extends FunSuite with Logging {
 
     val m2 = DenseMatrix.zeros[Double](5,3)
     val mapping2 = CollapseMapping(image, m2, 1)
+    assert(mapping2.qForward(List(Coor(0,0,0))).toString == "List((0,0))")
+    assert(mapping2.qBackward(List(Coor(0,0))).toString == "List((0,0,0), (0,1,0), (0,2,0), (0,3,0))")
 
     val m3 = DenseMatrix.zeros[Double](4,3)
     val mapping3 = CollapseMapping(image, m3, 0)
+    assert(mapping3.qForward(List(Coor(0,0,0))).toString == "List((0,0))")
+    assert(mapping3.qBackward(List(Coor(0,0))).toString == "List((0,0,0), (1,0,0), (2,0,0), (3,0,0), (4,0,0))")
   }
 }

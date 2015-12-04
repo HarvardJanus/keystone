@@ -63,7 +63,7 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
       })
       
       case 1 => keys.flatMap(key => {
-        val yDim = in.asInstanceOf[Image].xDim
+        val yDim = in.asInstanceOf[Image].yDim
         (0 until yDim).toList.zip(List.fill(yDim){key.asInstanceOf[Coor2D]}).map{case (x,y)=>Coor(y.x, x, y.y)}
       })
 
