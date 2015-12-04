@@ -6,6 +6,7 @@ import utils.{MultiLabeledImage, Image=>KeystoneImage, LabeledImage, ImageMetada
 abstract class SubSpace extends Serializable {
   def contain(c: Coor): Boolean
   def expand(): List[Coor]
+  def numDim(): Int
 }
 
 case class Vector(dim: Int) extends SubSpace {
@@ -21,6 +22,7 @@ case class Vector(dim: Int) extends SubSpace {
 
   override def expand() = (0 until dim).toList.map(Coor(_))
   override def toString(): String = "Vector: "+dim
+  override def numDim() = 1
 }
 
 case class Matrix(xDim: Int, yDim: Int) extends SubSpace {
@@ -36,6 +38,7 @@ case class Matrix(xDim: Int, yDim: Int) extends SubSpace {
 
   override def expand() = (for(i <- 0 until xDim; j <- 0 until yDim) yield Coor(i,j)).toList
   override def toString(): String = "Matrix: "+xDim+"x"+yDim
+  override def numDim() = 2
 }
 
 case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
@@ -49,7 +52,8 @@ case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
     }
   }
   override def expand  = (for(i <- 0 until xDim; j <- 0 until yDim; c <- 0 until cDim) yield Coor(i,j,c)).toList
-  override def toString(): String =  "Image: "+xDim+"x"+yDim+"x"+cDim 
+  override def toString(): String =  "Image: "+xDim+"x"+yDim+"x"+cDim
+  override def numDim() = 3
 }
 
 object SubSpace {
