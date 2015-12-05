@@ -10,6 +10,8 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     (inSpace, outSpace) match {
       case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
       case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
+      case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
+      case (in: Matrix, out: Image) => qBackwardI2M(out, in, dim, keys)
     }
   }
 
@@ -36,6 +38,8 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     (inSpace, outSpace) match {
       case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
       case (in: Image, out: Matrix) => qBackwardI2M(in, out, dim, keys)
+      case (in: Vector, out: Matrix) => qForwardM2V(out, in, dim, keys)
+      case (in: Matrix, out: Image) => qForwardI2M(out, in, dim, keys)
     }
   }
 
@@ -78,10 +82,24 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
 object CollapseMapping{
   def apply(inVector: DenseVector[_], outElement: Int, dim: Int) = 
     new CollapseMapping(SubSpace(inVector), SubSpace(outElement), dim)
+
+  /*
+   *  Interface from high dimensional spaces to low dimensional spaces
+   */  
   def apply(inMatrix: DenseMatrix[_], outVector: DenseVector[_], dim: Int) = 
     new CollapseMapping(SubSpace(inMatrix), SubSpace(outVector), dim)
   def apply(inImage: KeystoneImage, outMatrix: DenseMatrix[_], dim: Int) = 
     new CollapseMapping(SubSpace(inImage), SubSpace(outMatrix), dim)
   def apply(inImageMeta: ImageMetadata, outMatrix: DenseMatrix[_], dim: Int) = 
     new CollapseMapping(SubSpace(inImageMeta), SubSpace(outMatrix), dim)
+
+  /*
+   * Interface from low dimensional spaces to high dimensional spaces
+   */
+  def apply(inVector: DenseVector[_], outMatrix: DenseMatrix[_], dim: Int) = 
+    new CollapseMapping(SubSpace(inVector), SubSpace(outMatrix), dim)
+  def apply(inMatrix: DenseMatrix[_], outImage: KeystoneImage, dim: Int) = 
+    new CollapseMapping(SubSpace(inMatrix), SubSpace(outImage), dim)
+  def apply(inMatrix: DenseMatrix[_], outImageMeta: ImageMetadata, dim: Int) = 
+    new CollapseMapping(SubSpace(inMatrix), SubSpace(outImageMeta), dim)  
 }

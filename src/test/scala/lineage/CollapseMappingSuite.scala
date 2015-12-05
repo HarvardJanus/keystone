@@ -36,4 +36,17 @@ class CollapseMappingSuite extends FunSuite with Logging {
     assert(mapping3.qForward(List(Coor(0,0,0))).toString == "List((0,0))")
     assert(mapping3.qBackward(List(Coor(0,0))).toString == "List((0,0,0), (1,0,0), (2,0,0), (3,0,0), (4,0,0))")
   }
+
+  test("CollapseMapping Vector2Matrix Test"){
+    val m = DenseMatrix.zeros[Double](5, 4)
+    val v = DenseVector.zeros[Double](4)
+    val mapping1 = CollapseMapping(v, m, 0)
+    assert(mapping1.qForward(List(Coor(0))).toString == "List((0,0), (1,0), (2,0), (3,0), (4,0))")
+    assert(mapping1.qBackward(List(Coor(0,0), Coor(0,1))).toString == "List(0,1)")
+
+    /*val v2 = DenseVector.zeros[Double](5)
+    val mapping2 = CollapseMapping(v, m, 1)
+    assert(mapping2.qForward(List(Coor(0,0), Coor(0,1), Coor(1,1))).toString == "List(0, 1)")
+    assert(mapping2.qBackward(List(Coor(0))).toString == "List((0,0), (0,1), (0,2), (0,3))")*/
+  }
 }
