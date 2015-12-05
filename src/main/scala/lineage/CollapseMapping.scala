@@ -23,7 +23,7 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     }
   }
 
-  def qForwardI2M(in: Image, out: Matrix, dim: Int=2, keys: List[Coor]) = {
+  def qForwardI2M(in: Image, out: Matrix, dim: Int, keys: List[Coor]) = {
     require((dim >= 0)&&(dim < 3), {"Input is 3-d, it can only collapse along three dimensions"})
     dim match{
       case 0 => keys.map(key => Coor(key.asInstanceOf[Coor3D].y, key.asInstanceOf[Coor3D].c)).distinct
@@ -58,7 +58,7 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     }
   }
 
-  def qBackwardI2M(in: Image, out: Matrix, dim: Int=2, keys: List[Coor]) = {
+  def qBackwardI2M(in: Image, out: Matrix, dim: Int, keys: List[Coor]) = {
     require((dim >= 0)&&(dim < 3), {"Input is 3-d, it can only collapse along three dimensions"})
     dim match{
       case 0 => keys.flatMap(key => {
