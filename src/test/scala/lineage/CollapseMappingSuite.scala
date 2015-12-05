@@ -42,11 +42,31 @@ class CollapseMappingSuite extends FunSuite with Logging {
     val v = DenseVector.zeros[Double](4)
     val mapping1 = CollapseMapping(v, m, 0)
     assert(mapping1.qForward(List(Coor(0))).toString == "List((0,0), (1,0), (2,0), (3,0), (4,0))")
-    assert(mapping1.qBackward(List(Coor(0,0), Coor(0,1))).toString == "List(0,1)")
+    assert(mapping1.qBackward(List(Coor(0,0), Coor(0,1))).toString == "List(0, 1)")
 
-    /*val v2 = DenseVector.zeros[Double](5)
+    val v2 = DenseVector.zeros[Double](5)
     val mapping2 = CollapseMapping(v, m, 1)
-    assert(mapping2.qForward(List(Coor(0,0), Coor(0,1), Coor(1,1))).toString == "List(0, 1)")
-    assert(mapping2.qBackward(List(Coor(0))).toString == "List((0,0), (0,1), (0,2), (0,3))")*/
+    assert(mapping2.qForward(List(Coor(0))).toString == "List((0,0), (0,1), (0,2), (0,3))")
+    assert(mapping2.qBackward(List(Coor(0,0), Coor(0,1))).toString == "List(0)")
+  }
+
+  test("CollapseMapping Matrix2Image Test"){
+    val image = ImageMetadata(5,4,3)
+    val m1 = DenseMatrix.zeros[Double](5,4)
+    val mapping1 = CollapseMapping(m1, image, 2)
+    assert(mapping1.qForward(List(Coor(0,0))).toString == "List((0,0,0), (0,0,1), (0,0,2))")
+    assert(mapping1.qBackward(List(Coor(0,1,2))).toString == "List((0,1))")
+    
+
+    val m2 = DenseMatrix.zeros[Double](5,3)
+    val mapping2 = CollapseMapping(m2, image, 1)
+    assert(mapping2.qForward(List(Coor(0,0))).toString == "List((0,0,0), (0,1,0), (0,2,0), (0,3,0))")
+    assert(mapping2.qBackward(List(Coor(0,1,2))).toString == "List((0,2))")
+
+
+    val m3 = DenseMatrix.zeros[Double](4,3)
+    val mapping3 = CollapseMapping(m3, image, 0)
+    assert(mapping3.qForward(List(Coor(0,0))).toString == "List((0,0,0), (1,0,0), (2,0,0), (3,0,0), (4,0,0))")
+    assert(mapping3.qBackward(List(Coor(0,1,2))).toString == "List((1,2))")
   }
 }
