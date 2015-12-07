@@ -8,12 +8,16 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
     (inSpace, outSpace) match {
+      case (in: Vector, out: Singularity) => qForwardV2S(in, out, keys)
       case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
       case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
+      case (in: Singularity, out: Vector) => qBackwardV2S(out, in, keys)
       case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
       case (in: Matrix, out: Image) => qBackwardI2M(out, in, dim, keys)
     }
   }
+
+  def qForwardV2S(in: Vector, out: Singularity, keys: List[Coor]) = List(Coor(0))
 
   def qForwardM2V(in: Matrix, out: Vector, dim: Int, keys: List[Coor]) = {
     require((dim >= 0)&&(dim < 2), {"Input is 2-d, it can only collapse along two dimensions"})
@@ -32,15 +36,22 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     }
   }
 
+
   def qBackward(keys: List[Coor]) = {
     val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
     (inSpace, outSpace) match {
+      case (in: Vector, out: Singularity) => qBackwardV2S(in, out, keys)
       case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
       case (in: Image, out: Matrix) => qBackwardI2M(in, out, dim, keys)
+      case (in: Singularity, out: Vector) => qForwardV2S(out, in, keys)
       case (in: Vector, out: Matrix) => qForwardM2V(out, in, dim, keys)
       case (in: Matrix, out: Image) => qForwardI2M(out, in, dim, keys)
     }
+  }
+
+  def qBackwardV2S(in: Vector, out: Singularity, keys: List[Coor]) = {
+    in.expand()
   }
 
   def qBackwardM2V(in: Matrix, out: Vector, dim: Int, keys: List[Coor]) = {
@@ -80,9 +91,10 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
 }
 
 object CollapseMapping{
-  def apply(inVector: DenseVector[_], outElement: Int, dim: Int) = 
-    new CollapseMapping(SubSpace(inVector), SubSpace(outElement), dim)
-
+  def apply(inVector: DenseVector[_], outElement: Int) = 
+    new CollapseMapping(SubSpace(inVector), SubSpace(outElement), 0)
+  def apply(inElement: Int, outVector: DenseVector[_]) = 
+    new CollapseMapping(SubSpace(inElement), SubSpace(outVector), 0)
   /*
    *  Interface from high dimensional spaces to low dimensional spaces
    */  

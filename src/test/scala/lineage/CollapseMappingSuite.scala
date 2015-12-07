@@ -6,6 +6,14 @@ import pipelines.Logging
 import utils.ImageMetadata
 
 class CollapseMappingSuite extends FunSuite with Logging {
+  test("CollapseMapping Vector2Int Test"){
+    val v = DenseVector.zeros[Double](4)
+    val i = 3
+    val mapping = CollapseMapping(v, i)
+    assert(mapping.qForward(List(Coor(0))).toString == "List(0)")
+    assert(mapping.qBackward(List(Coor(0))).toString == "List(0, 1, 2, 3)")
+  }
+
   test("CollapseMapping Matrix2Vector Test"){
     val m = DenseMatrix.zeros[Double](5, 4)
     val v = DenseVector.zeros[Double](4)
@@ -37,6 +45,14 @@ class CollapseMappingSuite extends FunSuite with Logging {
     assert(mapping3.qBackward(List(Coor(0,0))).toString == "List((0,0,0), (1,0,0), (2,0,0), (3,0,0), (4,0,0))")
   }
 
+  test("CollapseMapping Int2Vector Test"){
+    val v = DenseVector.zeros[Double](4)
+    val i = 3
+    val mapping = CollapseMapping(i, v)
+    assert(mapping.qForward(List(Coor(0))).toString == "List(0, 1, 2, 3)")
+    assert(mapping.qBackward(List(Coor(0))).toString == "List(0)")
+  }
+  
   test("CollapseMapping Vector2Matrix Test"){
     val m = DenseMatrix.zeros[Double](5, 4)
     val v = DenseVector.zeros[Double](4)

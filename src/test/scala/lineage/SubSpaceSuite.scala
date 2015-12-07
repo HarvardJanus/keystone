@@ -6,6 +6,11 @@ import pipelines.Logging
 import utils.ImageMetadata
 
 class SubSpaceSuite extends FunSuite with Logging {
+  test("Singularity SubSpace Test"){
+    val s = SubSpace(5)
+    assert(s.toString == "Singularity: 0")
+  }
+
   test("Vector SubSpace Test"){
     val v = DenseVector.zeros[Double](5)
     val m = SubSpace(v)
@@ -52,9 +57,6 @@ class SubSpaceSuite extends FunSuite with Logging {
     val meta = ImageMetadata(5, 4, 3)
     val nativeMeta = SubSpace(meta)
     assert(nativeMeta.toString == "Image: 5x4x3")
-
-    val metadata = SubSpace(5, 4, 3)
-    assert(metadata.toString == "Image: 5x4x3")
   }
 
   test("Image SubSpace Contain Test"){
