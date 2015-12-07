@@ -3,6 +3,9 @@ package lineage
 import breeze.linalg._
 import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledImage}
 
+/*
+ *  add RDD[Seq[Vector]] => Seq[Vector]
+ */
 case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping{
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)

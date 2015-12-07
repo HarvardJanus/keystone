@@ -1,6 +1,7 @@
 package lineage
 
 import breeze.linalg._
+import org.apache.spark.rdd.RDD
 import utils.{MultiLabeledImage, Image=>KeystoneImage, LabeledImage, ImageMetadata}
 
 abstract class SubSpace extends Serializable {
@@ -79,4 +80,18 @@ object SubSpace {
   def apply(meta: ImageMetadata): SubSpace = Image(meta.xDim, meta.yDim, meta.numChannels)
   def apply(kImage: KeystoneImage): SubSpace = SubSpace(kImage.metadata)
   def apply(inImage: MultiLabeledImage): SubSpace = SubSpace(inImage.image.metadata)
+
+  def apply[T](in: Seq[RDD[DenseVector[T]]]): SubSpace = {
+    val x = in.size
+    val y = in.head.count.toInt
+    val z = in.head.first.size
+    Image(x, y, z)
+  }
+
+  def apply[T](in: RDD[Seq[DenseVector[T]]]): SubSpace = {
+    val x = in.count.toInt
+    val y = in.first.size
+    val z = in.first.head.size
+    Image(x, y, z)
+  }
 }
