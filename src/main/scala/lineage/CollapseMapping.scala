@@ -4,7 +4,7 @@ import breeze.linalg._
 import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledImage}
 
 /*
- *  add RDD[Seq[Vector]] => Seq[Vector]
+ *  add RDD[Seq[Vector]] => RDD[Vector]
  */
 case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping{
   def qForward(keys: List[Coor]) = {

@@ -26,6 +26,16 @@ class FlattenMappingSuite extends FunSuite with Logging {
     assert(mapping2.qBackward(List(Coor(14))).toString == "List((3,2))")
   }
 
+  test("FlattenMapping Seq[Vector]2Vector Test"){
+    val v1 = DenseVector.zeros[Double](5)
+    val s = Seq(v1, v1)
+    val v2 = DenseVector.zeros[Double](10)
+
+    val mapping = FlattenMapping(s, v2)
+    assert(mapping.qForward(List(Coor(1,0))).toString == "List(5)")
+    assert(mapping.qBackward(List(Coor(5))).toString == "List((1,0))")
+  }
+
   test("FlattenMapping Vector2Matrix Test"){
     val m = DenseMatrix.zeros[Double](5, 4)
     val v = DenseVector.zeros[Double](20)

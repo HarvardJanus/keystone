@@ -58,6 +58,10 @@ object FlattenMapping{
   /*
    *  Interface from high dimensional spaces to low dimensional spaces
    */ 
-  def apply(inMatrix: DenseMatrix[_], outVector: DenseVector[_], dim: Int) = new FlattenMapping(SubSpace(inMatrix), SubSpace(outVector), dim)
-  def apply(inVector: DenseVector[_], outMatrix: DenseMatrix[_], dim: Int) = new FlattenMapping(SubSpace(inVector), SubSpace(outMatrix), dim)
+  def apply(inMatrix: DenseMatrix[_], outVector: DenseVector[_], dim: Int) = 
+    new FlattenMapping(SubSpace(inMatrix), SubSpace(outVector), dim)
+  def apply(inVector: DenseVector[_], outMatrix: DenseMatrix[_], dim: Int) = 
+    new FlattenMapping(SubSpace(inVector), SubSpace(outMatrix), dim)
+  def apply[T](inSV: Seq[DenseVector[T]], outVector: DenseVector[T]) =
+    new FlattenMapping(SubSpace(inSV), SubSpace(outVector), 0)
 }

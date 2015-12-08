@@ -1,6 +1,7 @@
 package lineage
 
 import breeze.linalg._
+import org.apache.spark.rdd.RDD
 
 case class JoinMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping {
   def qForward(keys: List[Coor]) = {
@@ -24,4 +25,9 @@ case class JoinMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends 
       })
     }
   }
+}
+
+object JoinMapping{
+  def apply[T](inSR: Seq[RDD[DenseVector[T]]], outRS: RDD[Seq[DenseVector[T]]]) = 
+    new JoinMapping(SubSpace(inSR), SubSpace(outRS), 1)
 }
