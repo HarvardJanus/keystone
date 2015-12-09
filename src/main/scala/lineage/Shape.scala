@@ -3,11 +3,11 @@ package lineage
 import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
-	def getCenter(): (Double, Double)
-	def toCoor(): List[(Int, Int)]
-	def inShape(i: Double, j: Double): Boolean
-	def toBox(): Box
-	def toSquare(): Square
+  def getCenter(): (Double, Double)
+  def toCoor(): List[(Int, Int)]
+  def inShape(i: Double, j: Double): Boolean
+  def toBox(): Box
+  def toSquare(): Square
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
