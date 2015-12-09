@@ -11,139 +11,139 @@ abstract class Shape(c: (Double, Double)) extends Serializable{
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
-	def toCoor() = {
-		val x = c._1
-		val y = c._2
-		val l = for { 
-			i <- (x-r).toInt to (x+r).toInt
-			j <- (y-r).toInt to (y+r).toInt
-			if (i-x)*(i-x)+(j-y)*(j-y) <= r*r
-		} yield (i, j)
-		l.toList
-	}
+  def toCoor() = {
+    val x = c._1
+    val y = c._2
+    val l = for {
+      i <- (x-r).toInt to (x+r).toInt
+      j <- (y-r).toInt to (y+r).toInt
+      if (i-x)*(i-x)+(j-y)*(j-y) <= r*r
+    } yield (i, j)
+    l.toList
+  }
 
-	def inShape(i: Double, j: Double): Boolean = {
-		val x = c._1
-		val y = c._2
-		if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
-	}
+  def inShape(i: Double, j: Double): Boolean = {
+    val x = c._1
+    val y = c._2
+    if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
+  }
 
-	def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
-	def toSquare = Square(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble)).asInstanceOf[Square]
+  def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
+  def toSquare = Square(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble)).asInstanceOf[Square]
 
-	override def toString() = "center: "+c+" r: "+r
-	def getCenter() = c
-	def getR() = r
+  override def toString() = "center: "+c+" r: "+r
+  def getCenter() = c
+  def getR() = r
 }
 
 case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) extends Shape(c){
-	def getCenter() = c
-	def toCoor() = {
-		val x = c._1
-		val y = c._2
-		val l = for { 
-			i <- (x-a).toInt to (x+a).toInt
-			j <- (y-a).toInt to (y+a).toInt
-			if inShape(i, j)
-		} yield (i, j)
-		l.toList
-	}
+  def getCenter() = c
+  def toCoor() = {
+    val x = c._1
+    val y = c._2
+    val l = for {
+      i <- (x-a).toInt to (x+a).toInt
+      j <- (y-a).toInt to (y+a).toInt
+      if inShape(i, j)
+    } yield (i, j)
+    l.toList
+  }
 
-	def inShape(i: Double, j: Double): Boolean = {
-		val x = c._1
-		val y = c._2
-		if(a==0&&b==0){
-			return false
-		}else{
-			val firstItem = ((i-x)*cos(theta) + (j-y)*sin(theta))/a
-			val secondItem = ((j-y)*cos(theta) - (i-x)*sin(theta))/b
-			if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
-		}
-	}
+  def inShape(i: Double, j: Double): Boolean = {
+    val x = c._1
+    val y = c._2
+    if(a==0&&b==0){
+      return false
+    }else{
+      val firstItem = ((i-x)*cos(theta) + (j-y)*sin(theta))/a
+      val secondItem = ((j-y)*cos(theta) - (i-x)*sin(theta))/b
+      if(firstItem*firstItem + secondItem*secondItem <= 1) true else false
+    }
+  }
 
 	def toBox() = {
-		/**
-		 *  In an ellipse with rotation
-		 *  x = c._1 + a*cos(t)*cos(theta) - b*sin(t)*sin(theta)
-		 *	y = c._2 + b*sin(t)*cos(theta) + a*cos(t)*sin(phi)
-		 *
-		 *	dx/dt = -a*sin(t)*cos(theta) - b*cos(t)*sin(theta) = 0
-		 *	dy/dt = b*cos(t)*cos(theta) - a*sin(t)*sin(theta) = 0
-		 */
-		val xTan = -b*tan(theta)/a
-		val t1 = atan(xTan)
-		val t2 = t1+Pi
-		val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
-		val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
-		val xl = List(x1, x2)
-		val xMin = xl.min
-		val xMax = xl.max
+    /**
+     *  In an ellipse with rotation
+     *  x = c._1 + a*cos(t)*cos(theta) - b*sin(t)*sin(theta)
+     *	y = c._2 + b*sin(t)*cos(theta) + a*cos(t)*sin(phi)
+     *
+     *	dx/dt = -a*sin(t)*cos(theta) - b*cos(t)*sin(theta) = 0
+     *	dy/dt = b*cos(t)*cos(theta) - a*sin(t)*sin(theta) = 0
+     */
+    val xTan = -b*tan(theta)/a
+    val t1 = atan(xTan)
+    val t2 = t1+Pi
+    val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
+    val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
+    val xl = List(x1, x2)
+    val xMin = xl.min
+    val xMax = xl.max
 
-		val yTan = b*cos(theta)/sin(theta)/a
-		val t3 = atan(yTan)
-		val t4 = t3+Pi
-		val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
-		val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
-		val yl = List(y1, y2)
-		val yMin = yl.min
-		val yMax = yl.max
-		Box(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
+    val yTan = b*cos(theta)/sin(theta)/a
+    val t3 = atan(yTan)
+    val t4 = t3+Pi
+    val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
+    val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
+    val yl = List(y1, y2)
+    val yMin = yl.min
+    val yMax = yl.max
+    Box(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
 	}
 
-	def toSquare() ={
-		val xTan = -b*tan(theta)/a
-		val t1 = atan(xTan)
-		val t2 = t1+Pi
-		val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
-		val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
-		val xl = List(x1, x2)
-		val xMin = xl.min
-		val xMax = xl.max
+  def toSquare() ={
+    val xTan = -b*tan(theta)/a
+    val t1 = atan(xTan)
+    val t2 = t1+Pi
+    val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
+    val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
+    val xl = List(x1, x2)
+    val xMin = xl.min
+    val xMax = xl.max
 
-		val yTan = b*cos(theta)/sin(theta)/a
-		val t3 = atan(yTan)
-		val t4 = t3+Pi
-		val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
-		val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
-		val yl = List(y1, y2)
-		val yMin = yl.min
-		val yMax = yl.max
-		Square((xMin, yMin), (xMax, yMax)).asInstanceOf[Square]
-	}
+    val yTan = b*cos(theta)/sin(theta)/a
+    val t3 = atan(yTan)
+    val t4 = t3+Pi
+    val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
+    val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
+    val yl = List(y1, y2)
+    val yMin = yl.min
+    val yMax = yl.max
+    Square((xMin, yMin), (xMax, yMax)).asInstanceOf[Square]
+  }
 
-	override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
+  override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
 
 case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
-	def getCenter() = c
-	def getUpperLeft = (c._1-b, c._2-a)
-	def getLowerRight = (c._1+b, c._2+a)
-	def toCoor() = {
-		val x = c._1
-		val y = c._2
-		val l = for { 
-			i <- (x-b).toInt to (x+b).toInt
-			j <- (y-a).toInt to (y+a).toInt
-		} yield (i, j)
-		l.toList
-	}
+  def getCenter() = c
+  def getUpperLeft = (c._1-b, c._2-a)
+  def getLowerRight = (c._1+b, c._2+a)
+  def toCoor() = {
+    val x = c._1
+    val y = c._2
+    val l = for { 
+      i <- (x-b).toInt to (x+b).toInt
+      j <- (y-a).toInt to (y+a).toInt
+    } yield (i, j)
+    l.toList
+  }
 
-	def inShape(i: Double, j: Double): Boolean = {
-		val x = c._1
-		val y = c._2
-		if(i>=(x-b) && i<=(x+b) && j>=(y-a) && j<=(y+a)) true else false
-	}
+  def inShape(i: Double, j: Double): Boolean = {
+    val x = c._1
+    val y = c._2
+    if(i>=(x-b) && i<=(x+b) && j>=(y-a) && j<=(y+a)) true else false
+  }
 
-	def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
-	def toSquare() = Square(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a))).asInstanceOf[Square]
+  def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
+  def toSquare() = Square(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a))).asInstanceOf[Square]
 
-	override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
+  override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
 }
 
 object Circle{
-	def apply(c: (Double, Double), r: Double): Shape = {
-		new Circle(c, r)
-	}
+  def apply(c: (Double, Double), r: Double): Shape = {
+    new Circle(c, r)
+  }
 }
 
 /*object Ellipse{
@@ -154,53 +154,53 @@ object Circle{
 }*/
 
 object Shape{
-	def apply(input: List[(Int, Int)]): Shape = {
-		detect(input)
-	}
+  def apply(input: List[(Int, Int)]): Shape = {
+    detect(input)
+  }
 
-	def euclideanDistance(x: (Double, Double), y: (Double, Double)) = {
-		sqrt((x._1-y._1)*(x._1-y._1) + (x._2-y._2)*(x._2-y._2))
-	}
+  def euclideanDistance(x: (Double, Double), y: (Double, Double)) = {
+    sqrt((x._1-y._1)*(x._1-y._1) + (x._2-y._2)*(x._2-y._2))
+  }
 
-	def detect(input: List[(Int, Int)]): Shape = {
-		val x = input.map(x => x._1.toDouble)
-		val y = input.map(x => x._2.toDouble)
-		val xCentroid = x.sum/x.length
-		val yCentroid = y.sum/y.length
-		val centroid = (xCentroid, yCentroid)
+  def detect(input: List[(Int, Int)]): Shape = {
+    val x = input.map(x => x._1.toDouble)
+    val y = input.map(x => x._2.toDouble)
+    val xCentroid = x.sum/x.length
+    val yCentroid = y.sum/y.length
+    val centroid = (xCentroid, yCentroid)
 
-		//fit a square
-		val xLeft = x.min
-		val xRight = x.max
-		val yUp = y.min
-		val yDown = y.max
-		val square = Square((xLeft, yUp), (xRight, yDown))
+    //fit a square
+    val xLeft = x.min
+    val xRight = x.max
+    val yUp = y.min
+    val yDown = y.max
+    val square = Square((xLeft, yUp), (xRight, yDown))
 
-		val furthest = {
-			var distance = 0.0
-			var point = (0.0, 0.0)
-			for(p <- x.zip(y)){
-				val dist = euclideanDistance(p, centroid)
-				if ( dist > distance){
-					distance = dist
-					point = p
-				}
-			}
-			point
-		}
+    val furthest = {
+      var distance = 0.0
+      var point = (0.0, 0.0)
+      for(p <- x.zip(y)){
+        val dist = euclideanDistance(p, centroid)
+        if ( dist > distance){
+          distance = dist
+          point = p
+        }
+      }
+      point
+    }
 
-		//fit a circle
-		val r = euclideanDistance(furthest, centroid)
-		val circle = Circle(centroid, r)
+    //fit a circle
+    val r = euclideanDistance(furthest, centroid)
+    val circle = Circle(centroid, r)
 
-		//fit an ellipse
-		val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-(furthest._2-centroid._2)/r) else asin ((furthest._2-centroid._2)/r)
+    //fit an ellipse
+    val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-(furthest._2-centroid._2)/r) else asin ((furthest._2-centroid._2)/r)
 
-		val secondList = x.zip(y).filter{
-			x => (x != furthest) && (abs(abs(asin((x._2-centroid._2)/euclideanDistance(x, centroid)) - theta) - 1.57) < 0.01)
-		}
+    val secondList = x.zip(y).filter{
+      x => (x != furthest) && (abs(abs(asin((x._2-centroid._2)/euclideanDistance(x, centroid)) - theta) - 1.57) < 0.01)
+    }
 
-		val ellipse = if (secondList.isEmpty){
+    val ellipse = if (secondList.isEmpty){
 			Ellipse((0,0), 0, 0, 0)
 		}
 		else{
