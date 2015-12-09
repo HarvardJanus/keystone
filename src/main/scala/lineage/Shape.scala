@@ -1,5 +1,6 @@
 package lineage
 
+import archery._
 import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
@@ -7,7 +8,7 @@ abstract class Shape(c: (Double, Double)) extends Serializable{
   def toCoor(): List[(Int, Int)]
   def inShape(i: Double, j: Double): Boolean
   def toBox(): Box
-  def toSquare(): Square
+  def toRect(): Rect
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
@@ -29,7 +30,7 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
   }
 
   def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
-  def toSquare = Square(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble)).asInstanceOf[Square]
+  def toRect = Shape(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble))
 
   override def toString() = "center: "+c+" r: "+r
   def getCenter() = c
@@ -90,7 +91,7 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
     Box(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
 	}
 
-  def toSquare() ={
+  def toRect() ={
     val xTan = -b*tan(theta)/a
     val t1 = atan(xTan)
     val t2 = t1+Pi
@@ -108,13 +109,13 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
     val yl = List(y1, y2)
     val yMin = yl.min
     val yMax = yl.max
-    Square((xMin, yMin), (xMax, yMax)).asInstanceOf[Square]
+    Shape((xMin, yMin), (xMax, yMax))
   }
 
   override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
 
-case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
+case class Rect(c: (Double, Double), a: Double, b:Double) extends Shape(c){
   def getCenter() = c
   def getUpperLeft = (c._1-b, c._2-a)
   def getLowerRight = (c._1+b, c._2+a)
@@ -135,25 +136,27 @@ case class Square(c: (Double, Double), a: Double, b:Double) extends Shape(c){
   }
 
   def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
-  def toSquare() = Square(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a))).asInstanceOf[Square]
+  def toRect() = Shape(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a)))
 
   override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
 }
 
-object Circle{
-  def apply(c: (Double, Double), r: Double): Shape = {
-    new Circle(c, r)
-  }
-}
-
-/*object Ellipse{
-	override def apply(c: (Double, Double), a: Double, b: Double, theta: Double): Shape = {
-		require((a >= b), {"ellipse major has to be greater than or equal to minor"})
-		new Ellipse(c, a, b, theta)
-	}
-}*/
-
 object Shape{
+	def apply(c: (Double, Double), a: Double, b: Double) = new Rect(c, a, b)
+  def apply(upperLeft: (Double, Double), lowerRight: (Double, Double))= {
+    val c = ((upperLeft._1 + lowerRight._1)/2, (upperLeft._2 + lowerRight._2)/2)
+    val a = abs(upperLeft._2 - lowerRight._2)/2
+    val b = abs(upperLeft._1 - lowerRight._1)/2
+    new Rect(c, a, b)
+  }
+  
+  def apply(c: (Double, Double), r: Double) = new Circle(c, r)
+
+  def apply(c: (Double, Double), a: Double, b: Double, theta: Double) = {
+    require((a >= b), {"ellipse major has to be greater than or equal to minor"})
+    new Ellipse(c, a, b, theta)
+  }
+  
   def apply(input: List[(Int, Int)]): Shape = {
     detect(input)
   }
@@ -174,7 +177,7 @@ object Shape{
     val xRight = x.max
     val yUp = y.min
     val yDown = y.max
-    val square = Square((xLeft, yUp), (xRight, yDown))
+    val square = Shape((xLeft, yUp), (xRight, yDown))
 
     val furthest = {
       var distance = 0.0
@@ -191,7 +194,7 @@ object Shape{
 
     //fit a circle
     val r = euclideanDistance(furthest, centroid)
-    val circle = Circle(centroid, r)
+    val circle = Shape(centroid, r)
 
     //fit an ellipse
     val theta = if(((furthest._1 <= centroid._1)&&(furthest._2 <= centroid._2))||((furthest._1 > centroid._1)&&(furthest._2 > centroid._2))) asin(-(furthest._2-centroid._2)/r) else asin ((furthest._2-centroid._2)/r)
@@ -201,61 +204,33 @@ object Shape{
     }
 
     val ellipse = if (secondList.isEmpty){
-			Ellipse((0,0), 0, 0, 0)
-		}
-		else{
-			val second = secondList.sortWith(euclideanDistance(_,centroid)>euclideanDistance(_,centroid)).head
+      Ellipse((0,0), 0, 0, 0)
+    }
+    else{
+      val second = secondList.sortWith(euclideanDistance(_,centroid)>euclideanDistance(_,centroid)).head
+      val numerator = pow(r*((second._2-centroid._2)*cos(theta)-(second._1-centroid._1)*sin(theta)), 2)
+      val denominator = pow(r, 2)-pow(((second._1-centroid._1)*cos(theta)+(second._2-centroid._2)*sin(theta)), 2)
 
-			val numerator = pow(r*((second._2-centroid._2)*cos(theta)-(second._1-centroid._1)*sin(theta)), 2)
-			val denominator = pow(r, 2)-pow(((second._1-centroid._1)*cos(theta)+(second._2-centroid._2)*sin(theta)), 2)
+      val b = sqrt(numerator/denominator)
+      Ellipse(centroid, r, b, theta)
+    }
 
-			val b = sqrt(numerator/denominator)
-			Ellipse(centroid, r, b, theta)
-		}
+    //calculate the precision of each shape
+    val pre_square = if (square.toCoor.size == 0 || square.toCoor.size < input.size) 0 else square.toCoor.intersect(input).size.toDouble/square.toCoor.size
+    val pre_circle = if (circle.toCoor.size == 0 || circle.toCoor.size < input.size) 0 else circle.toCoor.intersect(input).size.toDouble/circle.toCoor.size
+    val pre_ellipse = if (ellipse.toCoor.size == 0 || ellipse.toCoor.size < input.size) 0 else ellipse.toCoor.intersect(input).size.toDouble/ellipse.toCoor.size
 
-		//calculate the precision of each shape
-		val pre_square = if (square.toCoor.size == 0 || square.toCoor.size < input.size) 0 else square.toCoor.intersect(input).size.toDouble/square.toCoor.size
-		val pre_circle = if (circle.toCoor.size == 0 || circle.toCoor.size < input.size) 0 else circle.toCoor.intersect(input).size.toDouble/circle.toCoor.size
-		val pre_ellipse = if (ellipse.toCoor.size == 0 || ellipse.toCoor.size < input.size) 0 else ellipse.toCoor.intersect(input).size.toDouble/ellipse.toCoor.size
+    //println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
 
-		//println("square: "+pre_square+"\tcircle: "+pre_circle+"\tellipse: "+pre_ellipse)
+    //decide shape based on the accuracy of the fitting shape
+    val shape = if ((pre_ellipse >= pre_circle)&&(pre_ellipse >= pre_square)){
+      ellipse
+    }else if (pre_circle >= pre_square) {
+      circle
+    }else{
+      square
+    }
 
-		//decide shape based on the accuracy of the fitting shape
-		val shape = if ((pre_ellipse >= pre_circle)&&(pre_ellipse >= pre_square)){
-			ellipse
-		}else if (pre_circle >= pre_square) {
-			circle
-		}else{
-			square
-		}
-
-		return shape
-	}
-}
-object Square{
-	def apply(upperLeft: (Double, Double), lowerRight: (Double, Double)): Shape = {
-		val c = ((upperLeft._1 + lowerRight._1)/2, (upperLeft._2 + lowerRight._2)/2)
-		val a = abs(upperLeft._2 - lowerRight._2)/2
-		val b = abs(upperLeft._1 - lowerRight._1)/2
-		new Square(c, a, b)
-	}
-}
-object ShapeTester{
-	def main(args: Array[String]) {
-    val circle = Circle((0, 0), 2.0)
-    println(circle.toCoor)
-
-    val ellipse = Ellipse((0, 0), 2, 1, 0)
-    println(ellipse.toCoor)
-
-    val square = Square((0, 0), 1, 1)
-    println(square.toCoor)
-
-    val square1 = Square((-1, -1), (1, 1))
-		println(square1.toCoor)
-
-		val list = List((0, 0), (0, 1), (1, 0), (1, 1))
-		val shape = Shape(list)
-		println(shape.toCoor)
+    return shape
   }
 }
