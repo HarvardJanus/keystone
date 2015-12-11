@@ -4,9 +4,9 @@ import archery._
 import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
+  def contain(i: Double, j: Double): Boolean
   def getCenter(): (Double, Double)
-  def toCoor(): List[(Int, Int)]
-  def inShape(i: Double, j: Double): Boolean
+  def toCoor(): List[Coor]
   def toBox(): Box
   def toRect(): Rect
 }
@@ -19,18 +19,18 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
       i <- (x-r).toInt to (x+r).toInt
       j <- (y-r).toInt to (y+r).toInt
       if (i-x)*(i-x)+(j-y)*(j-y) <= r*r
-    } yield (i, j)
+    } yield Coor(i, j)
     l.toList
   }
 
-  def inShape(i: Double, j: Double): Boolean = {
+  def contain(i: Double, j: Double): Boolean = {
     val x = c._1
     val y = c._2
     if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
   }
 
   def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
-  def toRect = Shape(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble))
+  def toRect() = Shape(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble))
 
   override def toString() = "center: "+c+" r: "+r
   def getCenter() = c
@@ -45,12 +45,12 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
     val l = for {
       i <- (x-a).toInt to (x+a).toInt
       j <- (y-a).toInt to (y+a).toInt
-      if inShape(i, j)
-    } yield (i, j)
+      if contain(i, j)
+    } yield Coor(i, j)
     l.toList
   }
 
-  def inShape(i: Double, j: Double): Boolean = {
+  def contain(i: Double, j: Double): Boolean = {
     val x = c._1
     val y = c._2
     if(a==0&&b==0){
@@ -125,11 +125,11 @@ case class Rect(c: (Double, Double), a: Double, b:Double) extends Shape(c){
     val l = for { 
       i <- (x-b).toInt to (x+b).toInt
       j <- (y-a).toInt to (y+a).toInt
-    } yield (i, j)
+    } yield Coor(i, j)
     l.toList
   }
 
-  def inShape(i: Double, j: Double): Boolean = {
+  def contain(i: Double, j: Double): Boolean = {
     val x = c._1
     val y = c._2
     if(i>=(x-b) && i<=(x+b) && j>=(y-a) && j<=(y+a)) true else false
