@@ -8,7 +8,7 @@ abstract class Shape(c: (Double, Double)) extends Serializable{
   def getCenter(): (Double, Double)
   def toCoor(): List[Coor]
   def toBox(): Box
-  def toRect(): Rect
+  def toRect(): Shape
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
@@ -142,17 +142,17 @@ case class Rect(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 }
 
 object Shape{
-	def apply(c: (Double, Double), a: Double, b: Double) = new Rect(c, a, b)
-  def apply(upperLeft: (Double, Double), lowerRight: (Double, Double))= {
+	def apply(c: (Double, Double), a: Double, b: Double): Shape = new Rect(c, a, b)
+  def apply(upperLeft: (Double, Double), lowerRight: (Double, Double)): Shape = {
     val c = ((upperLeft._1 + lowerRight._1)/2, (upperLeft._2 + lowerRight._2)/2)
     val a = abs(upperLeft._2 - lowerRight._2)/2
     val b = abs(upperLeft._1 - lowerRight._1)/2
     new Rect(c, a, b)
   }
   
-  def apply(c: (Double, Double), r: Double) = new Circle(c, r)
+  def apply(c: (Double, Double), r: Double): Shape = new Circle(c, r)
 
-  def apply(c: (Double, Double), a: Double, b: Double, theta: Double) = {
+  def apply(c: (Double, Double), a: Double, b: Double, theta: Double): Shape = {
     require((a >= b), {"ellipse major has to be greater than or equal to minor"})
     new Ellipse(c, a, b, theta)
   }
