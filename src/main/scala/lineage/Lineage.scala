@@ -33,7 +33,26 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       }
     })
   }
-  def qBackward(keys: List[Coor]) = qForward(keys)
+
+  def qBackward(keys: List[Coor]) = {
+    keys.flatMap(key => {
+      key match {
+        case k:Coor3D => {
+          val resultRDD = mappingRDD.zipWithIndex.map{
+            case (mapping, index) => {
+              if(index == k.x) mapping.asInstanceOf[Mapping].qBackward(List(k.lower()))
+            }
+          }
+          val filteredRDD = resultRDD.zipWithIndex.filter{
+            case (result, index) => (index == k.x)
+          }.map(_._1)
+          val m = filteredRDD.first
+          val innerRet = m.asInstanceOf[List[Coor]]
+          innerRet.map(x => x.asInstanceOf[Coor].raise(k.x))
+        }
+      }
+    })
+  }
   def saveInput() = {}
   def saveOutput() = {}
   def saveMapping() = {}

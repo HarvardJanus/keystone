@@ -22,8 +22,13 @@ class VLFeatSuite extends FunSuite with Logging {
     val descriptorLength = 128
     val scaleStep = 0
 
+    val descriptorCount = scales * testImage.metadata.xDim * testImage.metadata.yDim / stepSize / stepSize
+    var x = Array.ofDim[Double](descriptorCount)
+    var y = Array.ofDim[Double](descriptorCount)
+    var s = Array.ofDim[Double](descriptorCount)
+
     val rawDescDataShort = extLib.getSIFTs(grayImage.metadata.xDim, grayImage.metadata.yDim,
-      stepSize, binSize, scales, scaleStep, grayImage.getSingleChannelAsFloatArray())
+      stepSize, binSize, scales, scaleStep, grayImage.getSingleChannelAsFloatArray(), x, y, s)
 
     assert(rawDescDataShort.length % descriptorLength == 0, "Resulting SIFTs must be 128-dimensional.")
 
