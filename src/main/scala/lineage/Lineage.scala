@@ -18,18 +18,18 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def qForward(keys: List[Coor]) = {
     keys.flatMap(key => {
       key match {
-        case k:Coor3D => {
+        case k:Coor => {
           val resultRDD = mappingRDD.zipWithIndex.map{
             case (mapping, index) => {
-              if(index == k.x) mapping.asInstanceOf[Mapping].qForward(List(k.lower()))
+              if(index == k.first) mapping.asInstanceOf[Mapping].qForward(List(k.lower()))
             }
           }
           val filteredRDD = resultRDD.zipWithIndex.filter{
-            case (result, index) => (index == k.x)
+            case (result, index) => (index == k.first)
           }.map(_._1)
           val m = filteredRDD.first
           val innerRet = m.asInstanceOf[List[Coor]]
-          innerRet.map(x => x.asInstanceOf[Coor].raise(k.x))
+          innerRet.map(x => x.asInstanceOf[Coor].raise(k.first))
         }
       }
     })
@@ -38,18 +38,18 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def qBackward(keys: List[Coor]) = {
     keys.flatMap(key => {
       key match {
-        case k:Coor3D => {
+        case k:Coor => {
           val resultRDD = mappingRDD.zipWithIndex.map{
             case (mapping, index) => {
-              if(index == k.x) mapping.asInstanceOf[Mapping].qBackward(List(k.lower()))
+              if(index == k.first) mapping.asInstanceOf[Mapping].qBackward(List(k.lower()))
             }
           }
           val filteredRDD = resultRDD.zipWithIndex.filter{
-            case (result, index) => (index == k.x)
+            case (result, index) => (index == k.first)
           }.map(_._1)
           val m = filteredRDD.first
           val innerRet = m.asInstanceOf[List[Coor]]
-          innerRet.map(x => x.asInstanceOf[Coor].raise(k.x))
+          innerRet.map(x => x.asInstanceOf[Coor].raise(k.first))
         }
       }
     })
@@ -57,28 +57,4 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def saveInput() = {}
   def saveOutput() = {}
   def saveMapping() = {}
-}
-
-object Lineage{
-  def apply(inRDD: RDD[_], outRDD: RDD[_], tupleListRDD: RDD[List[(Shape,Shape)]], transformer: Transformer[_,_]) = {
-    val geoMappingRDD = tupleListRDD.map(l => GeoMapping(l))
-    new NarrowLineage(inRDD, outRDD, geoMappingRDD, transformer)
-  }
-}
-
-object IdentityLineage{
-  def apply(inRDD: RDD[_], outRDD:RDD[_], transformer: Transformer[_, _]) = {
-    val mappingRDD = inRDD.zip(outRDD).map{
-      case (in: DenseVector[_], out: DenseVector[_]) => {
-        IdentityMapping(in, out)
-      }
-      case (in: DenseMatrix[_], out: DenseMatrix[_]) => {
-        IdentityMapping(in, out)
-      }
-      case (in: KeystoneImage, out: KeystoneImage) => {
-        IdentityMapping(in, out)
-      }
-    }
-    new NarrowLineage(inRDD, outRDD, mappingRDD, transformer)
-  }
 }

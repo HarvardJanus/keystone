@@ -1,6 +1,7 @@
 package lineage
 
 abstract class Coor extends Serializable{
+  def first(): Int
   def lower(): Coor
   def raise(i: Int): Coor
 }
@@ -9,13 +10,15 @@ abstract class Coor extends Serializable{
 case class Coor1D(x: Int) extends Coor {
   require(x>=0, {"coordinate can not be negative"})
   override def toString = x.toString
+  def first() = x
   def lower() = Coor()
-  def raise(i: Int) = Coor(x, i)
+  def raise(i: Int) = Coor(i, x)
 }
 
 case class Coor2D(x:Int, y:Int) extends Coor {
   require((x>=0)&&(y>=0), {"coordinate can not be negative"})
   override def toString = "("+x+","+y+")"
+  def first() = x
   def lower() = Coor(y)
   def raise(i: Int) = Coor(i, x, y)
 }
@@ -23,6 +26,7 @@ case class Coor2D(x:Int, y:Int) extends Coor {
 case class Coor3D(x:Int, y:Int, c:Int) extends Coor {
   require((x>=0)&&(y>=0)&&(c>=0), {"coordinate can not be negative"})
   override def toString = "("+x+","+y+","+c+")"
+  def first() = x
   def lower() = Coor(y, c)
   def raise(i: Int) = Coor(i, x, y, c)
 }
@@ -30,6 +34,7 @@ case class Coor3D(x:Int, y:Int, c:Int) extends Coor {
 case class Coor4D(x:Int, y:Int, c:Int, d: Int) extends Coor {
   require((x>=0)&&(y>=0)&&(c>=0)&&(d>=0), {"coordinate can not be negative"})
   override def toString = "("+x+","+y+","+c+"d"+")"
+  def first() = x
   def lower() = Coor(y, c, d)
   /*
    *  The following raise method is a place holder.
@@ -39,6 +44,7 @@ case class Coor4D(x:Int, y:Int, c:Int, d: Int) extends Coor {
 
 case class CoorNull() extends Coor{
   override def toString = "null"
+  def first() = 0
   def lower() = this
   def raise(i: Int) = Coor(i)
 }

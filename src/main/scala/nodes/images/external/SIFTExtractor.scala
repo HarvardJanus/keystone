@@ -66,7 +66,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     val ioList = outRDD.map(x => x._2)
     ioList.cache()
 
-    val lineage = Lineage(in, out, ioList, this)
+    val lineage = GeoLineage(in, out, ioList, this)
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))))
     println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qForward(List(Coor(0,13,15))))
     out
