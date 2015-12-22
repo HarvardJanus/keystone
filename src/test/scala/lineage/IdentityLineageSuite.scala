@@ -20,4 +20,17 @@ class IdentityLineageSuite extends FunSuite with LocalSparkContext with Logging 
     assert(lineage.qForward(List(Coor(0,0))) == List(Coor(0,0)))
     assert(lineage.qBackward(List(Coor(0,4))) == List(Coor(0,4)))
   }
+
+  test("IdentityLineage Matrix Test"){
+    sc = new SparkContext("local", "test")
+    val v = DenseMatrix.zeros[Double](5, 5)
+    val l = List.fill(5){v}
+    val inRDD = sc.parallelize(l)
+    val outRDD = sc.parallelize(l)
+    val transformer = Transformer[Int, Int](_ * 1)
+
+    val lineage = IdentityLineage(inRDD, outRDD, transformer)
+    assert(lineage.qForward(List(Coor(0,1,2))) == List(Coor(0,1,2)))
+    assert(lineage.qBackward(List(Coor(0,3,4))) == List(Coor(0,3,4)))
+  }
 }
