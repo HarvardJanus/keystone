@@ -33,7 +33,7 @@ case class Coor3D(x:Int, y:Int, c:Int) extends Coor {
 
 case class Coor4D(x:Int, y:Int, c:Int, d: Int) extends Coor {
   require((x>=0)&&(y>=0)&&(c>=0)&&(d>=0), {"coordinate can not be negative"})
-  override def toString = "("+x+","+y+","+c+"d"+")"
+  override def toString = "("+x+","+y+","+c+","+d+")"
   def first() = x
   def lower() = Coor(y, c, d)
   /*
