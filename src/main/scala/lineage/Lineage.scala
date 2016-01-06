@@ -14,7 +14,7 @@ abstract class Lineage extends serializable {
   def saveMapping()
 }
 
-case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_]) extends Lineage{
+case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], model: DenseMatrix[_]=null) extends Lineage{
   def qForward(keys: List[Coor]) = {
     keys.flatMap(key => {
       key match {
