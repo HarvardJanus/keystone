@@ -58,3 +58,11 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def saveOutput() = {}
   def saveMapping() = {}
 }
+
+case class TransposeLineage[T](inRDD: Seq[RDD[DenseVector[T]]], outRDD: RDD[Seq[DenseVector[T]]], mapping: JoinMapping, transformer: Transformer[_,_]) extends Lineage{
+  def qForward(keys: List[Coor]) = mapping.qForward(keys)
+  def qBackward(keys: List[Coor]) = mapping.qBackward(keys)
+  def saveInput() = {}
+  def saveOutput() = {}
+  def saveMapping() = {}
+}
