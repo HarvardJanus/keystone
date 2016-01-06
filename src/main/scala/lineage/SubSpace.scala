@@ -79,7 +79,15 @@ object SubSpace {
   def apply(m: DenseMatrix[_]): SubSpace = Matrix(m.rows, m.cols)
   //def apply[T](sv: Seq[DenseVector[T]]): SubSpace = Matrix(sv.size, sv.head.size)
 
-  def apply(meta: ImageMetadata): SubSpace = Image(meta.xDim, meta.yDim, meta.numChannels)
+  def apply(meta: ImageMetadata): SubSpace = {
+    if(meta.numChannels == 1){
+      Matrix(meta.xDim, meta.yDim)
+    }
+    else{
+      Image(meta.xDim, meta.yDim, meta.numChannels)
+    }
+  }
+  
   def apply(kImage: KeystoneImage): SubSpace = SubSpace(kImage.metadata)
   def apply(inImage: MultiLabeledImage): SubSpace = SubSpace(inImage.image.metadata)
 

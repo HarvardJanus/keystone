@@ -107,6 +107,8 @@ object CollapseMapping{
     new CollapseMapping(SubSpace(inImage), SubSpace(outMatrix), dim)
   def apply(inImageMeta: ImageMetadata, outMatrix: DenseMatrix[_], dim: Int) = 
     new CollapseMapping(SubSpace(inImageMeta), SubSpace(outMatrix), dim)
+  def apply(inImage: KeystoneImage, outImage: KeystoneImage, dim: Int) = 
+    new CollapseMapping(SubSpace(inImage), SubSpace(outImage), dim)
 
   /*
    * Interface from low dimensional spaces to high dimensional spaces

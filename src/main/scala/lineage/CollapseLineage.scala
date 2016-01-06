@@ -17,6 +17,9 @@ object CollapseLineage{
       case (in: KeystoneImage, out: DenseMatrix[_]) => {
         CollapseMapping(in, out, dim)
       }
+      case (in: KeystoneImage, out: KeystoneImage) => {
+        CollapseMapping(in, out, dim)
+      }
       case (in: ImageMetadata, out: DenseMatrix[_]) => {
         CollapseMapping(in, out, dim)
       }
