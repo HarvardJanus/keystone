@@ -1,6 +1,7 @@
 package nodes.images.external
 
 import breeze.linalg._
+import lineage._
 import nodes.images.FisherVectorInterface
 import nodes.learning.{GaussianMixtureModelEstimator, GaussianMixtureModel}
 import org.apache.spark.rdd.RDD
@@ -32,6 +33,15 @@ case class FisherVector(
       vars, wts, in.toArray)
 
     new DenseMatrix(numDims, numCentroids*2, fisherVector)
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
+    val out = in.map(apply)
+    out.cache()
+    val lineage = AllLineage(in, out, this)
+    //lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))).size)
+    out
   }
 }
 
