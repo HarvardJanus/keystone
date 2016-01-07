@@ -6,7 +6,7 @@ import utils.{Image=>KeystoneImage}
 import workflow._
 
 object LinComLineage{
-  def apply(inRDD: RDD[_], outRDD:RDD[_], transformer: Transformer[_, _], model: DenseMatrix[_]) = {
+  def apply(inRDD: RDD[_], outRDD:RDD[_], transformer: Transformer[_, _], model: DenseMatrix[_]=null) = {
     val mappingRDD = inRDD.zip(outRDD).map{
       case (in: DenseVector[_], out: DenseVector[_]) => {
         LinComMapping(in, out)

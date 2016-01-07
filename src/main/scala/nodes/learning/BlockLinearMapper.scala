@@ -2,6 +2,7 @@ package nodes.learning
 
 import breeze.linalg._
 import edu.berkeley.cs.amplab.mlmatrix.{RowPartition, NormalEquations, BlockCoordinateDescent, RowPartitionedMatrix}
+import lineage._
 import nodes.stats.{StandardScalerModel, StandardScaler}
 import org.apache.spark.rdd.RDD
 import nodes.util.{VectorSplitter, Identity}
@@ -37,6 +38,15 @@ class BlockLinearMapper(
    */
   override def apply(in: RDD[DenseVector[Double]]): RDD[DenseVector[Double]] = {
     apply(vectorSplitter(in))
+  }
+
+  override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
+    val out = apply(vectorSplitter(in))
+    out.cache()
+    val lineage = LinComLineage(in, out, this, xs(0))
+    //lineage.save(tag)
+    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0))).size)
+    out
   }
 
   /**
