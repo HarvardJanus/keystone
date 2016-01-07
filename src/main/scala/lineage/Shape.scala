@@ -1,13 +1,15 @@
 package lineage
 
-import archery._
+import com.github.davidmoten.rtree.geometry._
+import com.github.davidmoten.rtree.geometry.Geometries._
+import com.github.davidmoten.rtree.RTree
 import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
   def contain(i: Double, j: Double): Boolean
   def getCenter(): (Double, Double)
   def toCoor(): List[Coor]
-  def toBox(): Box
+  def toBox(): Rectangle
   def toRect(): Shape
 }
 
@@ -29,7 +31,7 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
     if ((i-x)*(i-x)+(j-y)*(j-y) <= r*r) true else false
   }
 
-  def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
+  def toBox() = Rectangle.create((c._1-r).toDouble, (c._2-r).toDouble, (c._1+r).toDouble, (c._2+r).toDouble)
   def toRect() = Shape(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble))
 
   override def toString() = "center: "+c+" r: "+r
@@ -88,7 +90,7 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
     val yl = List(y1, y2)
     val yMin = yl.min
     val yMax = yl.max
-    Box(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
+    Rectangle.create(xMin.toDouble, yMin.toDouble, xMax.toDouble, yMax.toDouble)
 	}
 
   def toRect() ={
@@ -135,7 +137,7 @@ case class Rect(c: (Double, Double), a: Double, b:Double) extends Shape(c){
     if(i>=(x-b) && i<=(x+b) && j>=(y-a) && j<=(y+a)) true else false
   }
 
-  def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
+  def toBox() = Rectangle.create((c._1-b).toDouble, (c._2-a).toDouble, (c._1+b).toDouble, (c._2+a).toDouble)
   def toRect() = Shape(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a)))
 
   override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
