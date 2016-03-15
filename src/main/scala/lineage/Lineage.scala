@@ -10,7 +10,7 @@ abstract class Lineage extends serializable {
   def qForward(keys: List[Coor]): List[Coor]
   def qBackward(keys: List[Coor]): List[Coor]
   def saveInput()
-  def saveOutput()
+  def saveOutput(tag: String)
   def saveMapping(tag: String)
 }
 
@@ -63,12 +63,13 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     })
   }
   def saveInput() = {}
-  def saveOutput() = {}
+  def saveOutput(tag: String) = {
+    outRDD.saveAsObjectFile(Lineage.path+"/"+tag+"/outRDD")
+    //Lineage.updateStamp(System.nanoTime())
+    //println(Lineage.stamp)
+  }
   def saveMapping(tag: String) = {
     mappingRDD.saveAsObjectFile(Lineage.path+"/"+tag+"/mappingRDD")
-    println(Lineage.stamp)
-    Lineage.updateStamp(System.nanoTime())
-    println(Lineage.stamp)
   }
 }
 
@@ -76,6 +77,6 @@ case class TransposeLineage[T](inRDD: Seq[RDD[DenseVector[T]]], outRDD: RDD[Seq[
   def qForward(keys: List[Coor]) = mapping.qForward(keys)
   def qBackward(keys: List[Coor]) = mapping.qBackward(keys)
   def saveInput() = {}
-  def saveOutput() = {}
+  def saveOutput(tag: String) = {}
   def saveMapping(tag: String) = {}
 }
