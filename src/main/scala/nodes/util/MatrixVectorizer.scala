@@ -15,8 +15,8 @@ object MatrixVectorizer extends Transformer[DenseMatrix[Double], DenseVector[Dou
     val out = in.map(apply)
     out.cache()
     val lineage = FlattenLineage(in, out, this, 1)
-    //lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0))))
+    lineage.saveOutput(tag)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0))))
     out
   }
 }

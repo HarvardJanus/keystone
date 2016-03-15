@@ -39,8 +39,8 @@ case class FisherVector(
     val out = in.map(apply)
     out.cache()
     val lineage = AllLineage(in, out, this)
-    //lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))).size)
+    lineage.saveOutput(tag)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))).size)
     out
   }
 }

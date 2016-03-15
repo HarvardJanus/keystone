@@ -17,7 +17,8 @@ object PixelScaler extends Transformer[Image,Image] {
     val out = in.map(apply)
     out.cache()
     val lineage = IdentityLineage(in, out, this)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0,0))))
+    lineage.saveOutput(tag)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0,0))))
     out
   }
 }

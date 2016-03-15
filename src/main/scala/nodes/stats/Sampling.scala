@@ -40,8 +40,8 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
     }
 
     val lineage = GeoLineage(in, out, ioListRDD, this)
-    //lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))))
+    lineage.saveOutput(tag)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))))
     out
   }
 

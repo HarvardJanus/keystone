@@ -44,8 +44,8 @@ class BlockLinearMapper(
     val out = apply(vectorSplitter(in))
     out.cache()
     val lineage = LinComLineage(in, out, this, xs(0))
-    //lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0))).size)
+    lineage.saveOutput(tag)
+    //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0))).size)
     out
   }
 
