@@ -21,6 +21,7 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
   }
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Float]], tag: String): RDD[DenseMatrix[Float]] = {
+    val stamp1 = System.nanoTime()
     val outRDD = in.map{ m =>
       val cols = Seq.fill(numSamplesPerMatrix) {
         scala.util.Random.nextInt(m.cols)
@@ -29,7 +30,8 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
     }
     outRDD.cache()
     val out = outRDD.map(x => x._1)
-
+    out.count()
+    val stamp2 = System.nanoTime()
     val indexRDD = outRDD.map(x => (x._2,x._3))
     val ioListRDD = indexRDD.map{
       case (seq, rows) => {
@@ -40,8 +42,12 @@ case class ColumnSampler(numSamplesPerMatrix: Int)
     }
 
     val lineage = GeoLineage(in, out, ioListRDD, this)
+    lineage.saveMapping(tag)
+    val stamp3 = System.nanoTime()
     lineage.saveOutput(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))))
+    val stamp4 = System.nanoTime()
+    println(s"Transformer $tag: exec: ${(stamp2 - stamp1)/1e9}s, mapping: ${(stamp3-stamp2)/1e9}s, output: ${(stamp4-stamp3)/1e9}s")
     out
   }
 
