@@ -50,11 +50,18 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
   }
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+    val stamp1 = System.nanoTime()
     val out = in.map(apply)
     out.cache()
+    out.count()
+    val stamp2 = System.nanoTime()
     val lineage = IdentityLineage(in, out, this)
-    //lineage.save(tag)
+    lineage.saveMapping(tag)
+    val stamp3 = System.nanoTime()
+    lineage.saveOutput(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
+    val stamp4 = System.nanoTime()
+    println(s"Transformer $tag: exec: ${(stamp2 - stamp1)/1e9}s, mapping: ${(stamp3-stamp2)/1e9}s, output: ${(stamp4-stamp3)/1e9}s")
     out
   }
 }
@@ -91,6 +98,7 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
   }
 
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
+    val stamp1 = System.nanoTime()
     in.cache()
     val outRDD = in.map(m=>{
       val rms = rmsVector(0)
@@ -121,13 +129,18 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
     
     val out = outRDD.map(_._1)
     out.cache()
-
+    out.count()
+    val stamp2 = System.nanoTime()
     val ioList = outRDD.map(_._2)
     ioList.cache()
 
     val lineage = GeoLineage(in, out, ioList, this)
     lineage.saveMapping(tag)
+    val stamp3 = System.nanoTime()
+    lineage.saveOutput(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
+    val stamp4 = System.nanoTime()
+    println(s"Transformer $tag: exec: ${(stamp2 - stamp1)/1e9}s, mapping: ${(stamp3-stamp2)/1e9}s, output: ${(stamp4-stamp3)/1e9}s")
     out
   }
 }
