@@ -7,7 +7,6 @@ import org.apache.spark.rdd.RDD
 import nodes.util.{VectorSplitter, Identity}
 import utils.{MatrixUtils, Stats}
 import workflow._
-import workflow.Lineage._
 
 
 
@@ -39,15 +38,6 @@ class BlockLinearMapper(
    */
   override def apply(in: RDD[DenseVector[Double]]): RDD[DenseVector[Double]] = {
     apply(vectorSplitter(in))
-  }
-
-  override def saveLineageAndApply(in: RDD[DenseVector[Double]], tag: String): RDD[DenseVector[Double]] = {
-    val out = apply(vectorSplitter(in))
-    out.cache()
-    val lineage = LinComLineage(in, out, this, Some(xs(0)))
-    lineage.save(tag)
-    println("collecting lineage for Transformer "+this.label)
-    out
   }
   /**
    * Applies the linear model to feature vectors large enough to have been split into several RDDs.

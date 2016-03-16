@@ -8,7 +8,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.rdd.RDD
 import pipelines.Logging
 import workflow._
-import workflow.Lineage._
+import lineage._
 import scopt.OptionParser
 
 object RMS extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
@@ -25,8 +25,8 @@ object RMS extends Transformer[DenseMatrix[Double], DenseMatrix[Double]] {
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
     out.cache()
-    val lineage = AllToOneLineage(in, out, this)
-    lineage.save(tag)
+    val lineage = AllLineage(in, out, this)
+    //lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
   }
@@ -52,8 +52,8 @@ object BkgSubstract extends Transformer[DenseMatrix[Double], DenseMatrix[Double]
   override def saveLineageAndApply(in: RDD[DenseMatrix[Double]], tag: String): RDD[DenseMatrix[Double]] = {
     val out = in.map(apply)
     out.cache()
-    val lineage = AllToOneLineage(in, out, this)
-    lineage.save(tag)
+    val lineage = IdentityLineage(in, out, this)
+    //lineage.save(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping size: "+lineage.qBackward(0,0,0).size)
     out
   }
@@ -104,8 +104,8 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
 
       val ioList = array.zipWithIndex.map{
         case (row, index) => {
-          val ellipse:Shape = new Ellipse((row(7), row(8)), row(12), row(13), row(14))
-          val square = Square((index, 0), (index, row.size))
+          val ellipse = Shape((row(7), row(8)), row(12), row(13), row(14))
+          val square = Shape((index.toDouble, 0.0), (index.toDouble, row.size.toDouble))
           (ellipse, square)
         }
       }.toList     
@@ -125,8 +125,8 @@ case class ExtractTransformer(rmsVector: DenseVector[Double]) extends Transforme
     val ioList = outRDD.map(_._2)
     ioList.cache()
 
-    val lineage = RegionLineage(in, out, ioList, this)
-    lineage.save(tag)
+    val lineage = GeoLineage(in, out, ioList, this)
+    lineage.saveMapping(tag)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward((0,0,0)))
     out
   }
