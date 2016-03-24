@@ -87,9 +87,8 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     val predictedLoadTime = trialTimeList.sum*100/trialTimeList.length
 
     val outPath = Lineage.path+"/"+tag+"/outRDD"
-    val newRDD = outRDD.repartition(512)
-    newRDD.saveAsObjectFile(outPath)
-
+    outRDD.saveAsObjectFile(outPath)
+    outRDD.unpersist()
     val sc = outRDD.context
     val rdd = sc.objectFile(outPath)
     val loadTime = time(rdd.count)
