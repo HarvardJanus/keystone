@@ -11,11 +11,13 @@ abstract class Lineage extends serializable {
   def qBackward(keys: List[Coor]): List[Coor]
   def saveInput()
   def saveOutput(tag: String)
+  def saveOutputSmart(tag: String, duration: Long)
   def saveMapping(tag: String)
 }
 
 object Lineage{
   val path = "Lineage"
+  val pathTrial = "Lineage/Trial"
   var stamp = System.nanoTime()  
   def updateStamp(nStamp: Long) = {
     stamp = nStamp
@@ -68,8 +70,34 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     //Lineage.updateStamp(System.nanoTime())
     //println(Lineage.stamp)
   }
+
+  def saveOutputSmart(tag: String, duration: Long) = {
+    val numTrials = 3
+    val trialTimeList = (0 until numTrials).map(i => {
+      val sampleRDD = outRDD.sample(true, 0.01)
+      val path = Lineage.pathTrial+"/"+tag+"/outRDD-"+i
+      sampleRDD.saveAsObjectFile(path)
+      val sc = sampleRDD.context
+      sampleRDD.unpersist()
+      val rdd = sc.objectFile(path)
+      time(rdd.count)
+    }).toList
+    val predictedLoadTime = trialTimeList.sum*100/trialTimeList.length
+    if(predictedLoadTime < duration)
+      outRDD.saveAsObjectFile(Lineage.path+"/"+tag+"/outRDD")
+  }
+
   def saveMapping(tag: String) = {
     mappingRDD.saveAsObjectFile(Lineage.path+"/"+tag+"/mappingRDD")
+  }
+
+  /*
+   *  Helper function to record time
+   */
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    System.nanoTime-s
   }
 }
 
@@ -78,5 +106,6 @@ case class TransposeLineage[T](inRDD: Seq[RDD[DenseVector[T]]], outRDD: RDD[Seq[
   def qBackward(keys: List[Coor]) = mapping.qBackward(keys)
   def saveInput() = {}
   def saveOutput(tag: String) = {}
+  def saveOutputSmart(tag: String, duration: Long) = {}
   def saveMapping(tag: String) = {}
 }
