@@ -83,8 +83,9 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       time(rdd.count)
     }).toList
     val predictedLoadTime = trialTimeList.sum*100/trialTimeList.length
-    if(predictedLoadTime < duration)
-      outRDD.saveAsObjectFile(Lineage.path+"/"+tag+"/outRDD")
+    val loadTime = time(outRDD.saveAsObjectFile(Lineage.path+"/"+tag+"/outRDD"))
+    
+    println("saveOutputSmart() predictedLoadTime: "+predictedLoadTime/1e9+" actualLoadTime: "+loadTime/1e9)  
   }
 
   def saveMapping(tag: String) = {
