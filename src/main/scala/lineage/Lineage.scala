@@ -91,7 +91,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     val rdd = sc.objectFile(outPath)
     val loadTime = time(rdd.count)
     
-    println("saveOutputSmart() predictedLoadTime: "+predictedLoadTime+" actualLoadTime: "+loadTime)  
+    println(tag+" predictedLoadTime: "+predictedLoadTime+" actualLoadTime: "+loadTime)  
   }
 
   def saveMapping(tag: String) = {
