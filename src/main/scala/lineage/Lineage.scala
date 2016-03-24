@@ -79,7 +79,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       val path = Lineage.pathTrial+"/"+tag+"/outRDD-"+i
       sampleRDD.saveAsObjectFile(path)
       val sc = sampleRDD.context
-      sampleRDD.unpersist()
+      sampleRDD.coalesce(512)
       val rdd = sc.objectFile(path)
       println(tag+" sampleRDD size: "+sampleRDD.count)
       time(rdd.count)
