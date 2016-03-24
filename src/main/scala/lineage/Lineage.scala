@@ -74,7 +74,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def saveOutputSmart(tag: String, duration: Long) = {
     val numTrials = 3
     val trialTimeList = (0 until numTrials).map(i => {
-      val sampleRDD = outRDD.sample(true, 0.01)
+      val sampleRDD = outRDD.sample(true, 0.1)
       val path = Lineage.pathTrial+"/"+tag+"/outRDD-"+i
       sampleRDD.saveAsObjectFile(path)
       val sc = sampleRDD.context
@@ -82,7 +82,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       val rdd = sc.objectFile(path)
       time(rdd.count)
     }).toList
-    val predictedLoadTime = trialTimeList.sum*100/trialTimeList.length
+    val predictedLoadTime = trialTimeList.sum*10/trialTimeList.length
 
     val outPath = Lineage.path+"/"+tag+"/outRDD"
     outRDD.saveAsObjectFile(outPath)
@@ -91,7 +91,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     val rdd = sc.objectFile(outPath)
     val loadTime = time(rdd.count)
     
-    println("saveOutputSmart() predictedLoadTime: "+predictedLoadTime/1e9+" actualLoadTime: "+loadTime/1e9)  
+    println("saveOutputSmart() predictedLoadTime: "+predictedLoadTime+" actualLoadTime: "+loadTime)  
   }
 
   def saveMapping(tag: String) = {
@@ -104,7 +104,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
-    System.nanoTime-s
+    System.nanoTime-s/1e9
   }
 }
 
