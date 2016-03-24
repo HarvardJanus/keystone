@@ -72,6 +72,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   }
 
   def saveOutputSmart(tag: String, duration: Long) = {
+    outRDD.cache()
     val numTrials = 3
     val trialTimeList = (0 until numTrials).map(i => {
       val sampleRDD = outRDD.sample(true, 0.1)
