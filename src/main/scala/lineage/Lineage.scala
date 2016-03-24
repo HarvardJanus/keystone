@@ -75,15 +75,16 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     outRDD.cache()
     val numTrials = 3
     val trialTimeList = (0 until numTrials).map(i => {
-      val sampleRDD = outRDD.sample(true, 0.1)
+      val sampleRDD = outRDD.sample(true, 0.01)
       val path = Lineage.pathTrial+"/"+tag+"/outRDD-"+i
       sampleRDD.saveAsObjectFile(path)
       val sc = sampleRDD.context
       sampleRDD.unpersist()
       val rdd = sc.objectFile(path)
+      println(tag+" sampleRDD size: "+sampleRDD.count)
       time(rdd.count)
     }).toList
-    val predictedLoadTime = trialTimeList.sum*10/trialTimeList.length
+    val predictedLoadTime = trialTimeList.sum*100/trialTimeList.length
 
     val outPath = Lineage.path+"/"+tag+"/outRDD"
     outRDD.saveAsObjectFile(outPath)
