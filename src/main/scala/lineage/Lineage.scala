@@ -2,7 +2,7 @@ package lineage
 
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
-import sys.process._
+import sys.process.stringSeqToProcess
 import utils.{Image=>KeystoneImage}
 import workflow._
 
@@ -114,7 +114,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
    *  Helper function to clear cache on all nodes
    */
    def clearCache() = {
-    "for h in `cat ~/spark/conf/slaves`; do   free && sync && echo 3 > /proc/sys/vm/drop_caches && free; done" !
+    Seq("bash", "-c", "for h in `cat ~/spark/conf/slaves`; do ssh $h \"free && sync && echo 3 > /proc/sys/vm/drop_caches && free\"; done") !
    }
 }
 
