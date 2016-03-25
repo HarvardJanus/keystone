@@ -81,7 +81,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       sampleRDD.saveAsObjectFile(path)
       sampleRDD.unpersist()
       val sc = sampleRDD.context
-      //clearCache()
+      clearCache()
       val rdd = sc.objectFile(path)
       println(tag+" sampleRDD size: "+sampleRDD.count)
       time(rdd.count)
@@ -91,7 +91,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     val outPath = Lineage.path+"/"+tag+"/outRDD"
     outRDD.saveAsObjectFile(outPath)
     outRDD.unpersist()
-    //clearCache()
+    clearCache()
     val sc = outRDD.context
     val rdd = sc.objectFile(outPath)
     val loadTime = time(rdd.count)
