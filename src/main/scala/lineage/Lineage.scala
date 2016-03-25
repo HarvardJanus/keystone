@@ -107,7 +107,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
-    System.nanoTime-s/1e9
+    (System.nanoTime-s)/1e9
   }
 
   /*
