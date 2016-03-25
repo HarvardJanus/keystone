@@ -2,6 +2,7 @@ package lineage
 
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
+import sys.process._
 import utils.{Image=>KeystoneImage}
 import workflow._
 
@@ -79,7 +80,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
       val path = Lineage.pathTrial+"/"+tag+"/outRDD-"+i
       sampleRDD.saveAsObjectFile(path)
       val sc = sampleRDD.context
-      sampleRDD.unpersist()
+      clearCache()
       val rdd = sc.objectFile(path)
       println(tag+" sampleRDD size: "+sampleRDD.count)
       time(rdd.count)
@@ -88,7 +89,7 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
 
     val outPath = Lineage.path+"/"+tag+"/outRDD"
     outRDD.saveAsObjectFile(outPath)
-    outRDD.unpersist()
+    clearCache()
     val sc = outRDD.context
     val rdd = sc.objectFile(outPath)
     val loadTime = time(rdd.count)
@@ -108,6 +109,13 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     val ret = f
     System.nanoTime-s/1e9
   }
+
+  /*
+   *  Helper function to clear cache on all nodes
+   */
+   def clearCache() = {
+    "for h in `cat ~/spark/conf/slaves`; do   free && sync && echo 3 > /proc/sys/vm/drop_caches && free; done" !
+   }
 }
 
 case class TransposeLineage[T](inRDD: Seq[RDD[DenseVector[T]]], outRDD: RDD[Seq[DenseVector[T]]], mapping: JoinMapping, transformer: Transformer[_,_]) extends Lineage{
