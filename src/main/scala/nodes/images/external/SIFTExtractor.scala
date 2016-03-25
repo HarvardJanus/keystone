@@ -73,7 +73,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     lineage.saveMapping(tag)
     val stamp3 = System.nanoTime()
     //lineage.saveOutput(tag)
-    lineage.saveOutputSmart(tag, stamp3-stamp1)
+    //lineage.saveOutputSmart(tag, stamp3-stamp1)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))))
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qForward(List(Coor(0,13,15))))
     val stamp4 = System.nanoTime()
