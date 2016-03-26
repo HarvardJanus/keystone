@@ -19,10 +19,6 @@ abstract class Lineage extends serializable {
 object Lineage{
   val path = "Lineage"
   val pathTrial = "Lineage/Trial"
-  var stamp = System.nanoTime()  
-  def updateStamp(nStamp: Long) = {
-    stamp = nStamp
-  }
 }
 
 case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], model: DenseMatrix[_]=null) extends Lineage{
