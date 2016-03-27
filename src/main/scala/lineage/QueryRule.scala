@@ -21,17 +21,27 @@ case class CollapseQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, ke
           case 2 => Coor(k.asInstanceOf[Coor3D].x, k.asInstanceOf[Coor3D].y)
         }
       })
+      case _ => keys
     }
   }.toList.distinct
 
   def isTotal() = {
-    reducedKeys.size == outSpace.expand().size
+    if(inSpace.numDim > outSpace.numDim)
+      reducedKeys.size == outSpace.expand().size
+    else
+      reducedKeys.size == inSpace.expand().size
   }
 
   def reduce() = reducedKeys
 }
 
-object CollpaseQueryRule{
-  def apply(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) = 
-    new CollapseQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor])
+case class FlattenQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
+  val reducedKeys = keys.distinct
+
+  def isTotal() = {
+    reducedKeys.size == inSpace.expand().size
+  }
+
+  def reduce = reducedKeys
 }
+
