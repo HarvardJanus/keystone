@@ -12,7 +12,24 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
     require((flag==true), {"query out of subspace boundary"})
     (inSpace, outSpace) match {
       case (in: Vector, out: Singularity) => qForwardV2S(in, out, keys)
-      case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
+      case (in: Matrix, out: Vector) => {
+        Mapping.queryOptimization match {
+          case true => {
+            println("query opz flag is true")
+            val rule = CollapseQueryRule(inSpace, outSpace, dim, keys)
+            if (rule.isTotal)
+              outSpace.expand()
+            else{
+              println("key count: "+keys.size+"\treduced key count: "+rule.reduce.size)
+              qForwardM2V(in, out, dim, rule.reduce())
+            }
+          }
+          case false => {
+            println("query opz flag is false")
+            qForwardM2V(in, out, dim, keys)
+          }
+        }        
+      }
       case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
       case (in: Singularity, out: Vector) => qBackwardV2S(out, in, keys)
       case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
@@ -119,4 +136,5 @@ object CollapseMapping{
     new CollapseMapping(SubSpace(inMatrix), SubSpace(outImage), dim)
   def apply(inMatrix: DenseMatrix[_], outImageMeta: ImageMetadata, dim: Int) = 
     new CollapseMapping(SubSpace(inMatrix), SubSpace(outImageMeta), dim)  
+
 }

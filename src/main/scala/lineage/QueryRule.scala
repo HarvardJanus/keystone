@@ -26,7 +26,7 @@ case class CollapseQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, ke
   }.toList.distinct
 
   def isTotal() = {
-    keys.distinct.size == inSpace.expand().size
+    keys.size == inSpace.expand().size
   }
 
   def reduce() = reducedKeys
@@ -36,7 +36,7 @@ case class FlattenQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, key
   val reducedKeys = keys.distinct
 
   def isTotal() = {
-    reducedKeys.size == inSpace.expand().size
+    keys.size == inSpace.expand().size
   }
 
   def reduce = reducedKeys
@@ -46,7 +46,7 @@ case class IdentityQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[C
   val reducedKeys = keys.distinct
 
   def isTotal() = {
-    reducedKeys.size == inSpace.expand().size
+    keys.size == inSpace.expand().size
   }
 
   def reduce = reducedKeys
@@ -69,7 +69,7 @@ case class LinComQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coo
   }.toList.distinct
 
   def isTotal() = {
-    keys.distinct.size == inSpace.expand().size
+    keys.size == inSpace.expand().size
   }
 
   def reduce = reducedKeys

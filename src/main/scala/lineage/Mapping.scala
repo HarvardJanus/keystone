@@ -6,6 +6,8 @@ trait Mapping extends Serializable{
 }
 
 object Mapping {
-  val reduction = false
-  val totality  = false
+  var queryOptimization = false
+  def setOpzFlag(v: Boolean) = {
+    queryOptimization = v
+  }
 }
