@@ -26,7 +26,7 @@ case class CollapseQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, ke
   }.toList.distinct
 
   def isTotal() = {
-      keys.distinct.size == inSpace.expand().size
+    keys.distinct.size == inSpace.expand().size
   }
 
   def reduce() = reducedKeys
@@ -61,9 +61,16 @@ case class AllQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor])
 }
 
 case class LinComQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor]) extends QueryRule{
-  val reducedKeys = keys.distinct
+  val reducedKeys = {
+    (inSpace, outSpace) match {
+      case (in: Vector, out: Vector) => keys
+      case (in: Matrix, out: Matrix) => keys.map(k => Coor(k.asInstanceOf[Coor2D].x, 0))
+    }
+  }.toList.distinct
 
-  def isTotal() = true
+  def isTotal() = {
+    keys.distinct.size == inSpace.expand().size
+  }
 
   def reduce = reducedKeys
 }
