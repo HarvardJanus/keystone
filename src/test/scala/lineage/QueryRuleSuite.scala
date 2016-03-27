@@ -47,4 +47,14 @@ class QueryRuleSuite extends FunSuite with Logging {
 
     assert(rule.isTotal == true)
   } 
+
+  test("Identity Query Rule Test"){
+    val m1 = DenseMatrix.zeros[Double](3,2)
+    val m2 = DenseMatrix.zeros[Double](3,2)
+    
+    val keys = List(Coor(0,0), Coor(0,1), Coor(1,0), Coor(1,1), Coor(2,0), Coor(2,1))
+    val rule = IdentityQueryRule(SubSpace(m1), SubSpace(m2), keys)
+
+    assert(rule.isTotal == true)
+  } 
 }

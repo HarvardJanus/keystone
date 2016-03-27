@@ -45,3 +45,12 @@ case class FlattenQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, key
   def reduce = reducedKeys
 }
 
+case class IdentityQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor]) extends QueryRule{
+  val reduceKeys = keys.distinct
+
+  def isTotal() = {
+    reducedKeys.size == inSpace.expand().size
+  }
+
+  def reduce = reducedKeys
+}
