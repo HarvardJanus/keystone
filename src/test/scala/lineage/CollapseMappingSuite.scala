@@ -6,7 +6,7 @@ import pipelines.Logging
 import utils.ImageMetadata
 
 class CollapseMappingSuite extends FunSuite with Logging {
-  /*test("CollapseMapping Vector2Int Test"){
+  test("CollapseMapping Vector2Int Test"){
     val v = DenseVector.zeros[Double](4)
     val i = 3
     val mapping = CollapseMapping(v, i)
@@ -84,7 +84,7 @@ class CollapseMappingSuite extends FunSuite with Logging {
     val mapping3 = CollapseMapping(m3, image, 0)
     assert(mapping3.qForward(List(Coor(0,0))).toString == "List((0,0,0), (1,0,0), (2,0,0), (3,0,0), (4,0,0))")
     assert(mapping3.qBackward(List(Coor(0,1,2))).toString == "List((1,2))")
-  }*/
+  }
 
   test("CollapseMapping Matrix2Vector Query Optimization Test"){
     val m = DenseMatrix.zeros[Double](10, 100000)
@@ -93,14 +93,16 @@ class CollapseMappingSuite extends FunSuite with Logging {
     
     val keys = (for(i <- 0 until m.rows; j <- 0 until m.cols-1) yield Coor(i, j)).toList
 
-    val length1 = time(mapping1.qForward(keys))
+    val trials = 1
+    val list1 = (0 until trials).map(x => time(mapping1.qForward(keys))).toList
     
     Mapping.setOpzFlag(true)
     val mapping2 = CollapseMapping(m, v, 1)
-    val length2 = time(mapping2.qForward(keys))
+    val list2 = (0 until trials).map(x => time(mapping2.qForward(keys))).toList
 
-    println("non-optimized: "+length1)
-    println("optimized: "+length2)
+    println("non-optimized: "+list1.sum/list1.size)
+    println("optimized: "+list2.sum/list2.size)
+    assert(list1.sum/list1.size > list2.sum/list2.size)
   }
 
   def time[A](f: => A) = {

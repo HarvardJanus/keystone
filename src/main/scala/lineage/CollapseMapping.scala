@@ -15,19 +15,13 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
       case (in: Matrix, out: Vector) => {
         Mapping.queryOptimization match {
           case true => {
-            println("query opz flag is true")
             val rule = CollapseQueryRule(inSpace, outSpace, dim, keys)
             if (rule.isTotal)
               outSpace.expand()
-            else{
-              println("key count: "+keys.size+"\treduced key count: "+rule.reduce.size)
+            else
               qForwardM2V(in, out, dim, rule.reduce())
-            }
           }
-          case false => {
-            println("query opz flag is false")
-            qForwardM2V(in, out, dim, keys)
-          }
+          case false => qForwardM2V(in, out, dim, keys)
         }        
       }
       case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
