@@ -57,4 +57,14 @@ class QueryRuleSuite extends FunSuite with Logging {
 
     assert(rule.isTotal == true)
   } 
+
+  test("All Query Rule Test"){
+    val m1 = DenseMatrix.zeros[Double](3,2)
+    val m2 = DenseMatrix.zeros[Double](3,2)
+    
+    val keys = List(Coor(0,0))
+    val rule = AllQueryRule(SubSpace(m1), SubSpace(m2), keys)
+
+    assert(rule.isTotal == true)
+  } 
 }

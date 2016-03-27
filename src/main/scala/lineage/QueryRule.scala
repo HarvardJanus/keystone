@@ -54,3 +54,11 @@ case class IdentityQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[C
 
   def reduce = reducedKeys
 }
+
+case class AllQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor]) extends QueryRule{
+  val reducedKeys = keys.distinct
+
+  def isTotal() = true
+
+  def reduce = reducedKeys
+}
