@@ -55,7 +55,7 @@ case class GeoMapping(fRTree: RTree[Int], bRTree: RTree[Int],
 
 object GeoMapping{
   def apply(tupleList: List[(Shape, Shape)]) = {
-    val (fRTree, bRTree) = buildRTreeIndex(tupleList)
+    //val (fRTree, bRTree) = buildRTreeIndex(tupleList)
     //new GeoMapping(fRTree, bRTree, tupleList)
     new GeoMapping(RTree(), RTree(), tupleList)
   }

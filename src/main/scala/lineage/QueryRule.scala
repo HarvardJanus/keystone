@@ -8,13 +8,21 @@ trait QueryRule{
 object QueryRule{
   def optimizeThenQuery(rule: QueryRule, query: List[Coor] => List[Coor]):List[Coor] = {
     if(rule.isTotal){
+      println("rule optimizer: totality")
       rule match {
         case r: CollapseForwardQueryRule => r.outSpace.expand()
         case r: CollapseBackwardQueryRule => r.inSpace.expand()
+        case r: FlattenForwardQueryRule => r.outSpace.expand()
+        case r: FlattenBackwardQueryRule => r.inSpace.expand()
+        case r: LinComForwardQueryRule => r.outSpace.expand()
+        case r: LinComBackwardQueryRule => r.inSpace.expand()
       }
     }
-    else
+    else{
+      println("rule optimizer: reduction")
+      println("reduced keys: "+rule.reduce)
       query(rule.reduce)
+    }
   }
 }
 
@@ -56,7 +64,17 @@ case class CollapseBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim:
   def reduce() = reducedKeys
 }
 
-case class FlattenQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
+case class FlattenForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
+  val reducedKeys = keys.distinct
+
+  def isTotal() = {
+    keys.size == inSpace.expand().size
+  }
+
+  def reduce = reducedKeys
+}
+
+case class FlattenBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
   val reducedKeys = keys.distinct
 
   def isTotal() = {
@@ -84,10 +102,25 @@ case class AllQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor])
   def reduce = reducedKeys
 }
 
-case class LinComQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor]) extends QueryRule{
+case class LinComForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor]) extends QueryRule{
   val reducedKeys = {
     (inSpace, outSpace) match {
-      case (in: Vector, out: Vector) => keys
+      case (in: Vector, out: Vector) => List(Coor(0))
+      case (in: Matrix, out: Matrix) => keys.map(k => Coor(k.asInstanceOf[Coor2D].x, 0))
+    }
+  }.toList.distinct
+
+  def isTotal() = {
+    keys.size == inSpace.expand().size
+  }
+
+  def reduce = reducedKeys
+}
+
+case class LinComBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[Coor]) extends QueryRule{
+  val reducedKeys = {
+    (inSpace, outSpace) match {
+      case (in: Vector, out: Vector) => List(Coor(0))
       case (in: Matrix, out: Matrix) => keys.map(k => Coor(k.asInstanceOf[Coor2D].x, 0))
     }
   }.toList.distinct

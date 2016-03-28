@@ -33,7 +33,7 @@ class QueryRuleSuite extends FunSuite with Logging {
     val v1 = DenseVector.zeros[Double](6)
     
     val keys = List(Coor(0,0), Coor(0,1), Coor(1,0), Coor(1,1), Coor(2,0), Coor(2,1))
-    val rule = FlattenQueryRule(SubSpace(m1), SubSpace(v1), 1, keys)
+    val rule = FlattenForwardQueryRule(SubSpace(m1), SubSpace(v1), 1, keys)
 
     assert(rule.isTotal == true)
   } 
@@ -43,7 +43,7 @@ class QueryRuleSuite extends FunSuite with Logging {
     val v1 = DenseVector.zeros[Double](6)
     
     val keys = List(Coor(0), Coor(1), Coor(2), Coor(3), Coor(4), Coor(5))
-    val rule = FlattenQueryRule(SubSpace(v1), SubSpace(m1), 1, keys)
+    val rule = FlattenForwardQueryRule(SubSpace(v1), SubSpace(m1), 1, keys)
 
     assert(rule.isTotal == true)
   } 
@@ -73,7 +73,7 @@ class QueryRuleSuite extends FunSuite with Logging {
     val m2 = DenseMatrix.zeros[Double](3,2)
     
     val keys = List(Coor(0,0), Coor(0,1), Coor(1,0), Coor(1,1), Coor(2,0), Coor(2,1))
-    val rule = LinComQueryRule(SubSpace(m1), SubSpace(m2), keys)
+    val rule = LinComForwardQueryRule(SubSpace(m1), SubSpace(m2), keys)
 
     assert(rule.isTotal == true)
     assert(rule.reduce == List(Coor(0,0), Coor(1,0), Coor(2,0)))
