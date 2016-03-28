@@ -103,6 +103,7 @@ class LinComMappingSuite extends FunSuite with Logging {
     println("optimized backward: "+list4.sum/list4.size)
     Mapping.setOpzFlag(false)
   }
+  
   def time[A](f: => A) = {
     val s = System.nanoTime
     val ret = f
