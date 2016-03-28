@@ -84,36 +84,11 @@ case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int],
       }
     }
   }
-
-  /* The following query methods are for RTree index */
-  /*def qForward(keys: List[Coor]) = {
-    keys.flatMap(key => {
-      key match {
-        case k: Coor2D => {
-          val indexArray = fRTree.searchWithIn(Point(k.x.toFloat, k.y.toFloat))
-          val filteredIndex = indexArray.toList.filter(e => tupleList(e.value)._1.contain(k.x.toDouble, k.y.toDouble))
-          filteredIndex.flatMap(e => tupleList(e.value)._2.toCoor)
-        }
-      }  
-    })
-  }
-
-  def qBackward(keys: List[Coor]) = {
-    keys.flatMap(key => {
-      key match {
-        case k: Coor2D => {
-          val indexArray = bRTree.searchWithIn(Point(k.x.toFloat, k.y.toFloat))
-          val filteredIndex = indexArray.toList.filter(e => tupleList(e.value)._2.contain(k.x.toDouble, k.y.toDouble))
-          filteredIndex.flatMap(e => tupleList(e.value)._1.toCoor)
-        }
-      }  
-    })
-  }*/
 }
 
 object GeoMapping{
   def apply(inMatrix: DenseMatrix[_], outMatrix: DenseMatrix[_], tupleList: List[(Shape, Shape)]) = {
-    //val (fRTree, bRTree) = buildRTreeIndex(tupleList)
+    val (fRTree, bRTree) = buildRTreeIndex(tupleList)
     //new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), fRTree, bRTree, tupleList)
     new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), RTree(), RTree(), tupleList)
   }
