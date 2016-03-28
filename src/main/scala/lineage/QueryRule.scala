@@ -5,9 +5,23 @@ trait QueryRule{
   def reduce(): List[Coor]
 }
 
-case class CollapseQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
+object QueryRule{
+  def optimizeThenQuery(rule: QueryRule, query: List[Coor] => List[Coor]):List[Coor] = {
+    if(rule.isTotal){
+      rule match {
+        case r: CollapseForwardQueryRule => r.outSpace.expand()
+        case r: CollapseBackwardQueryRule => r.inSpace.expand()
+      }
+    }
+    else
+      query(rule.reduce)
+  }
+}
+
+case class CollapseForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
   val reducedKeys = {
     (inSpace, outSpace) match {
+      case (in: Vector, out: Singularity) => List(Coor(0))
       case (in: Matrix, out: Vector) => keys.map( k => {
         dim match {
           case 0 => Coor(0, k.asInstanceOf[Coor2D].y)
@@ -24,6 +38,16 @@ case class CollapseQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, ke
       case _ => keys
     }
   }.toList.distinct
+
+  def isTotal() = {
+    keys.size == inSpace.expand().size
+  }
+
+  def reduce() = reducedKeys
+}
+
+case class CollapseBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: Int, keys: List[Coor]) extends QueryRule{
+  val reducedKeys = keys.distinct
 
   def isTotal() = {
     keys.size == inSpace.expand().size
