@@ -5,7 +5,7 @@ import breeze.linalg._
 import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledImage}
 
 case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int], bRTree: RTree[Int],
-  tupleList: List[(Shape, Shape)]) extends Mapping{
+  tupleList: List[(Shape, Shape)]) extends Mapping(inSpace, outSpace){
 
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)

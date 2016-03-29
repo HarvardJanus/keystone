@@ -3,7 +3,7 @@ package lineage
 import breeze.linalg._
 import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledImage}
 
-case class IdentityMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping{
+case class IdentityMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping(inSpace, outSpace){
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})

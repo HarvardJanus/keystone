@@ -2,7 +2,7 @@ package lineage
 
 import breeze.linalg._
 
-case class LinComMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping {
+case class LinComMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping(inSpace, outSpace) {
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})

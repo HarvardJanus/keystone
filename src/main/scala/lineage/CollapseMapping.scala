@@ -6,7 +6,7 @@ import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledIma
 /*
  *  add RDD[Seq[Vector]] => RDD[Vector]
  */
-case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping{
+case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping(inSpace, outSpace){
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})

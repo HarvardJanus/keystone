@@ -7,7 +7,12 @@ import sys.process.stringSeqToProcess
 import utils.{Image=>KeystoneImage}
 import workflow._
 
-abstract class Lineage extends serializable {
+trait Queriable extends serializable{
+  def qForward(keys: List[Coor]): List[Coor]
+  def qBackward(keys: List[Coor]): List[Coor]
+}
+
+abstract class Lineage extends serializable with Queriable{
   //val path = "Lineage"
   def qForward(keys: List[Coor]): List[Coor]
   def qBackward(keys: List[Coor]): List[Coor]
@@ -36,6 +41,34 @@ object Lineage{
       load(p, sc)
     })
   }
+}
+
+case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
+  val mappingSeq = lineageSeq.map(l => l.mappingRDD)
+  val mappingRDD: RDD[Seq[Mapping]] = mappingSeq.map(rdd => rdd.map(m => Seq(m.asInstanceOf[Mapping]))).reduceLeft((x, y) => {
+    x.zip(y).map(z => z._1 ++ z._2)
+  })
+
+  val mergedMappingRDD = mappingRDD.map(s => merge(s))
+
+  def merge(inSeq: Seq[Mapping]): Seq[Mapping] = {
+    inSeq.map(Seq(_)).reduceLeft((x, y) => {
+      (x.last, y.head) match {
+        //Rule: All + Any = All, Any + All = All
+        case (m1: AllMapping, m2: Mapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
+        case (m1: Mapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
+        //Identity + Any = Any, Any + Identity = Any
+        case (m1: IdentityMapping, m2: Mapping) => Seq(m2)
+        case (m1: Mapping, m2: IdentityMapping) => Seq(m1)
+        //LinCom + LinCom = LinCom
+        case (m1: LinComMapping, m2: LinComMapping) => Seq(LinComMapping(m1.getInSpace, m2.getOutSpace))
+        case _ => x ++ y
+      }
+    })
+  }
+
+  def qForward(keys: List[Coor]) = List(Coor(0))
+  def qBackward(keys: List[Coor]) = List(Coor(0))
 }
 
 case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], model: DenseMatrix[_]=null) extends Lineage{

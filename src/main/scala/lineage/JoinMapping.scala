@@ -3,7 +3,7 @@ package lineage
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
 
-case class JoinMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping {
+case class JoinMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping(inSpace, outSpace) {
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
