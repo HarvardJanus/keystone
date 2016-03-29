@@ -49,7 +49,7 @@ class BlockLinearMapper(
     val lineage = LinComLineage(in, out, this, xs(0))
     lineage.saveMapping(tag)
     val stamp3 = System.nanoTime()
-    //lineage.saveOutput(tag)
+    lineage.saveOutput(tag)
     //lineage.saveOutputSmart(tag, stamp3-stamp1)
     val stamp4 = System.nanoTime()
     println(s"Transformer $tag: exec: ${(stamp2 - stamp1)/1e9}s, mapping: ${(stamp3-stamp2)/1e9}s, output: ${(stamp4-stamp3)/1e9}s")

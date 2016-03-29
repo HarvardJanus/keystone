@@ -25,7 +25,7 @@ object NormalizeRows extends Transformer[DenseVector[Double], DenseVector[Double
     val lineage = LinComLineage(in, out, this)
     lineage.saveMapping(tag)
     val stamp3 = System.nanoTime()
-    //lineage.saveOutput(tag)
+    lineage.saveOutput(tag)
     //lineage.saveOutputSmart(tag, stamp3-stamp1)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0))))
     val stamp4 = System.nanoTime()

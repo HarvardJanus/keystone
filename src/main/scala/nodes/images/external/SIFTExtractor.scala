@@ -72,7 +72,7 @@ class SIFTExtractor(val stepSize: Int = 3, val binSize: Int = 4, val scales: Int
     val lineage = GeoLineage(in, out, ioList, this)
     lineage.saveMapping(tag)
     val stamp3 = System.nanoTime()
-    //lineage.saveOutput(tag)
+    lineage.saveOutput(tag)
     //lineage.saveOutputSmart(tag, stamp3-stamp1)
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qBackward(List(Coor(0,0,0))))
     //println("collecting lineage for Transformer "+this.label+"\t mapping: "+lineage.qForward(List(Coor(0,13,15))))
