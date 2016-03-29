@@ -22,7 +22,7 @@ object SignedHellingerMapper extends Transformer[DenseVector[Double], DenseVecto
     out.cache()
     out.count()
     val stamp2 = System.nanoTime()    
-    val lineage = AllLineage(in, out, this)
+    val lineage = OneLineage(in, out, this)
     lineage.saveMapping(tag)
     val stamp3 = System.nanoTime()
     //lineage.saveOutput(tag)
