@@ -3,6 +3,7 @@ package lineage
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
+import scala.annotation.tailrec
 import sys.process.stringSeqToProcess
 import utils.{Image=>KeystoneImage}
 import workflow._
@@ -90,7 +91,7 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
       innerRet.map(_.raise(i))
   }
 
-  def qForwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
+  @tailrec private def qForwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
     mappingSeq match {
       case Nil => keys
       case head::tail => {
@@ -123,7 +124,7 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
       innerRet.map(_.raise(i))
   }
 
-  def qBackwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
+  @tailrec private def qBackwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
     mappingSeq match {
       case Nil => keys
       case head::tail => {
