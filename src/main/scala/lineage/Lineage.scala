@@ -2,6 +2,7 @@ package lineage
 
 import breeze.linalg._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.SparkContext
 import sys.process.stringSeqToProcess
 import utils.{Image=>KeystoneImage}
 import workflow._
@@ -19,6 +20,22 @@ abstract class Lineage extends serializable {
 object Lineage{
   val path = "Lineage"
   val pathTrial = "Lineage/Trial"
+
+  def load(path: String, sc: SparkContext): NarrowLineage = {
+    val mappingRDD = sc.objectFile(path+"/mappingRDD")
+    //a trivial rdd
+    val rdd = sc.parallelize(Seq(1))
+    //a trivial transformer
+    val transformer = Transformer[Int, Int](_ * 1)
+
+    NarrowLineage(rdd, rdd, mappingRDD, transformer)
+  }
+
+  def load(paths: Seq[String], sc: SparkContext): Seq[NarrowLineage] = {
+    paths.map(p => {
+      load(p, sc)
+    })
+  }
 }
 
 case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], model: DenseMatrix[_]=null) extends Lineage{
