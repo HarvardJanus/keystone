@@ -67,7 +67,39 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
     })
   }
 
-  def qForward(keys: List[Coor]) = List(Coor(0))
+  def qForward(keys: List[Coor]) = {
+    val i = keys.head.first
+    val resultRDD = mergedMappingRDD.zipWithIndex.map{
+      case (mappingSeq, index) => {
+        if(index == i){
+          qForwardRecursive(keys.map(_.lower), mappingSeq)
+        }
+      }
+    }
+
+    val filteredRDD = resultRDD.zipWithIndex.filter{
+      case (result, index) => (index == i)
+    }.map(_._1)
+
+    val m = filteredRDD.first
+    val innerRet = m.asInstanceOf[List[Coor]]
+
+    if(innerRet.size == 0) 
+      List(Coor())
+    else
+      innerRet.map(_.raise(i))
+  }
+
+  def qForwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
+    mappingSeq match {
+      case Nil => keys
+      case head::tail => {
+        val interResults = head.qForward(keys)
+        qForwardRecursive(interResults, tail)
+      }
+    }
+  }
+
   def qBackward(keys: List[Coor]) = List(Coor(0))
 }
 
