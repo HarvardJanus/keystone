@@ -44,97 +44,6 @@ object Lineage{
   }
 }
 
-case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
-  val mappingSeq = lineageSeq.map(l => l.mappingRDD)
-  val mappingRDD: RDD[Seq[Mapping]] = mappingSeq.map(rdd => rdd.map(m => Seq(m.asInstanceOf[Mapping]))).reduceLeft((x, y) => {
-    x.zip(y).map(z => z._1 ++ z._2)
-  })
-
-  val mergedMappingRDD = mappingRDD.map(s => merge(s))
-
-  def merge(inSeq: Seq[Mapping]): Seq[Mapping] = {
-    inSeq.map(Seq(_)).reduceLeft((x, y) => {
-      (x.last, y.head) match {
-        //Rule: All + Any = All, Any + All = All
-        case (m1: AllMapping, m2: Mapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        case (m1: Mapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        //Identity + Any = Any, Any + Identity = Any
-        case (m1: IdentityMapping, m2: Mapping) => Seq(m2)
-        case (m1: Mapping, m2: IdentityMapping) => Seq(m1)
-        //LinCom + LinCom = LinCom
-        case (m1: LinComMapping, m2: LinComMapping) => Seq(LinComMapping(m1.getInSpace, m2.getOutSpace))
-        case _ => x ++ y
-      }
-    })
-  }
-
-  def qForward(keys: List[Coor]) = {
-    val i = keys.head.first
-    val resultRDD = mergedMappingRDD.zipWithIndex.map{
-      case (mappingSeq, index) => {
-        if(index == i){
-          qForwardRecursive(keys.map(_.lower), mappingSeq)
-        }
-      }
-    }
-
-    val filteredRDD = resultRDD.zipWithIndex.filter{
-      case (result, index) => (index == i)
-    }.map(_._1)
-
-    val m = filteredRDD.first
-    val innerRet = m.asInstanceOf[List[Coor]]
-
-    if(innerRet.size == 0) 
-      List(Coor())
-    else
-      innerRet.map(_.raise(i))
-  }
-
-  @tailrec private def qForwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
-    mappingSeq match {
-      case Nil => keys
-      case head::tail => {
-        val interResults = head.qForward(keys)
-        qForwardRecursive(interResults, tail)
-      }
-    }
-  }
-
-  def qBackward(keys: List[Coor]) = {
-    val i = keys.head.first
-    val resultRDD = mergedMappingRDD.zipWithIndex.map{
-      case (mappingSeq, index) => {
-        if(index == i){
-          qBackwardRecursive(keys.map(_.lower), mappingSeq.reverse)
-        }
-      }
-    }
-
-    val filteredRDD = resultRDD.zipWithIndex.filter{
-      case (result, index) => (index == i)
-    }.map(_._1)
-
-    val m = filteredRDD.first
-    val innerRet = m.asInstanceOf[List[Coor]]
-
-    if(innerRet.size == 0) 
-      List(Coor())
-    else
-      innerRet.map(_.raise(i))
-  }
-
-  @tailrec private def qBackwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
-    mappingSeq match {
-      case Nil => keys
-      case head::tail => {
-        val interResults = head.qBackward(keys)
-        qBackwardRecursive(interResults, tail)
-      }
-    }
-  }
-}
-
 case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], transformer: Transformer[_,_], model: DenseMatrix[_]=null) extends Lineage{
   def qForward(keys: List[Coor]) = {
     keys.flatMap(key => {
@@ -229,3 +138,171 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     Seq("bash", "-c", "for h in `cat ~/spark/conf/slaves`; do ssh $h \"free && sync && echo 3 > /proc/sys/vm/drop_caches && free\"; done") !
    }
 }
+
+/*
+ *   CompositeLineage and ParallelLineage are for querying only.
+ */
+
+case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
+  val mappingSeq = lineageSeq.map(l => l.mappingRDD)
+  val mappingRDD: RDD[Seq[Mapping]] = mappingSeq.map(rdd => rdd.map(m => Seq(m.asInstanceOf[Mapping]))).reduceLeft((x, y) => {
+    x.zip(y).map(z => z._1 ++ z._2)
+  })
+
+  val mergedMappingRDD = mappingRDD.map(s => merge(s))
+
+  def merge(inSeq: Seq[Mapping]): Seq[Mapping] = {
+    inSeq.map(Seq(_)).reduceLeft((x, y) => {
+      (x.last, y.head) match {
+        //Rule: All + Any = All, Any + All = All
+        case (m1: AllMapping, m2: Mapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
+        case (m1: Mapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
+        //Identity + Any = Any, Any + Identity = Any
+        case (m1: IdentityMapping, m2: Mapping) => Seq(m2)
+        case (m1: Mapping, m2: IdentityMapping) => Seq(m1)
+        //LinCom + LinCom = LinCom
+        case (m1: LinComMapping, m2: LinComMapping) => Seq(LinComMapping(m1.getInSpace, m2.getOutSpace))
+        case _ => x ++ y
+      }
+    })
+  }
+
+  def qForward(keys: List[Coor]) = {
+    val i = keys.head.first
+    val resultRDD = mergedMappingRDD.zipWithIndex.map{
+      case (mappingSeq, index) => {
+        if(index == i){
+          qForwardRecursive(keys.map(_.lower), mappingSeq)
+        }
+      }
+    }
+
+    val filteredRDD = resultRDD.zipWithIndex.filter{
+      case (result, index) => (index == i)
+    }.map(_._1)
+
+    val m = filteredRDD.first
+    val innerRet = m.asInstanceOf[List[Coor]]
+
+    if(innerRet.size == 0) 
+      List(Coor())
+    else
+      innerRet.map(_.raise(i))
+  }
+
+  @tailrec private def qForwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
+    mappingSeq match {
+      case Nil => keys
+      case head::tail => {
+        val interResults = head.qForward(keys)
+        qForwardRecursive(interResults, tail)
+      }
+    }
+  }
+
+  def qBackward(keys: List[Coor]) = {
+    val i = keys.head.first
+    val resultRDD = mergedMappingRDD.zipWithIndex.map{
+      case (mappingSeq, index) => {
+        if(index == i){
+          qBackwardRecursive(keys.map(_.lower), mappingSeq.reverse)
+        }
+      }
+    }
+
+    val filteredRDD = resultRDD.zipWithIndex.filter{
+      case (result, index) => (index == i)
+    }.map(_._1)
+
+    val m = filteredRDD.first
+    val innerRet = m.asInstanceOf[List[Coor]]
+
+    if(innerRet.size == 0) 
+      List(Coor())
+    else
+      innerRet.map(_.raise(i))
+  }
+
+  @tailrec private def qBackwardRecursive(keys: List[Coor], mappingSeq: Seq[Mapping]): List[Coor] = {
+    mappingSeq match {
+      case Nil => keys
+      case head::tail => {
+        val interResults = head.qBackward(keys)
+        qBackwardRecursive(interResults, tail)
+      }
+    }
+  }
+}
+
+object CompositeLineage{
+  def apply(stringSeq: Seq[String], sc: SparkContext) = {
+    val sl = Lineage.load(stringSeq, sc)
+    new CompositeLineage(sl)
+  }
+}
+
+case class ParallelLineage(compositeLineageSeq: Seq[CompositeLineage]) extends Queriable{
+  def qForward(keys: List[Coor]) = {
+    val groupedKeys = keys.map(k => (k.first, k.lower)).groupBy(_._1).map{
+      case (k, v) => v.map(_._2)
+    }
+
+    val interRets = groupedKeys.zip(compositeLineageSeq).map{
+      case (keyList, lineage) => lineage.qForward(keyList)
+    }
+
+    interRets.zipWithIndex.map{
+      case (result, index) => result.map(_.raise(index))
+    }.flatMap(identity).toList.distinct
+  }
+
+  def qBackward(keys: List[Coor]) = {
+    val groupedKeys = keys.map(k => (k.first, k.lower)).groupBy(_._1).map{
+      case (k, v) => v.map(_._2)
+    }
+
+    val interRets = groupedKeys.zip(compositeLineageSeq).map{
+      case (keyList, lineage) => lineage.qBackward(keyList)
+    }
+
+    interRets.zipWithIndex.map{
+      case (result, index) => result.map(_.raise(index))
+    }.flatMap(identity).toList.distinct
+  }
+}
+
+object ParallelLineage{
+  def apply(pathMatrix: Seq[Seq[String]], sc: SparkContext) = {
+    val comLineageSeq = pathMatrix.map(pathSeq => CompositeLineage(pathSeq, sc))
+    new ParallelLineage(comLineageSeq)
+  }
+}
+
+case class ComplexLineage(lineageSeq: Seq[Queriable]) extends Queriable{
+  def qForward(keys: List[Coor]) = {
+    qForwardRecursive(keys, lineageSeq)
+  }
+
+  @tailrec private def qForwardRecursive(keys: List[Coor], lineageSeq: Seq[Queriable]):List[Coor] = {
+    lineageSeq match{
+      case Nil => keys
+      case head::tail => qForwardRecursive(head.qForward(keys), tail)
+    }
+  }
+
+  def qBackward(keys: List[Coor]) = {
+    qBackwardRecursive(keys, lineageSeq.reverse)
+  }
+
+  @tailrec private def qBackwardRecursive(keys: List[Coor], lineageSeq: Seq[Queriable]):List[Coor] = {
+    lineageSeq match {
+      case Nil => keys
+      case head::tail => qBackwardRecursive(head.qBackward(keys), tail)
+    }
+  }
+}
+
+
+
+
+

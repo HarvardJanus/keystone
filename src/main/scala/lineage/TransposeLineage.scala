@@ -24,4 +24,13 @@ object TransposeLineage{
     val mapping = TransposeMapping(inSeq, outRDD, dims)
     new TransposeLineage(inSeq, outRDD, mapping)
   }
+
+  def apply(path: String, sc: SparkContext) = {
+    val vecSeq = Seq(DenseVector.zeros[Double](5))
+    val s = sc.parallelize(vecSeq)
+    val srdd = sc.parallelize(Seq(vecSeq))
+    val rdd = sc.objectFile[TransposeMapping](path+"/mappingRDD")
+    val mapping = rdd.first.asInstanceOf[TransposeMapping]
+    new TransposeLineage(Seq(s), srdd, mapping)
+  }
 }
