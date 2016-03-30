@@ -17,7 +17,7 @@ private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
     val out = transformRDD(dataDependencies, fitDependencies)
     out.cache()
     val lineage = TransposeLineage(dataDependencies.map(_.asInstanceOf[RDD[DenseVector[T]]]), out.asInstanceOf[RDD[Seq[DenseVector[T]]]], (0,1))
-    lineage.saveOutput(tag)
+    lineage.saveMapping(tag)
     out
   }
 }
