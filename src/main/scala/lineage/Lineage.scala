@@ -229,12 +229,3 @@ case class NarrowLineage(inRDD: RDD[_], outRDD: RDD[_], mappingRDD: RDD[_], tran
     Seq("bash", "-c", "for h in `cat ~/spark/conf/slaves`; do ssh $h \"free && sync && echo 3 > /proc/sys/vm/drop_caches && free\"; done") !
    }
 }
-
-case class TransposeLineage[T](inRDD: Seq[RDD[DenseVector[T]]], outRDD: RDD[Seq[DenseVector[T]]], mapping: JoinMapping, transformer: Transformer[_,_]) extends Lineage{
-  def qForward(keys: List[Coor]) = mapping.qForward(keys)
-  def qBackward(keys: List[Coor]) = mapping.qBackward(keys)
-  def saveInput() = {}
-  def saveOutput(tag: String) = {}
-  def saveOutputSmart(tag: String, duration: Long) = {}
-  def saveMapping(tag: String) = {}
-}
