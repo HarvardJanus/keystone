@@ -13,7 +13,7 @@ case class AllMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping(inS
   def qBackward(keys: List[Coor]) = {
     val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    outSpace.expand()
+    inSpace.expand()
   }
 }
 
