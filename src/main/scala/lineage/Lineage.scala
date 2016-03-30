@@ -251,9 +251,10 @@ case class ParallelLineage(compositeLineageSeq: Seq[CompositeLineage]) extends Q
       case (keyList, lineage) => lineage.qForward(keyList)
     }
 
-    interRets.zipWithIndex.map{
+    /*interRets.zipWithIndex.map{
       case (result, index) => result.map(_.raise(index))
-    }.flatMap(identity).toList.distinct
+    }.flatMap(identity).toList.distinct*/
+    interRets.flatMap(identity).toList.distinct
   }
 
   def qBackward(keys: List[Coor]) = {
@@ -265,9 +266,10 @@ case class ParallelLineage(compositeLineageSeq: Seq[CompositeLineage]) extends Q
       case (keyList, lineage) => lineage.qBackward(keyList)
     }
 
-    interRets.zipWithIndex.map{
+    /*interRets.zipWithIndex.map{
       case (result, index) => result.map(_.raise(index))
-    }.flatMap(identity).toList.distinct
+    }.flatMap(identity).toList.distinct*/
+    interRets.flatMap(identity).toList.distinct
   }
 }
 
