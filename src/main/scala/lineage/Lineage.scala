@@ -28,7 +28,7 @@ object Lineage{
   val pathTrial = "Lineage/Trial"
 
   def load(path: String, sc: SparkContext): NarrowLineage = {
-    val mappingRDD = sc.objectFile(path+"/mappingRDD")
+    val mappingRDD = sc.objectFile(Lineage.path+"/"+path+"/mappingRDD")
     //a trivial rdd
     val rdd = sc.parallelize(Seq(1))
     //a trivial transformer
