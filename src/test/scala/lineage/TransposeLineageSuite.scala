@@ -22,7 +22,7 @@ class TransposeLineageSuite extends FunSuite with Logging {
 
     val transformer = Transformer[Int, Int](_ * 1)
 
-    val lineage = TransposeLineage(input, output, (0,1), transformer)
+    val lineage = TransposeLineage(input, output, (0,1))
     assert(lineage.qForward(List(Coor(0,1,0))) == List(Coor(1,0,0)))
     assert(lineage.qBackward(List(Coor(1,0,0))) == List(Coor(0,1,0)))
   }

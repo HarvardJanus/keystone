@@ -1,7 +1,8 @@
 package workflow
 
+import breeze.linalg._
+import lineage._
 import org.apache.spark.rdd.RDD
-
 import scala.reflect.ClassTag
 
 private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
@@ -14,9 +15,9 @@ private[workflow] class GatherTransformer[T] extends TransformerNode[Seq[T]] {
   }
   def transformRDDWithLineage(dataDependencies: Seq[RDD[_]], fitDependencies: Seq[TransformerNode[_]], tag: String): RDD[Seq[T]] = {
     val out = transformRDD(dataDependencies, fitDependencies)
-    //out.cache()
-    //val lineage = GatherLineage(dataDependencies.map(_.asInstanceOf[RDD[T]]), out, this)
-    //lineage.save(tag)
+    out.cache()
+    val lineage = TransposeLineage(dataDependencies.map(_.asInstanceOf[RDD[DenseVector[T]]]), out.asInstanceOf[RDD[Seq[DenseVector[T]]]], (0,1))
+    lineage.saveOutput(tag)
     out
   }
 }
