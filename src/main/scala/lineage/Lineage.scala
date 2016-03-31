@@ -154,8 +154,8 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
   def merge(inSeq: Seq[Mapping]): Seq[Mapping] = {
     inSeq.map(Seq(_)).reduceLeft((x, y) => {
       (x.last, y.head) match {
-        case (m1: AllMapping, m2: GeoMapping) => Seq(m1, m2)
-        case (m1: GeoMapping, m2: AllMapping) => Seq(m1, m2)
+        case (m1: AllMapping, m2: GeoMapping) => x ++ y
+        case (m1: GeoMapping, m2: AllMapping) => x ++ y
         //Rule: All + Any/Geo = All, Any + All/Geo = All
         case (m1: AllMapping, m2: Mapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
         case (m1: Mapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
