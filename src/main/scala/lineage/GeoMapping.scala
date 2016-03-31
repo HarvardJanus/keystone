@@ -11,9 +11,8 @@ import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledIma
 //case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int], bRTree: RTree[Int],
 //  tupleList: List[(Shape, Shape)]) extends Mapping(inSpace, outSpace){
 
-case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, tupleList: List[(Shape, Shape)]) extends Mapping(inSpace, outSpace){
-  var fRTree: RTree[Int, Rectangle] = RTree.create()
-  var bRTree: RTree[Int, Rectangle] = RTree.create() 
+case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int, Rectangle], bRTree: RTree[Int, Rectangle],
+  tupleList: List[(Shape, Shape)]) extends Mapping(inSpace, outSpace){
 
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
@@ -105,11 +104,15 @@ object GeoMapping{
     //val (fRTree, bRTree) = buildRTreeIndex(tupleList)
     //new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), fRTree, bRTree, tupleList)
     //new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), RTree(), RTree(), tupleList)
-    new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), tupleList)
+    val fRTree: RTree[Int, Rectangle] = RTree.create()
+    val bRTree: RTree[Int, Rectangle] = RTree.create()
+    new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), fRTree, bRTree, tupleList)
   }
 
   def apply(inImage: KeystoneImage, outMatrix: DenseMatrix[_], tupleList: List[(Shape, Shape)]) = {
-    new GeoMapping(SubSpace(inImage), SubSpace(outMatrix), tupleList)
+    val fRTree: RTree[Int, Rectangle] = RTree.create()
+    val bRTree: RTree[Int, Rectangle] = RTree.create()
+    new GeoMapping(SubSpace(inImage), SubSpace(outMatrix), fRTree, bRTree, tupleList)
   }
 
   /*def buildRTreeIndex(tupleList: List[(Shape, Shape)]): (RTree[Int], RTree[Int]) = {
