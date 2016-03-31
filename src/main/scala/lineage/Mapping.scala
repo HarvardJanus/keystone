@@ -8,7 +8,7 @@ abstract class Mapping(inSpace: SubSpace, outSpace: SubSpace) extends Serializab
 }
 
 object Mapping {
-  var queryOptimization = false
+  var queryOptimization = true
   def setOpzFlag(v: Boolean) = {
     queryOptimization = v
   }
