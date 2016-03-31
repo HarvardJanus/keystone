@@ -16,8 +16,8 @@ object QueryRule{
         case r: FlattenBackwardQueryRule => r.inSpace.expand()
         case r: LinComForwardQueryRule => r.outSpace.expand()
         case r: LinComBackwardQueryRule => r.inSpace.expand()
-        case r: GeoForwardQueryRule => r.tupleList.flatMap(_._2.toCoor()).distinct
-        case r: GeoBackwardQueryRule => r.tupleList.flatMap(_._1.toCoor()).distinct
+        case r: GeoForwardQueryRule => r.outSpace.expand() //r.tupleList.flatMap(_._2.toCoor()).distinct
+        case r: GeoBackwardQueryRule => r.inSpace.expand() //r.tupleList.flatMap(_._1.toCoor()).distinct
       }
     }
     else{

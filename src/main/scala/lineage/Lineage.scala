@@ -158,21 +158,11 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
         case (m1: GeoMapping, m2: AllMapping) => x ++ y
         //Rule: All + Any/Geo = All, Any + All/Geo = All
         case (m1: AllMapping, m2: Mapping) => x.dropRight(1) ++ Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        /*case (m1: AllMapping, m2: FlattenMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        case (m1: AllMapping, m2: LinComMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        case (m1: AllMapping, m2: IdentityMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))*/
         case (m1: Mapping, m2: AllMapping) => x.dropRight(1) ++ Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        /*case (m1: FlattenMapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        case (m1: LinComMapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))
-        case (m1: IdentityMapping, m2: AllMapping) => Seq(AllMapping(m1.getInSpace, m2.getOutSpace))*/
-        //Identity + Any = Any, Any + Identity = Any
+        //Rule: Identity + Any = Any, Any + Identity = Any
         case (m1: IdentityMapping, m2: Mapping) => x.dropRight(1) ++ Seq(m2)
-        /*case (m1: IdentityMapping, m2: FlattenMapping) => Seq(m2)
-        case (m1: IdentityMapping, m2: LinComMapping) => Seq(m2)*/
         case (m1: Mapping, m2: IdentityMapping) => x
-        /*case (m1: FlattenMapping, m2: IdentityMapping) => Seq(m1)
-        case (m1: LinComMapping, m2: IdentityMapping) => Seq(m1)*/
-        //LinCom + LinCom = LinCom
+        //Rule: LinCom + LinCom = LinCom
         case (m1: LinComMapping, m2: LinComMapping) => Seq(LinComMapping(m1.getInSpace, m2.getOutSpace))
         case _ => x ++ y
       }
@@ -206,7 +196,6 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
     mappingSeq match {
       case Nil => keys
       case head::tail => {
-        println("mapping: "+head+"  key: "+keys.head)
         val interResults = head.qForward(keys)
         qForwardRecursive(interResults, tail)
       }
