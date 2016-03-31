@@ -1,10 +1,6 @@
 package lineage
 
 import archery._
-import com.github.davidmoten.rtree.geometry._
-import com.github.davidmoten.rtree.geometry.{Rectangle=>javaRTreeRect}
-import com.github.davidmoten.rtree.geometry.Geometries._
-import com.github.davidmoten.rtree.RTree
 import scala.math._
 
 abstract class Shape(c: (Double, Double)) extends Serializable{
@@ -13,7 +9,6 @@ abstract class Shape(c: (Double, Double)) extends Serializable{
   def toCoor(): List[Coor]
   def toBox(): Box
   def toRect(): Shape
-  def toJavaRTreeRect(): javaRTreeRect
 }
 
 class Circle(c: (Double, Double), r: Double) extends Shape(c){
@@ -36,7 +31,6 @@ class Circle(c: (Double, Double), r: Double) extends Shape(c){
 
   def toBox() = Box((c._1-r).toFloat, (c._2-r).toFloat, (c._1+r).toFloat, (c._2+r).toFloat)
   def toRect() = Shape(((c._1-r).toDouble, (c._2-r).toDouble), ((c._1+r).toDouble, (c._2+r).toDouble))
-  def toJavaRTreeRect() = javaRTreeRect.create((c._1-r).toDouble, (c._2-r).toDouble, (c._1+r).toDouble, (c._2+r).toDouble)
 
   override def toString() = "center: "+c+" r: "+r
   def getCenter() = c
@@ -118,26 +112,6 @@ case class Ellipse(c: (Double, Double), a: Double, b: Double, theta: Double) ext
     Shape((xMin, yMin), (xMax, yMax))
   }
 
-  def toJavaRTreeRect() = {
-    val xTan = -b*tan(theta)/a
-    val t1 = atan(xTan)
-    val t2 = t1+Pi
-    val x1 = c._1 + a*cos(t1)*cos(theta) - b*sin(t1)*sin(theta)
-    val x2 = c._1 + a*cos(t2)*cos(theta) - b*sin(t2)*sin(theta)
-    val xl = List(x1, x2)
-    val xMin = xl.min
-    val xMax = xl.max
-
-    val yTan = b*cos(theta)/sin(theta)/a
-    val t3 = atan(yTan)
-    val t4 = t3+Pi
-    val y1 = c._2 + b*sin(t3)*cos(theta) + a*cos(t3)*sin(theta)
-    val y2 = c._2 + b*sin(t4)*cos(theta) + a*cos(t4)*sin(theta)
-    val yl = List(y1, y2)
-    val yMin = yl.min
-    val yMax = yl.max
-    javaRTreeRect.create(xMin.toFloat, yMin.toFloat, xMax.toFloat, yMax.toFloat)
-  }
   override def toString() = "center: "+c+" major: "+a+" minor: "+b+" theta: "+theta
 }
 
@@ -163,7 +137,6 @@ case class Rect(c: (Double, Double), a: Double, b:Double) extends Shape(c){
 
   def toBox() = Box((c._1-b).toFloat, (c._2-a).toFloat, (c._1+b).toFloat, (c._2+a).toFloat)
   def toRect() = Shape(((c._1-b), (c._2-a)), ((c._1+b), (c._2+a)))
-  def toJavaRTreeRect() = javaRTreeRect.create((c._1-b).toDouble, (c._2-a).toDouble, (c._1+b).toDouble, (c._2+a).toDouble)
 
   override def toString() = "center: "+c+" width: "+2*a+" height: "+2*b
 }
