@@ -29,20 +29,16 @@ object Lineage{
 
   def load(path: String, sc: SparkContext): NarrowLineage = {
     val mappingRDD = sc.objectFile[Mapping](Lineage.path+"/"+path+"/mappingRDD")
-    /*val mRDD = mappingRDD.map(m => m match{
-      case gm: GeoMapping => {
-        val tupleList = gm.tupleList
-        val (fRTree, bRTree) = GeoMapping.buildRTreeIndex(tupleList)
-        GeoMapping(gm.inSpace, gm.outSpace, fRTree, bRTree, tupleList)
-      }
+    val mRDD = mappingRDD.map(m => m match{
+      case gm: GeoMapping => GeoMappingWithIndex(gm)
       case _ => 
-    })*/
+    })
     //a trivial rdd
     val rdd = sc.parallelize(Seq(1))
     //a trivial transformer
     val transformer = Transformer[Int, Int](_ * 1)
 
-    NarrowLineage(rdd, rdd, mappingRDD, transformer)
+    NarrowLineage(rdd, rdd, mRDD, transformer)
   }
 
   def load(paths: Seq[String], sc: SparkContext): Seq[NarrowLineage] = {
