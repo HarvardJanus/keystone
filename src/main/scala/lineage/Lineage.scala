@@ -33,7 +33,6 @@ object Lineage{
       case gm: GeoMapping => GeoMappingWithIndex(gm)
       case _ => 
     })
-    println("index building time: "+time(mRDD.count)+"s")
     //a trivial rdd
     val rdd = sc.parallelize(Seq(1))
     //a trivial transformer
@@ -46,12 +45,6 @@ object Lineage{
     paths.map(p => {
       load(p, sc)
     })
-  }
-
-  def time[A](f: => A) = {
-    val s = System.nanoTime
-    val ret = f
-    (System.nanoTime-s)/1e9
   }
 }
 
