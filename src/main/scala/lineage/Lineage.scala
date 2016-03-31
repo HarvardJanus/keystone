@@ -196,6 +196,7 @@ case class CompositeLineage(lineageSeq: Seq[NarrowLineage]) extends Queriable{
     mappingSeq match {
       case Nil => keys
       case head::tail => {
+        println("mapping: "+head+"  key: "+keys.head)
         val interResults = head.qForward(keys)
         qForwardRecursive(interResults, tail)
       }

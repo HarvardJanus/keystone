@@ -45,7 +45,6 @@ case class Matrix(xDim: Int, yDim: Int) extends SubSpace {
     c match {
       case coor: Coor2D => if ((coor.x < xDim)&&(coor.y < yDim)) true else false
       case _ => {
-        println("coor: "+c)
         require(0==1, {"input is 2-d structure, use 2-d index"})
         false
       }
