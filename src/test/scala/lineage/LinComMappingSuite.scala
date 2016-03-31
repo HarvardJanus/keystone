@@ -16,10 +16,10 @@ class LinComMappingSuite extends FunSuite with Logging {
 
   test("LinComMapping Matrix Test"){
     val m1 = DenseMatrix.zeros[Double](5, 4)
-    val m2 = DenseMatrix.zeros[Double](5, 2)
+    val m2 = DenseMatrix.zeros[Double](2, 4)
     val mapping = LinComMapping(m1, m2)
-    assert(mapping.qForward(List(Coor(2,0))) == List(Coor(2,0), Coor(2,1)))
-    assert(mapping.qBackward(List(Coor(2,0))) == List(Coor(2,0), Coor(2,1), Coor(2,2), Coor(2,3)))
+    assert(mapping.qForward(List(Coor(2,0))) == List(Coor(0,0), Coor(1,0)))
+    assert(mapping.qBackward(List(Coor(0,2))) == List(Coor(0,2), Coor(1,2), Coor(2,2), Coor(3,2), Coor(4,2)))
   }
 
   test("LinComMapping Vector2Vector Query Optimization Test"){
@@ -64,8 +64,8 @@ class LinComMappingSuite extends FunSuite with Logging {
   }
 
   test("LinComMapping Matrix2Matrix Query Optimization Test"){
-    val m1 = DenseMatrix.zeros[Double](5, 3)
-    val m2 = DenseMatrix.zeros[Double](5, 2)
+    val m1 = DenseMatrix.zeros[Double](5, 4)
+    val m2 = DenseMatrix.zeros[Double](2, 4)
     
     val fKeys = (for(i <- 0 until m1.rows; j <- 0 until m1.cols-1) yield Coor(i,j)).toList
     val bKeys = (for(i <- 0 until m2.rows; j <- 0 until m2.cols-1) yield Coor(i,j)).toList

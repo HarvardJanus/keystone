@@ -36,9 +36,10 @@ case class LinComMapping(inSpace: SubSpace, outSpace: SubSpace) extends Mapping(
   }
 
   def qForwardM2M(in: Matrix, out: Matrix, keys: List[Coor]) = {
+    /*The current implementation is column-wise*/
     keys.flatMap(k=>{
       val k2D = k.asInstanceOf[Coor2D]
-      val l = for (i <- 0 until out.yDim) yield Coor(k2D.x, i)
+      val l = for (i <- 0 until out.xDim) yield Coor(i, k2D.y)
       l.toList
     }).distinct
   }
