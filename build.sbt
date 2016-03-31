@@ -26,7 +26,8 @@ libraryDependencies ++= Seq(
   "commons-io" % "commons-io" % "2.4",
   "org.scalanlp" % "breeze_2.10" % "0.11.2",
   "com.github.fommil.netlib" % "all" % "1.1.2" pomOnly(),
-  "com.github.scopt" %% "scopt" % "3.3.0"
+  "com.github.scopt" %% "scopt" % "3.3.0",
+  "com.github.davidmoten" % "rtree" % "0.7.1"
 )
 
 {

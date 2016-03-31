@@ -2,9 +2,16 @@ package lineage
 
 import archery._
 import breeze.linalg._
+import com.github.davidmoten.rtree.geometry._
+import com.github.davidmoten.rtree.geometry.Geometries._
+import com.github.davidmoten.rtree.RTree
+import scala.collection.JavaConversions._
 import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledImage}
 
-case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int], bRTree: RTree[Int],
+//case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int], bRTree: RTree[Int],
+//  tupleList: List[(Shape, Shape)]) extends Mapping(inSpace, outSpace){
+
+case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int, Rectangle], bRTree: RTree[Int, Rectangle],
   tupleList: List[(Shape, Shape)]) extends Mapping(inSpace, outSpace){
 
   def qForward(keys: List[Coor]) = {
@@ -37,8 +44,11 @@ case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int],
       keys.flatMap(key => {
         key match {
           case k: Coor2D => {
-            val indexArray = fRTree.searchWithIn(Point(k.x.toFloat, k.y.toFloat))
-            val filteredIndex = indexArray.toList.filter(e => tupleList(e.value)._1.contain(k.x.toDouble, k.y.toDouble))
+            //val indexArray = fRTree.searchWithIn(Point(k.x.toFloat, k.y.toFloat))
+            //val filteredIndex = indexArray.toList.filter(e => tupleList(e.value)._1.contain(k.x.toDouble, k.y.toDouble))
+            val indexArray = fRTree.search(point(k.x.toDouble, k.y.toDouble)).toBlocking().toIterable()
+            val indexList = indexArray.toList
+            val filteredIndex = indexList.toList.filter(e => tupleList(e.value)._1.contain(k.x.toDouble, k.y.toDouble))
             filteredIndex.flatMap(e => tupleList(e.value)._2.toCoor)
           }
         }  
@@ -61,8 +71,11 @@ case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int],
       keys.flatMap(key => {
         key match {
           case k: Coor2D => {
-            val indexArray = bRTree.searchWithIn(Point(k.x.toFloat, k.y.toFloat))
-            val filteredIndex = indexArray.toList.filter(e => tupleList(e.value)._2.contain(k.x.toDouble, k.y.toDouble))
+            //val indexArray = bRTree.searchWithIn(Point(k.x.toFloat, k.y.toFloat))
+            //val filteredIndex = indexArray.toList.filter(e => tupleList(e.value)._2.contain(k.x.toDouble, k.y.toDouble))
+            val indexArray = bRTree.search(point(k.x.toDouble, k.y.toDouble)).toBlocking().toIterable()
+            val indexList = indexArray.toList
+            val filteredIndex = indexList.toList.filter(e => tupleList(e.value)._2.contain(k.x.toDouble, k.y.toDouble))
             filteredIndex.flatMap(e => tupleList(e.value)._1.toCoor)
           }
         }  
@@ -88,15 +101,21 @@ case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int],
 
 object GeoMapping{
   def apply(inMatrix: DenseMatrix[_], outMatrix: DenseMatrix[_], tupleList: List[(Shape, Shape)]) = {
-    val (fRTree, bRTree) = buildRTreeIndex(tupleList)
+    //val (fRTree, bRTree) = buildRTreeIndex(tupleList)
     //new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), fRTree, bRTree, tupleList)
-    new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), RTree(), RTree(), tupleList)
-  }
-  def apply(inImage: KeystoneImage, outMatrix: DenseMatrix[_], tupleList: List[(Shape, Shape)]) = {
-    new GeoMapping(SubSpace(inImage), SubSpace(outMatrix), RTree(), RTree(), tupleList)
+    //new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), RTree(), RTree(), tupleList)
+    val fRTree: RTree[Int, Rectangle] = RTree.create()
+    val bRTree: RTree[Int, Rectangle] = RTree.create()
+    new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), fRTree, bRTree, tupleList)
   }
 
-  def buildRTreeIndex(tupleList: List[(Shape, Shape)]): (RTree[Int], RTree[Int]) = {
+  def apply(inImage: KeystoneImage, outMatrix: DenseMatrix[_], tupleList: List[(Shape, Shape)]) = {
+    val fRTree: RTree[Int, Rectangle] = RTree.create()
+    val bRTree: RTree[Int, Rectangle] = RTree.create()
+    new GeoMapping(SubSpace(inImage), SubSpace(outMatrix), fRTree, bRTree, tupleList)
+  }
+
+  /*def buildRTreeIndex(tupleList: List[(Shape, Shape)]): (RTree[Int], RTree[Int]) = {
     var fRTree: RTree[Int] = RTree()
     var bRTree: RTree[Int] = RTree()
 
@@ -105,6 +124,20 @@ object GeoMapping{
       case ((s1: Shape, s2: Shape), i: Int) => {
         fRTree = fRTree.insert(Entry(s1.toBox, i))
         bRTree = bRTree.insert(Entry(s2.toBox, i))
+      }
+    }
+    (fRTree, bRTree)
+  }*/
+
+  def buildRTreeIndex(tupleList: List[(Shape, Shape)]): (RTree[Int, Rectangle], RTree[Int, Rectangle]) = {
+    var fRTree: RTree[Int, Rectangle] = RTree.create()
+    var bRTree: RTree[Int, Rectangle] = RTree.create()
+
+    /*need to change to automatic shape detection*/
+    val maps = tupleList.zipWithIndex.map{
+      case ((s1: Shape, s2: Shape), i: Int) => {
+        fRTree = fRTree.add(i, s1.toJavaRTreeRect)
+        bRTree = bRTree.add(i, s2.toJavaRTreeRect)
       }
     }
     (fRTree, bRTree)
