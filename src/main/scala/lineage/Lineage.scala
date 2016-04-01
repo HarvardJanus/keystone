@@ -36,7 +36,7 @@ object Lineage{
       }
     })
     mRDD.cache()
-    println("index build time: "+time(mRDD.count)+"s")*/ß
+    println("index build time: "+time(mRDD.count)+"s")*/
     //a trivial rdd
     val rdd = sc.parallelize(Seq(1))
     //a trivial transformer
