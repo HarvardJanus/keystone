@@ -34,6 +34,7 @@ object Lineage{
         val (fRTree, bRTree) = GeoMapping.buildRTreeIndex(gm.tupleList)
         GeoMapping(gm.inSpace, gm.outSpace, fRTree, bRTree, gm.tupleList)
       }
+      case _: m
     })
     mRDD.cache()
     println("index build time: "+time(mRDD.count)+"s")
