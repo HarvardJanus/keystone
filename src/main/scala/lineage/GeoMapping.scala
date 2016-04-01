@@ -88,7 +88,7 @@ case class GeoMapping(inSpace: SubSpace, outSpace: SubSpace, fRTree: RTree[Int],
 
 object GeoMapping{
   def apply(inMatrix: DenseMatrix[_], outMatrix: DenseMatrix[_], tupleList: List[(Shape, Shape)]) = {
-    val (fRTree, bRTree) = buildRTreeIndex(tupleList)
+    //val (fRTree, bRTree) = buildRTreeIndex(tupleList)
     //new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), fRTree, bRTree, tupleList)
     new GeoMapping(SubSpace(inMatrix), SubSpace(outMatrix), RTree(), RTree(), tupleList)
   }
