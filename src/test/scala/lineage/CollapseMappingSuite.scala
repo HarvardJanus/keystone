@@ -85,4 +85,93 @@ class CollapseMappingSuite extends FunSuite with Logging {
     assert(mapping3.qForward(List(Coor(0,0))).toString == "List((0,0,0), (1,0,0), (2,0,0), (3,0,0), (4,0,0))")
     assert(mapping3.qBackward(List(Coor(0,1,2))).toString == "List((1,2))")
   }
+
+  test("CollapseMapping Vector2Singular Query Optimization Test"){
+    val v = DenseVector.zeros[Double](100000)
+    val i = 3
+    
+    val fKeys = (for(i <- 0 until v.size) yield Coor(i)).toList
+    val bKeys = List(Coor(0))
+
+    val trials = 3
+    val list1 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(v, i)
+      assert(mapping.qForward(fKeys) == List(Coor(0)))
+      time(mapping.qForward(fKeys))
+    }).toList
+
+    val list2 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(v, i)
+      assert(mapping.qBackward(bKeys).size == 100000)
+      time(mapping.qBackward(bKeys))
+    }).toList
+    
+    Mapping.setOpzFlag(true)
+    
+    val list3 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(v, i)
+      assert(mapping.qForward(fKeys) == List(Coor(0)))
+      time(mapping.qForward(fKeys))
+    }).toList
+
+    val list4 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(v, i)
+      assert(mapping.qBackward(bKeys).size == 100000)
+      time(mapping.qBackward(bKeys))
+    }).toList
+
+    println("non-optimized forward: "+list1.sum/list1.size)
+    println("optimized forward: "+list3.sum/list3.size)
+    println("non-optimized backward: "+list2.sum/list2.size)
+    println("optimized backward: "+list4.sum/list4.size)
+    Mapping.setOpzFlag(false)
+  }
+
+  test("CollapseMapping Matrix2Vector Query Optimization Test"){
+    val m = DenseMatrix.zeros[Double](10, 100000)
+    val v = DenseVector.zeros[Double](10)
+    
+    val fKeys = (for(i <- 0 until m.rows-1; j <- 0 until m.cols) yield Coor(i, j)).toList
+    val bKeys = (for(i <- 0 until v.size-1) yield Coor(i)).toList
+
+    val trials = 3
+    val list1 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(m, v, 1)
+      assert(mapping.qForward(fKeys).size == 9)
+      time(mapping.qForward(fKeys))
+    }).toList
+    
+    val list2 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(m, v, 1)
+      assert(mapping.qBackward(bKeys).size == 900000)
+      time(mapping.qBackward(bKeys))
+    }).toList
+
+    Mapping.setOpzFlag(true)
+
+    val list3 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(m, v, 1)
+      assert(mapping.qForward(fKeys).size == 9)
+      time(mapping.qForward(fKeys))
+    }).toList
+
+    val list4 = (0 until trials).map(x => {
+      val mapping = CollapseMapping(m, v, 1)
+      assert(mapping.qBackward(bKeys).size == 900000)
+      time(mapping.qBackward(bKeys))
+    }).toList
+
+    println("non-optimized forward: "+list1.sum/list1.size)
+    println("optimized forward: "+list3.sum/list3.size)
+    println("non-optimized backward: "+list2.sum/list2.size)
+    println("optimized backward: "+list4.sum/list4.size)
+    Mapping.setOpzFlag(false)
+  }
+
+
+  def time[A](f: => A) = {
+    val s = System.nanoTime
+    val ret = f
+    (System.nanoTime-s)/1e9
+  }
 }

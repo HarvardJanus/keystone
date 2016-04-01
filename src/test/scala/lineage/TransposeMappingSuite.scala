@@ -8,8 +8,8 @@ import org.scalatest.FunSuite
 import pipelines.Logging
 import utils.ImageMetadata
 
-class JoinMappingSuite extends FunSuite with Logging {
-  test("JoinMapping Vector Test"){
+class TransposeMappingSuite extends FunSuite with Logging {
+  test("TransposeMapping Vector Test"){
     val sc = new SparkContext("local", "test")
     val v1 = DenseVector.zeros[Double](4)
     val v2 = DenseVector.zeros[Double](4)
@@ -20,7 +20,7 @@ class JoinMappingSuite extends FunSuite with Logging {
     val s = Seq(v1, v1)
     val output = sc.parallelize(List.fill(2){s})
 
-    val mapping = JoinMapping(input, output)
+    val mapping = TransposeMapping(input, output, (0,1))
     assert(mapping.qForward(List(Coor(0,1,0), Coor(1,0,2))).toString == "List((1,0,0), (0,1,2))")
     assert(mapping.qBackward(List(Coor(1,0,0), Coor(0,1,2))).toString == "List((0,1,0), (1,0,2))")
   }

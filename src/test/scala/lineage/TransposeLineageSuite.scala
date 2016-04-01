@@ -9,8 +9,8 @@ import pipelines.Logging
 import utils.ImageMetadata
 import workflow._
 
-class JoinLineageSuite extends FunSuite with Logging {
-  test("JoinLineage Vector Test"){
+class TransposeLineageSuite extends FunSuite with Logging {
+  test("TranposeLineage Vector Test"){
     val sc = new SparkContext("local", "test")
     val v1 = DenseVector.zeros[Double](4)
 
@@ -22,7 +22,7 @@ class JoinLineageSuite extends FunSuite with Logging {
 
     val transformer = Transformer[Int, Int](_ * 1)
 
-    val lineage = JoinLineage(input, output, transformer)
+    val lineage = TransposeLineage(input, output, (0,1))
     assert(lineage.qForward(List(Coor(0,1,0))) == List(Coor(1,0,0)))
     assert(lineage.qBackward(List(Coor(1,0,0))) == List(Coor(0,1,0)))
   }

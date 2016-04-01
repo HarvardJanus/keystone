@@ -6,13 +6,32 @@ import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledIma
 /*
  *  dim is the dimension that breaks in the flattening
  */
-case class FlattenMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping{
+case class FlattenMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping(inSpace, outSpace){
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    (inSpace, outSpace) match {
-      case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
-      case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
+    Mapping.queryOptimization match{
+      case true => {
+        //println("flatten mapping forward optimization path")
+        val rule = FlattenForwardQueryRule(inSpace, outSpace, dim, keys)
+        (inSpace, outSpace) match {
+          case (in: Matrix, out: Vector) => {
+            def query = qForwardM2V(in, out, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Vector, out: Matrix) => {
+            def query = qBackwardM2V(out, in, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+        }
+      }
+      case false => {
+        //println("flatten mapping forward non-optimization path")
+        (inSpace, outSpace) match {
+          case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
+          case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
+        }
+      }
     }
   }
 
@@ -33,9 +52,28 @@ case class FlattenMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exten
   def qBackward(keys: List[Coor]) = {
     val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    (inSpace, outSpace) match {
-      case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
-      case (in: Vector, out: Matrix) => qForwardM2V(out, in, dim, keys)
+    Mapping.queryOptimization match{
+      case true => {
+        //println("flatten mapping backward optimization path")
+        val rule = FlattenBackwardQueryRule(inSpace, outSpace, dim, keys)
+        (inSpace, outSpace) match {
+          case (in: Matrix, out: Vector) => {
+            def query = qBackwardM2V(in, out, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Vector, out: Matrix) => {
+            def query = qForwardM2V(out, in, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+        }
+      }
+      case false => {
+        //println("flatten mapping backward non-optimization path")
+        (inSpace, outSpace) match {
+          case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
+          case (in: Vector, out: Matrix) => qForwardM2V(out, in, dim, keys)
+        }
+      }
     }
   }
 

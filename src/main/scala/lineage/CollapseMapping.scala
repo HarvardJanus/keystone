@@ -6,17 +6,52 @@ import utils.{MultiLabeledImage, Image=>KeystoneImage, ImageMetadata, LabeledIma
 /*
  *  add RDD[Seq[Vector]] => RDD[Vector]
  */
-case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping{
+case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) extends Mapping(inSpace, outSpace){
   def qForward(keys: List[Coor]) = {
     val flag = keys.map(k => inSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    (inSpace, outSpace) match {
-      case (in: Vector, out: Singularity) => qForwardV2S(in, out, keys)
-      case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
-      case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
-      case (in: Singularity, out: Vector) => qBackwardV2S(out, in, keys)
-      case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
-      case (in: Matrix, out: Image) => qBackwardI2M(out, in, dim, keys)
+    Mapping.queryOptimization match{
+      case true => {
+        //println("executing the optimization path")
+        val rule = CollapseForwardQueryRule(inSpace, outSpace, dim, keys)
+        (inSpace, outSpace) match {
+          case (in: Vector, out: Singularity) => {
+            def query = qForwardV2S(in, out, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Matrix, out: Vector) => {            
+            def query = qForwardM2V(in, out, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Image, out: Matrix) => {
+            def query = qForwardI2M(in, out, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Singularity, out: Vector) => {
+            def query = qBackwardV2S(out, in, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Vector, out: Matrix) => {
+            def query = qBackwardM2V(out, in, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Matrix, out: Image) => {
+            def query = qBackwardI2M(out, in, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+        }
+      }
+      case false => {
+        //println("executing the unoptimized path")
+        (inSpace, outSpace) match {
+          case (in: Vector, out: Singularity) => qForwardV2S(in, out, keys)
+          case (in: Matrix, out: Vector) => qForwardM2V(in, out, dim, keys)
+          case (in: Image, out: Matrix) => qForwardI2M(in, out, dim, keys)
+          case (in: Singularity, out: Vector) => qBackwardV2S(out, in, keys)
+          case (in: Vector, out: Matrix) => qBackwardM2V(out, in, dim, keys)
+          case (in: Matrix, out: Image) => qBackwardI2M(out, in, dim, keys)
+        }
+      }
     }
   }
 
@@ -43,13 +78,47 @@ case class CollapseMapping(inSpace: SubSpace, outSpace: SubSpace, dim: Int) exte
   def qBackward(keys: List[Coor]) = {
     val flag = keys.map(k => outSpace.contain(k)).reduce(_ && _)
     require((flag==true), {"query out of subspace boundary"})
-    (inSpace, outSpace) match {
-      case (in: Vector, out: Singularity) => qBackwardV2S(in, out, keys)
-      case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
-      case (in: Image, out: Matrix) => qBackwardI2M(in, out, dim, keys)
-      case (in: Singularity, out: Vector) => qForwardV2S(out, in, keys)
-      case (in: Vector, out: Matrix) => qForwardM2V(out, in, dim, keys)
-      case (in: Matrix, out: Image) => qForwardI2M(out, in, dim, keys)
+    Mapping.queryOptimization match{
+      case true => {
+        //println("executing the optimization path")
+        val rule = CollapseBackwardQueryRule(inSpace, outSpace, dim, keys)
+        (inSpace, outSpace) match {
+          case (in: Vector, out: Singularity) => {
+            def query = qBackwardV2S(in, out, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Matrix, out: Vector) => {            
+            def query = qBackwardM2V(in, out, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Image, out: Matrix) => {
+            def query = qBackwardI2M(in, out, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Singularity, out: Vector) => {
+            def query = qForwardV2S(out, in, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Vector, out: Matrix) => {
+            def query = qForwardM2V(out, in, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+          case (in: Matrix, out: Image) => {
+            def query = qForwardI2M(out, in, dim, _: List[Coor])
+            QueryRule.optimizeThenQuery(rule, query)
+          }
+        }
+      }      
+      case false => {
+        (inSpace, outSpace) match {
+          case (in: Vector, out: Singularity) => qBackwardV2S(in, out, keys)
+          case (in: Matrix, out: Vector) => qBackwardM2V(in, out, dim, keys)
+          case (in: Image, out: Matrix) => qBackwardI2M(in, out, dim, keys)
+          case (in: Singularity, out: Vector) => qForwardV2S(out, in, keys)
+          case (in: Vector, out: Matrix) => qForwardM2V(out, in, dim, keys)
+          case (in: Matrix, out: Image) => qForwardI2M(out, in, dim, keys)
+        }
+      }
     }
   }
 
@@ -119,4 +188,5 @@ object CollapseMapping{
     new CollapseMapping(SubSpace(inMatrix), SubSpace(outImage), dim)
   def apply(inMatrix: DenseMatrix[_], outImageMeta: ImageMetadata, dim: Int) = 
     new CollapseMapping(SubSpace(inMatrix), SubSpace(outImageMeta), dim)  
+
 }

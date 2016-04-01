@@ -66,7 +66,7 @@ case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
       }
     }
   }
-  def expand  = (for(i <- 0 until xDim; j <- 0 until yDim; c <- 0 until cDim) yield Coor(i,j,c)).toList
+  def expand()  = (for(i <- 0 until xDim; j <- 0 until yDim; c <- 0 until cDim) yield Coor(i,j,c)).toList
   def numDim() = 3
   override def toString(): String =  "Image: "+xDim+"x"+yDim+"x"+cDim
 }

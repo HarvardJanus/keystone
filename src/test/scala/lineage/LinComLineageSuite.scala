@@ -28,7 +28,7 @@ class LinComLineageSuite extends FunSuite with LocalSparkContext with Logging {
     val l = List.fill(5){v}
     val inRDD = sc.parallelize(l)
 
-    val v2 = DenseMatrix.zeros[Double](3, 2)
+    val v2 = DenseMatrix.zeros[Double](2, 3)
     val l2 = List.fill(5){v2}
     val outRDD = sc.parallelize(l2)
 
@@ -36,7 +36,7 @@ class LinComLineageSuite extends FunSuite with LocalSparkContext with Logging {
     val model = DenseMatrix.zeros[Double](4, 2)
 
     val lineage = LinComLineage(inRDD, outRDD, transformer, model)
-    assert(lineage.qForward(List(Coor(0,1,1))) == List(Coor(0,1,0), Coor(0,1,1)))
-    assert(lineage.qBackward(List(Coor(0,1,1))) == List(Coor(0,1,0), Coor(0,1,1), Coor(0,1,2), Coor(0,1,3)))
+    assert(lineage.qForward(List(Coor(0,1,1))) == List(Coor(0,0,1), Coor(0,1,1)))
+    assert(lineage.qBackward(List(Coor(0,1,1))) == List(Coor(0,0,1), Coor(0,1,1), Coor(0,2,1)))
   }
 }

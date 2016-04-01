@@ -14,7 +14,7 @@ object FlattenLineage{
       case (in: DenseVector[_], out: DenseMatrix[_]) => {
         FlattenMapping(in, out, dim)
       }
-      case (in: Seq[DenseVector[T]], out: DenseVector[T]) => {
+      case (in: Seq[DenseVector[T] @unchecked], out: DenseVector[T]) => {
         FlattenMapping(in, out)
       }
     }
