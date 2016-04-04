@@ -29,8 +29,6 @@ object Lineage{
 
   def load(path: String, sc: SparkContext): NarrowLineage = {
     val mappingRDD = sc.objectFile[Mapping](Lineage.path+"/"+path+"/mappingRDD")
-    mappingRDD.cache
-    mappingRDD.count
     val mRDD = mappingRDD.map(m => m match{
       case gm: GeoMapping => {
         GeoMappingWithIndex(gm)
