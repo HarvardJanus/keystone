@@ -50,7 +50,7 @@ case class CollapseForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: 
   }.toList.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce() = reducedKeys
@@ -60,7 +60,7 @@ case class CollapseBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim:
   lazy val reducedKeys = keys.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce() = reducedKeys
@@ -70,7 +70,7 @@ case class FlattenForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: I
   lazy val reducedKeys = keys.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce = reducedKeys
@@ -80,7 +80,7 @@ case class FlattenBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, dim: 
   lazy val reducedKeys = keys.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce = reducedKeys
@@ -90,7 +90,7 @@ case class IdentityQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: List[C
   lazy val reducedKeys = keys.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce = reducedKeys
@@ -113,7 +113,7 @@ case class LinComForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: L
   }.toList.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce = reducedKeys
@@ -128,7 +128,7 @@ case class LinComBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, keys: 
   }.toList.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == outSpace.size
   }
 
   def reduce = reducedKeys
@@ -138,7 +138,7 @@ case class GeoForwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, tupleList:
   lazy val reducedKeys = keys.distinct
 
   def isTotal() = {
-    keys.size == inSpace.expand().size
+    keys.size == inSpace.size
   }
 
   def reduce = reducedKeys
@@ -148,7 +148,7 @@ case class GeoBackwardQueryRule(inSpace: SubSpace, outSpace: SubSpace, tupleList
   lazy val reducedKeys = keys.distinct
 
   def isTotal() = {
-    keys.size == outSpace.expand().size
+    keys.size == outSpace.size
   }
 
   def reduce = reducedKeys

@@ -9,12 +9,14 @@ abstract class SubSpace extends Serializable {
   def contain(c: Coor): Boolean
   def expand(): List[Coor]
   def numDim(): Int
+  def size(): Int
 }
 
 case class NullSpace() extends SubSpace {
   def contain(c: Coor) = false
   def expand() = List(Coor())
   def numDim() = 0
+  def size() = 0
 }
 
 case class Singularity(value: Int) extends SubSpace {
@@ -22,6 +24,7 @@ case class Singularity(value: Int) extends SubSpace {
   def expand = List(Coor(0))
   def numDim() = 0
   override def toString(): String = "Singularity: 0"
+  def size() = 1
 }
 
 case class Vector(dim: Int) extends SubSpace {
@@ -38,6 +41,7 @@ case class Vector(dim: Int) extends SubSpace {
   def expand() = (0 until dim).toList.map(Coor(_))
   def numDim() = 1
   override def toString(): String = "Vector: "+dim
+  def size = dim
 }
 
 case class Matrix(xDim: Int, yDim: Int) extends SubSpace {
@@ -54,6 +58,7 @@ case class Matrix(xDim: Int, yDim: Int) extends SubSpace {
   def expand() = (for(i <- 0 until xDim; j <- 0 until yDim) yield Coor(i,j)).toList
   def numDim() = 2
   override def toString(): String = "Matrix: "+xDim+"x"+yDim
+  def size() = xDim * yDim
 }
 
 case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
@@ -69,6 +74,7 @@ case class Image(xDim: Int, yDim: Int, cDim: Int) extends SubSpace {
   def expand()  = (for(i <- 0 until xDim; j <- 0 until yDim; c <- 0 until cDim) yield Coor(i,j,c)).toList
   def numDim() = 3
   override def toString(): String =  "Image: "+xDim+"x"+yDim+"x"+cDim
+  def size() = xDim * yDim * cDim
 }
 
 object SubSpace {
