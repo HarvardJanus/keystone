@@ -1,6 +1,8 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+require './vagrant-provision-reboot-plugin'
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -76,12 +78,14 @@ Vagrant.configure(2) do |config|
     sudo dnf -y -v groupinstall 'Development Tools'
     sudo dnf -y -v install java-1.8.0-openjdk java-1.8.0-openjdk-devel
     export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+    echo 'export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk' >> /home/vagrant/.bashrc
     sudo dnf -y -v install scala
     mkdir -p workspace
-    mkdir -p workspace
     cd workspace && git clone https://github.com/tfjmp/keystone.git
-    cd keystone && git checkout lineage-v4
+    cd keystone && git checkout janus
     cd ../..
     sudo chown -R vagrant ./workspace
   SHELL
+
+  config.vm.provision :unix_reboot
 end
