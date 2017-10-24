@@ -1,0 +1,54 @@
+- Instructions on using KeystoneML on Wrangler
+1. Go to https://portal.wrangler.tacc.utexas.edu 
+2. Login with the TACC account
+3. "Manage" in Machine-Learning-Dia
+4. Create Hadoop Reservation
+5. Specify number of nodes, duration, and the start time
+6. Submit. You will see the reservation on the website
+7. Submit a slurm job through SSH:
+7.1 Login Wrangler: ssh mikehan@wrangler.tacc.utexas.edu
+7.2 Enter password and token
+7.3 Now we are at $HOME. Use the command `showres` to check out active reservations. It may take a few minutes for the reservation to go through
+7.4 Make changes to the Slurm code (get the slurm code from `cp /home/00946/zzhang/work/sleep.slurm`)
+7.4.1 Number of nodes (-N): the number of nodes you reserved
+7.4.2 Set (-n) = 24 * number of nodes (-N)
+7.4.3 Set (-A): project name
+7.4.4 Set (-t) as run time
+7.5 Run `sbatch --reservation=RESERVATION_NAME sleep.slurm`. RESERVATION_NAME is shown in the `Reservation Name` column of the `showres` output
+8. Run `squeue` to find out the nodes that are allocated -- the ones with the username `mikehan`
+
+9. Setup Spark
+9.1 Download Spark: wget https://archive.apache.org/dist/spark/spark-1.6.0/spark-1.6.0.tgz
+9.2 unpack Spark: tar xvzf spark-1.6.0.tgz
+9.3 Build Spark: build/mvn -Pyarn -Phadoop-2.6 -Dhadoop.version=2.6.0 -DskipTests clean package
+10. SSH to one of the node by: ssh NODE_NAME
+    We will use this node as the Spark driver node (say c252-104).
+11. Copy the spark program to the tmp directory, which is the local rotating disk on c252-104.
+Since I downloaded and built Spark in $WORK, I do (remember that I am currently on node c252-104):
+cp -r $WORK/spark-1.6.0 /tmp/ (since it is stored in tmp. We have to copy this everytime, but the Spark that was built in $WORK persists.)
+
+12. Go to /tmp/ folder on c252-104, and then go to spark-1.6.0/conf
+13. Edit conf/slaves: vi slaves (it was called slaves.template so I renamed it)
+Put the other nodes in the file with each hostname in a line
+14. Edit conf/spark-defaults.conf (it was called spark-defaults.conf.template so I renamed it), and add these three lines:
+spark.master		spark://c252-104:7077
+spark.executor.memory	112g
+spark.locality.wait	3000
+15. Copy /work/00946/zzhang/wrangler/spark-1.6.0/conf/spark-env.sh to spark/conf/
+16. Copy /home/00946/zzhang/spark-ec2/copy-dir.sh to your home directory (in my case in $HOME)
+17. Go to /tmp/spark-1.6.0, run: $HOME/copy-dir.sh /tmp/spark-1.6.0
+18. Start Spark by running: sbin/start-all.sh (if you want to terminate Spark, run: sbin/stop-all.sh)
+19. Download keystoneML (I am still on node c252-104): https://github.com/zhaozhang/keystone.git /tmp/keystone
+20. Go to /tmp/keystone, change to branch-v0.3: git checkout lineage-v3
+21. Before build, change spark version to 1.6.0, and Hadoop version to 2.6.0-cdh5.7.1 in "build.sbt". Build it with: sbt/sbt assembly, then run: make
+21-2. Go to /tmp/spark-1.6.0, run: $HOME/copy-dir.sh /tmp/keystone 
+22. cp -r /home/00946/zzhang/software/openblas-install /tmp/openblas-install
+23. In /tmp/spark-1.6.0 do:$HOME/copy-dir.sh /tmp/openblas-install/
+
+24. Test:
+24.1. run: export SPARK_HOME=/tmp/spark-1.6.0
+24.2 Get MNIST data:
+wget http://mnist-data.s3.amazonaws.com/train-mnist-dense-with-labels.data
+wget http://mnist-data.s3.amazonaws.com/test-mnist-dense-with-labels.data
+24.3 Put data into HDFS: hadoop fs -put *.data .
+24.4 Run: KEYSTONE_MEM=4g ./bin/run-pipeline.sh   pipelines.images.mnist.MnistRandomFFT   --trainLocation ./train-mnist-dense-with-labels.data   --testLocation ./test-mnist-dense-with-labels.data   --numFFTs 4 --blockSize 2048
